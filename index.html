@@ -52,11 +52,11 @@ const GROUP_ORDER = ["Panaderia","Batido","Comida de sal","Reposteria"];
 const GROUP_LABEL = {"Panaderia":"Panadería","Batido":"Batido","Comida de sal":"Comida de sal","Reposteria":"Repostería"};
 const SUB_ORDER = {
   "Panaderia": ["Nevera","Congelador","Panes","Adicional"],
-  "Batido": ["Tortas"],
+  "Batido": ["Tortas","Topping"],
   "Comida de sal": ["Quiche","Quiche congeladas","Lasañas y plato fuerte","Crema","Sandwich & Wraps","Bebida","Bebida / Formula Jugo Mango","Relleno panadería salado","Adicional"],
   "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Parfait de frutas","Mise en Place / Formula"]
 };
-const FORMULA_SUBS = new Set(["Bebida / Formula Jugo Mango","Mise en Place / Formula","Relleno panadería salado"]);
+const FORMULA_SUBS = new Set(["Bebida / Formula Jugo Mango","Mise en Place / Formula","Relleno panadería salado","Topping"]);
 
 // Fila de Excel -> [subcategoría en Panaderia, nombre del producto] usado por las fórmulas de Relleno panadería salado
 const ROW_PRODUCTS = {
@@ -148,6 +148,41 @@ function computeRelleno(day){
   return out;
 }
 
+// Fórmula "CODIGO 535 - G DE TOPPING" tomada de Excel (D641+D649).
+// Agrupa por tamaño de torta sin distinguir PM/particular/marcada (el mismo tamaño = el mismo producto).
+function qtyOf(list, name){
+  const it = (list||[]).find(x => x[0].trim() === name);
+  return it ? it[1] : 0;
+}
+function computeTopping(day){
+  const tortas = (day.Batido && day.Batido["Tortas"]) || [];
+  const dulceria = (day.Reposteria && day.Reposteria["Dulceria"]) || [];
+
+  const rv14 = qtyOf(tortas, "Red velvet 1/4 libra");
+  const rv12 = qtyOf(tortas, "Red velvet 1/2 libra");
+  const rv1  = qtyOf(tortas, "Red velvet 1 libra");
+  const rv2  = qtyOf(tortas, "Red velvet 2 libras");
+
+  const zan14 = qtyOf(tortas, "Zanahoria 1/4 libra");
+  const zan12 = qtyOf(tortas, "Zanahoria 1/2 libra");
+  const zan1  = qtyOf(tortas, "Zanahoria 1 libra");
+
+  const tlMilo = qtyOf(tortas, "Tres leches Milo PM") + qtyOf(tortas, "Tres leches Milo");
+  const tlAreq = qtyOf(tortas, "Tres leches Arequipe PM") + qtyOf(tortas, "Tres leches Arequipe")
+               + qtyOf(tortas, "Tres leches arequipe PM") + qtyOf(tortas, "Tres leches arequipe");
+
+  const rvMini = qtyOf(dulceria, "Red velvet Mini");
+
+  const total = rv14*700 + rv12*900 + rv1*1100 + rv2*2200
+              + zan14*100 + zan12*200 + zan1*300
+              + (tlMilo + tlAreq)*825
+              + rvMini*30;
+
+  const out = [];
+  if(total > 0) out.push(["G de Topping (g)", Math.round(total)]);
+  return out;
+}
+
 const TODAY_ISO = "2026-09-11";
 const dates = Object.keys(DATA).filter(d => d >= TODAY_ISO).sort();
 const dayNames = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
@@ -212,6 +247,10 @@ function render(){
     if(g === "Comida de sal"){
       const relleno = computeRelleno(day || {});
       if(relleno.length) subs["Relleno panadería salado"] = relleno;
+    }
+    if(g === "Batido"){
+      const topping = computeTopping(day || {});
+      if(topping.length) subs["Topping"] = topping;
     }
     const subKeys = Object.keys(subs);
     if(subKeys.length === 0) return;
