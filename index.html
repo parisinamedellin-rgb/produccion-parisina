@@ -173,10 +173,14 @@ function computeTopping(day){
 
   const rvMini = qtyOf(dulceria, "Red velvet Mini");
 
+  const parfait = (day.Reposteria && day.Reposteria["Parfait de frutas"]) || [];
+  const parfaitTotal = qtyOf(parfait, "Parfait de frutas") + qtyOf(parfait, "Parfait de frutas *V*");
+
   const total = rv14*700 + rv12*900 + rv1*1100 + rv2*2200
               + zan14*100 + zan12*200 + zan1*300
               + (tlMilo + tlAreq)*825
-              + rvMini*30;
+              + rvMini*30
+              + parfaitTotal*33;
 
   const out = [];
   if(total > 0) out.push(["G de Topping (g)", Math.round(total)]);
