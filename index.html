@@ -187,6 +187,62 @@ function computeTopping(day){
   return out;
 }
 
+// Sub-subcategorías por tamaño dentro de Panadería > Nevera / Congelador
+const SIZE_SPLIT_SUBS = new Set(["Nevera","Congelador"]);
+function isMini(name){ return /\bmini\b/i.test(name); }
+
+// Detalle de fórmula (para el desplegable "Fórmula" en cada tarjeta)
+function toppingDetailLines(day){
+  const tortas = (day.Batido && day.Batido["Tortas"]) || [];
+  const dulceria = (day.Reposteria && day.Reposteria["Dulceria"]) || [];
+  const parfait = (day.Reposteria && day.Reposteria["Parfait de frutas"]) || [];
+  const rows = [
+    ["Red velvet 1/4 libra", qtyOf(tortas,"Red velvet 1/4 libra"), 700],
+    ["Red velvet 1/2 libra", qtyOf(tortas,"Red velvet 1/2 libra"), 900],
+    ["Red velvet 1 libra", qtyOf(tortas,"Red velvet 1 libra"), 1100],
+    ["Red velvet 2 libras", qtyOf(tortas,"Red velvet 2 libras"), 2200],
+    ["Zanahoria 1/4 libra", qtyOf(tortas,"Zanahoria 1/4 libra"), 100],
+    ["Zanahoria 1/2 libra", qtyOf(tortas,"Zanahoria 1/2 libra"), 200],
+    ["Zanahoria 1 libra", qtyOf(tortas,"Zanahoria 1 libra"), 300],
+  ];
+  const tlTotal = qtyOf(tortas,"Tres leches Milo PM")+qtyOf(tortas,"Tres leches Milo")
+    + qtyOf(tortas,"Tres leches Arequipe PM")+qtyOf(tortas,"Tres leches Arequipe")
+    + qtyOf(tortas,"Tres leches arequipe PM")+qtyOf(tortas,"Tres leches arequipe");
+  rows.push(["Tres leches (Milo/Arequipe)", tlTotal, 825]);
+  rows.push(["Red velvet Mini (Dulcería)", qtyOf(dulceria,"Red velvet Mini"), 30]);
+  const parfaitTotal = qtyOf(parfait,"Parfait de frutas")+qtyOf(parfait,"Parfait de frutas *V*");
+  rows.push(["Parfait de frutas", parfaitTotal, 33]);
+  const lines = [];
+  let total = 0;
+  rows.forEach(([name,qty,w])=>{
+    if(qty>0){ const g = qty*w; total+=g; lines.push(`${name}: ${qty} × ${w} g = ${g} g`); }
+  });
+  if(lines.length) lines.push(`<b>Total: ${Math.round(total)} g</b>`);
+  return lines;
+}
+function rellenoDetailLines(day){
+  const lines = [];
+  RELLENO_FORMULAS.forEach(f=>{
+    const parts = f.terms.filter(([row])=>rowQty(day,row)>0).map(([row,coef])=>{
+      const name = (ROW_PRODUCTS[row]||[])[1] || `fila ${row}`;
+      const q = rowQty(day,row);
+      return `${name} (${q}×${coef})`;
+    });
+    if(parts.length){
+      const val = f.terms.reduce((s,[row,coef])=>s+rowQty(day,row)*coef,0);
+      lines.push(`${f.name}: ${parts.join(' + ')} = ${val} g`);
+    }
+  });
+  const queso_palito = rowQty(day,49) + rowQty(day,132) + rowQty(day,133) + rowQty(day,134);
+  const queso_palito_mini = rowQty(day,73) + rowQty(day,158);
+  if(queso_palito_mini>0 || queso_palito>0){
+    const queso_palito_g = queso_palito*30 + queso_palito_mini*15;
+    lines.push(`Queso palito (g): ${queso_palito}×30 + ${queso_palito_mini}×15 = ${queso_palito_g} g`);
+  }
+  return lines;
+}
+const FORMULA_DETAIL_FN = { "Topping": toppingDetailLines, "Relleno panadería salado": rellenoDetailLines };
+
 const TODAY_ISO = "2026-09-12";
 const dates = Object.keys(DATA).filter(d => d >= TODAY_ISO).sort();
 const dayNames = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
@@ -266,30 +322,70 @@ function render(){
       return (ia===-1?99:ia) - (ib===-1?99:ib);
     });
 
-    const total = subKeys.reduce((s,k)=>s + subs[k].reduce((s2,it)=>s2+it[1],0), 0);
+    // El total del grupo solo cuenta unidades reales; las subcategorías de fórmula
+    // (Topping, Relleno panadería salado, etc.) están en gramos y se muestran aparte.
+    const total = subKeys.filter(k=>!FORMULA_SUBS.has(k))
+      .reduce((s,k)=>s + subs[k].reduce((s2,it)=>s2+it[1],0), 0);
 
     const groupEl = document.createElement("div");
     groupEl.setAttribute("style","margin-top:26px;");
     groupEl.innerHTML = `<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px;"><h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0;">${GROUP_LABEL[g]}</h2><span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${C.inkSoft};">${total} und.</span></div>`;
 
+    function buildLi([name,qty], idx, len, sk){
+      const key = [activeDate, g, sk, name].join("::");
+      const done = !!COMPLETED[key];
+      const li = document.createElement("li");
+      const borderBottom = idx === len-1 ? "none" : `1px solid ${C.line}`;
+      li.setAttribute("style", `display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 16px;border-bottom:${borderBottom};background:${done?C.accentSoft:"transparent"};`);
+      li.innerHTML = `<span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:2.6em;text-align:center;flex:0 0 auto;">${qty % 1 === 0 ? qty : qty.toFixed(2)}</span><span class="pname" style="font-size:0.95rem;flex:1;margin:0 12px;${done?`text-decoration:line-through;color:${C.inkSoft};`:""}">${name}</span><label style="display:flex;align-items:center;cursor:pointer;flex:0 0 auto;"><input type="checkbox" class="chk" data-key="${key}" ${done?"checked":""} style="width:20px;height:20px;flex:0 0 auto;accent-color:${C.accent};cursor:pointer;"></label>`;
+      return li;
+    }
+
     subKeys.forEach(sk=>{
-      const items = subs[sk].slice().sort((a,b)=>a[0].localeCompare(b[0],'es'));
+      const isFormula = FORMULA_SUBS.has(sk);
       const subEl = document.createElement("div");
       subEl.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-bottom:12px;overflow:hidden;`);
-      const flag = FORMULA_SUBS.has(sk) ? `<span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:${C.amber};background:${C.amberSoft};border:1px solid ${C.amber};border-radius:100px;padding:2px 8px;font-weight:700;">Fórmula</span>` : '';
+      const flag = isFormula ? `<button type="button" class="formula-toggle" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:${C.amber};background:${C.amberSoft};border:1px solid ${C.amber};border-radius:100px;padding:2px 8px;font-weight:700;cursor:pointer;">Fórmula ▸</button>` : '';
       subEl.innerHTML = `<div style="padding:11px 16px;font-size:0.82rem;font-weight:600;color:${C.accent};border-bottom:1px solid ${C.line};background:${C.accentSoft};display:flex;justify-content:space-between;align-items:center;"><span>${sk}</span>${flag}</div>`;
-      const ul = document.createElement("ul");
-      ul.setAttribute("style","list-style:none;margin:0;padding:0;");
-      items.forEach(([name,qty],idx)=>{
-        const key = [activeDate, g, sk, name].join("::");
-        const done = !!COMPLETED[key];
-        const li = document.createElement("li");
-        const borderBottom = idx === items.length-1 ? "none" : `1px solid ${C.line}`;
-        li.setAttribute("style", `display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 16px;border-bottom:${borderBottom};background:${done?C.accentSoft:"transparent"};`);
-        li.innerHTML = `<span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:2.6em;text-align:center;flex:0 0 auto;">${qty % 1 === 0 ? qty : qty.toFixed(2)}</span><span class="pname" style="font-size:0.95rem;flex:1;margin:0 12px;${done?`text-decoration:line-through;color:${C.inkSoft};`:""}">${name}</span><label style="display:flex;align-items:center;cursor:pointer;flex:0 0 auto;"><input type="checkbox" class="chk" data-key="${key}" ${done?"checked":""} style="width:20px;height:20px;flex:0 0 auto;accent-color:${C.accent};cursor:pointer;"></label>`;
-        ul.appendChild(li);
-      });
-      subEl.appendChild(ul);
+
+      if(SIZE_SPLIT_SUBS.has(sk)){
+        const estandar = subs[sk].filter(([name])=>!isMini(name)).sort((a,b)=>a[0].localeCompare(b[0],'es'));
+        const mini = subs[sk].filter(([name])=>isMini(name)).sort((a,b)=>a[0].localeCompare(b[0],'es'));
+        [["Tamaño estándar", estandar], ["Tamaño mini", mini]].forEach(([label, arr])=>{
+          if(!arr.length) return;
+          const labelEl = document.createElement("div");
+          labelEl.setAttribute("style", `padding:8px 16px 4px;font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;`);
+          labelEl.textContent = label;
+          subEl.appendChild(labelEl);
+          const ul2 = document.createElement("ul");
+          ul2.setAttribute("style","list-style:none;margin:0;padding:0;");
+          arr.forEach((item,idx)=>ul2.appendChild(buildLi(item, idx, arr.length, sk)));
+          subEl.appendChild(ul2);
+        });
+      } else {
+        const items = subs[sk].slice().sort((a,b)=>a[0].localeCompare(b[0],'es'));
+        const ul = document.createElement("ul");
+        ul.setAttribute("style","list-style:none;margin:0;padding:0;");
+        items.forEach((item,idx)=>ul.appendChild(buildLi(item, idx, items.length, sk)));
+        subEl.appendChild(ul);
+      }
+
+      if(isFormula){
+        const detailDiv = document.createElement("div");
+        detailDiv.className = "formula-detail";
+        detailDiv.setAttribute("style", `display:none;padding:12px 16px;background:${C.bg};border-top:1px dashed ${C.line};font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};line-height:1.7;`);
+        const detailFn = FORMULA_DETAIL_FN[sk];
+        const lines = detailFn ? detailFn(day || {}) : null;
+        detailDiv.innerHTML = (lines && lines.length) ? lines.map(l=>`<div>${l}</div>`).join('') : `<div style="font-style:italic;">Detalle de fórmula pendiente de definir contigo.</div>`;
+        subEl.appendChild(detailDiv);
+        const btn = subEl.querySelector('.formula-toggle');
+        btn.onclick = ()=>{
+          const open = detailDiv.style.display !== 'none';
+          detailDiv.style.display = open ? 'none' : 'block';
+          btn.textContent = open ? 'Fórmula ▸' : 'Fórmula ▾';
+        };
+      }
+
       groupEl.appendChild(subEl);
     });
 
