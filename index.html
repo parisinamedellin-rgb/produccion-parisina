@@ -41,9 +41,9 @@ const SUB_ORDER = {
   "Panaderia": ["Nevera","Congelador","Panes","Adicional"],
   "Batido": ["Tortas","Topping"],
   "Comida de sal": ["Quiche","Quiche congeladas","Caja especial","Lasañas y plato fuerte","Crema","Sandwich & Wraps","Bebida","Bebida / Formula Jugo Mango","Parfait de frutas","Relleno panadería salado","Adicional"],
-  "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Mise en Place / Formula"]
+  "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Mise en Place Dulcería"]
 };
-const FORMULA_SUBS = new Set(["Bebida / Formula Jugo Mango","Parfait de frutas","Relleno panadería salado","Topping"]);
+const FORMULA_SUBS = new Set(["Bebida / Formula Jugo Mango","Parfait de frutas","Relleno panadería salado","Topping","Mise en Place Dulcería"]);
 
 // Fila de Excel -> [subcategoría en Panaderia, nombre del producto] usado por las fórmulas de Relleno panadería salado
 const ROW_PRODUCTS = {
@@ -228,7 +228,75 @@ function rellenoDetailLines(day){
   }
   return lines;
 }
-const FORMULA_DETAIL_FN = { "Topping": toppingDetailLines, "Relleno panadería salado": rellenoDetailLines };
+// Fórmula "Mise en Place Dulcería" — crema pastelera (COD.530 café, 531 vainilla, 532 chocolate)
+// Solo se implementa la parte de crema pastelera (leche, mantequilla, azúcar, fécula, huevos, yemas).
+// Aún faltan por definir: esencia de vainilla, chocolate en bloque y café instantáneo por separado.
+function creamPastryDemand(day){
+  const dulceria = (day.Reposteria && day.Reposteria["Dulceria"]) || [];
+  const tartas = (day.Reposteria && day.Reposteria["Tartas"]) || [];
+  const tortas = (day.Batido && day.Batido["Tortas"]) || [];
+
+  const profiterol = qtyOf(dulceria, "Profiterol");
+  const rayoVainilla = qtyOf(dulceria, "Rayo vainilla");
+  const rayoMiniVainilla = qtyOf(dulceria, "Rayo mini vainilla");
+  const tartaFresaMini = qtyOf(tartas, "Tarta fresa mini");
+  const tartaFresaIndiv = qtyOf(tartas, "Tarta fresa indiv.");
+  const tartaFresa8_10 = qtyOf(tartas, "Tarta fresa 8-10 porc.");
+  const tartaMultifruta8_10 = qtyOf(tartas, "Tarta multifruta 8-10 porc.");
+  const saintHonore = qtyOf(tortas, "Saint-Honoré");
+
+  const vainilla = profiterol*35 + rayoVainilla*50
+    + (tartaFresaMini + tartaFresaIndiv + rayoMiniVainilla)*30
+    + (tartaFresa8_10 + tartaMultifruta8_10)*650
+    + saintHonore*990;
+
+  const rayoChocolate = qtyOf(dulceria, "Rayo chocolate");
+  const rayoMiniChocolate = qtyOf(dulceria, "Rayo mini chocolate");
+  const chocolate = rayoMiniChocolate*15 + rayoChocolate*50;
+
+  const rayoCafe = qtyOf(dulceria, "Rayo café");
+  const rayoMiniCafe = qtyOf(dulceria, "Rayo mini café");
+  const cafe = rayoMiniCafe*35 + rayoCafe*50;
+
+  return {vainilla, chocolate, cafe};
+}
+function computeCremaPastelera(day){
+  const {vainilla, chocolate, cafe} = creamPastryDemand(day);
+  const total = vainilla + chocolate + cafe;
+  if(total <= 0) return [];
+  const factor = (vainilla/620) + (chocolate/720) + (cafe/620);
+  const out = [
+    ["G de Crema Pastelera", Math.round(total)],
+    ["Leche entera (g)", Math.round(500*factor)],
+    ["Mantequilla (g)", Math.round(30*factor)],
+    ["Azúcar común (g)", Math.round(115*factor)],
+    ["Fécula de maíz (g)", Math.round(35*factor)],
+    ["Huevos (g)", Math.round(55*factor)],
+    ["Yemas (g)", Math.round(60*factor)],
+  ];
+  return out.filter(([,v])=>v>0);
+}
+function cremaPasteleraDetailLines(day){
+  const {vainilla, chocolate, cafe} = creamPastryDemand(day);
+  const total = vainilla + chocolate + cafe;
+  if(total <= 0) return [];
+  const factor = (vainilla/620) + (chocolate/720) + (cafe/620);
+  const lines = [];
+  if(vainilla>0) lines.push(`Crema pastelera de vainilla (COD.531): ${Math.round(vainilla)} g`);
+  if(chocolate>0) lines.push(`Crema pastelera de chocolate (COD.532): ${Math.round(chocolate)} g`);
+  if(cafe>0) lines.push(`Crema pastelera de café (COD.530): ${Math.round(cafe)} g`);
+  lines.push(`Leche entera: 500 × ${factor.toFixed(3)} = ${Math.round(500*factor)} g`);
+  lines.push(`Mantequilla: 30 × ${factor.toFixed(3)} = ${Math.round(30*factor)} g`);
+  lines.push(`Azúcar común: 115 × ${factor.toFixed(3)} = ${Math.round(115*factor)} g`);
+  lines.push(`Fécula de maíz: 35 × ${factor.toFixed(3)} = ${Math.round(35*factor)} g`);
+  lines.push(`Huevos: 55 × ${factor.toFixed(3)} = ${Math.round(55*factor)} g`);
+  lines.push(`Yemas: 60 × ${factor.toFixed(3)} = ${Math.round(60*factor)} g`);
+  lines.push(`<b>Total crema pastelera: ${Math.round(total)} g</b>`);
+  lines.push(`<span style="font-style:italic;">Falta: esencia de vainilla, chocolate en bloque y café instantáneo por separado.</span>`);
+  return lines;
+}
+
+const FORMULA_DETAIL_FN = { "Topping": toppingDetailLines, "Relleno panadería salado": rellenoDetailLines, "Mise en Place Dulcería": cremaPasteleraDetailLines };
 
 const TODAY_ISO = "2026-09-12";
 const dates = Object.keys(DATA).filter(d => d >= TODAY_ISO).sort();
@@ -298,6 +366,10 @@ function render(){
     if(g === "Batido"){
       const topping = computeTopping(day || {});
       if(topping.length) subs["Topping"] = topping;
+    }
+    if(g === "Reposteria"){
+      const mise = computeCremaPastelera(day || {});
+      if(mise.length) subs["Mise en Place Dulcería"] = mise;
     }
     const subKeys = Object.keys(subs);
     if(subKeys.length === 0) return;
