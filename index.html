@@ -265,6 +265,9 @@ function computeCremaPastelera(day){
   const total = vainilla + chocolate + cafe;
   if(total <= 0) return [];
   const factor = (vainilla/620) + (chocolate/720) + (cafe/620);
+  const esenciaVainilla = 5*((vainilla/790)+(chocolate/890));
+  const chocolateBloque = 100*(chocolate/890);
+  const cafeInstantaneo = 3.4*(cafe/790);
   const out = [
     ["G de Crema Pastelera", Math.round(total)],
     ["Leche entera (g)", Math.round(500*factor)],
@@ -273,6 +276,9 @@ function computeCremaPastelera(day){
     ["Fécula de maíz (g)", Math.round(35*factor)],
     ["Huevos (g)", Math.round(55*factor)],
     ["Yemas (g)", Math.round(60*factor)],
+    ["Esencia de vainilla (g)", Math.round(esenciaVainilla)],
+    ["Chocolate en bloque (g)", Math.round(chocolateBloque)],
+    ["Café instantáneo (g)", Math.round(cafeInstantaneo)],
   ];
   return out.filter(([,v])=>v>0);
 }
@@ -281,6 +287,9 @@ function cremaPasteleraDetailLines(day){
   const total = vainilla + chocolate + cafe;
   if(total <= 0) return [];
   const factor = (vainilla/620) + (chocolate/720) + (cafe/620);
+  const esenciaVainilla = 5*((vainilla/790)+(chocolate/890));
+  const chocolateBloque = 100*(chocolate/890);
+  const cafeInstantaneo = 3.4*(cafe/790);
   const lines = [];
   if(vainilla>0) lines.push(`Crema pastelera de vainilla (COD.531): ${Math.round(vainilla)} g`);
   if(chocolate>0) lines.push(`Crema pastelera de chocolate (COD.532): ${Math.round(chocolate)} g`);
@@ -291,8 +300,10 @@ function cremaPasteleraDetailLines(day){
   lines.push(`Fécula de maíz: 35 × ${factor.toFixed(3)} = ${Math.round(35*factor)} g`);
   lines.push(`Huevos: 55 × ${factor.toFixed(3)} = ${Math.round(55*factor)} g`);
   lines.push(`Yemas: 60 × ${factor.toFixed(3)} = ${Math.round(60*factor)} g`);
+  if(esenciaVainilla>0) lines.push(`Esencia de vainilla: ${Math.round(esenciaVainilla)} g`);
+  if(chocolateBloque>0) lines.push(`Chocolate en bloque: ${Math.round(chocolateBloque)} g`);
+  if(cafeInstantaneo>0) lines.push(`Café instantáneo: ${Math.round(cafeInstantaneo)} g`);
   lines.push(`<b>Total crema pastelera: ${Math.round(total)} g</b>`);
-  lines.push(`<span style="font-style:italic;">Falta: esencia de vainilla, chocolate en bloque y café instantáneo por separado.</span>`);
   return lines;
 }
 
