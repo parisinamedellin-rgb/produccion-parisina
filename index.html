@@ -22,6 +22,7 @@
     Reporte de trabajo — reemplaza la hoja impresa. Cantidades calculadas desde los pedidos ingresados a esa fecha; pueden cambiar si entran pedidos nuevos.<br>
     Pendiente por definir contigo: archivo fuente definitivo, hora de corte diaria y cómo se va a compartir con el equipo. Por ahora esto es la estructura por categoría para revisar y afinar.
   </footer>
+  <iframe name="hidden_iframe" style="display:none;"></iframe>
 </div>
 <script type="application/json" id="completed-json">{"2026-09-10::Panaderia::Nevera::Pastel Ranchero": true, "2026-09-10::Panaderia::Nevera::Croiss. mini chocolate": true, "2026-09-10::Panaderia::Nevera::Pastel mini pollo": true}</script>
 <script id="main-script">
@@ -92,6 +93,36 @@ const ROW_PRODUCTS = {
   171:["Congelador","Pastel mini queso *C*"], 172:["Congelador","Pastel mini queso azul *C*"], 173:["Congelador","Pastel mini ranchero *C*"],
   174:["Congelador","Pastel mini tomate pesto *C*"], 175:["Congelador","Pastel mini tomate seco *C*"]
 };
+
+// ---- Comentarios de fórmulas (operador -> Alban) ----
+// Google Form "Comentarios de formulas - Produccion Parisina": guarda en un
+// Google Sheet con notificación por email a Alban cada vez que llega una respuesta.
+const FORM_ACTION_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdOBsckZrG1iBs547l2CWDLUFMRIsPOr0-pUAIMkYhCjpF59A/formResponse";
+const FORM_ENTRIES = {
+  formula: "entry.2020781984",
+  comentario: "entry.1339365156",
+  nombre: "entry.1233277065"
+};
+function submitFormulaComment(formulaLabel, comentario, nombre){
+  const f = document.createElement("form");
+  f.action = FORM_ACTION_URL;
+  f.method = "POST";
+  f.target = "hidden_iframe";
+  f.style.display = "none";
+  function addField(name, value){
+    const inp = document.createElement("input");
+    inp.type = "hidden";
+    inp.name = name;
+    inp.value = value;
+    f.appendChild(inp);
+  }
+  addField(FORM_ENTRIES.formula, formulaLabel);
+  addField(FORM_ENTRIES.comentario, comentario);
+  if(nombre) addField(FORM_ENTRIES.nombre, nombre);
+  document.body.appendChild(f);
+  f.submit();
+  setTimeout(()=>f.remove(), 1000);
+}
 
 function rowQty(day, row){
   const info = ROW_PRODUCTS[row];
@@ -430,6 +461,39 @@ function render(){
         const detailFn = FORMULA_DETAIL_FN[sk];
         const lines = detailFn ? detailFn(day || {}) : null;
         detailDiv.innerHTML = (lines && lines.length) ? lines.map(l=>`<div>${l}</div>`).join('') : `<div style="font-style:italic;">Detalle de fórmula pendiente de definir contigo.</div>`;
+
+        const commentWrap = document.createElement("div");
+        commentWrap.setAttribute("style", `margin-top:10px;padding-top:10px;border-top:1px dashed ${C.line};font-family:'Work Sans',sans-serif;`);
+        commentWrap.innerHTML = `
+          <button type="button" class="comment-toggle" style="font-size:0.72rem;color:${C.accent};background:none;border:none;cursor:pointer;font-weight:600;padding:0;">💬 Comentar esta fórmula</button>
+          <div class="comment-form" style="display:none;margin-top:8px;">
+            <textarea class="comment-text" placeholder="Ej: necesitaríamos 10 g menos de azúcar... (puedes dictarlo con el micrófono del teclado)" rows="2" style="width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:0.85rem;padding:8px;border:1px solid ${C.line};border-radius:8px;resize:vertical;"></textarea>
+            <div style="display:flex;gap:8px;margin-top:6px;align-items:center;flex-wrap:wrap;">
+              <input type="text" class="comment-name" placeholder="Tu nombre (opcional)" style="flex:1;min-width:140px;font-size:0.8rem;padding:7px 8px;border:1px solid ${C.line};border-radius:8px;font-family:'Work Sans',sans-serif;">
+              <button type="button" class="comment-send" style="font-size:0.78rem;font-weight:600;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;">Enviar</button>
+            </div>
+            <div class="comment-status" style="font-size:0.72rem;color:${C.inkSoft};margin-top:4px;"></div>
+          </div>
+        `;
+        detailDiv.appendChild(commentWrap);
+        const cToggle = commentWrap.querySelector('.comment-toggle');
+        const cForm = commentWrap.querySelector('.comment-form');
+        cToggle.onclick = ()=>{
+          cForm.style.display = cForm.style.display === 'none' ? 'block' : 'none';
+        };
+        commentWrap.querySelector('.comment-send').onclick = ()=>{
+          const textEl = commentWrap.querySelector('.comment-text');
+          const nameEl = commentWrap.querySelector('.comment-name');
+          const statusEl = commentWrap.querySelector('.comment-status');
+          const text = textEl.value.trim();
+          const nombre = nameEl.value.trim();
+          if(!text){ statusEl.textContent = "Escribe un comentario antes de enviar."; return; }
+          submitFormulaComment(sk, text, nombre);
+          statusEl.textContent = "Enviado ✓ — Alban lo va a revisar.";
+          textEl.value = "";
+          nameEl.value = "";
+        };
+
         subEl.appendChild(detailDiv);
         const btn = subEl.querySelector('.formula-toggle');
         btn.onclick = ()=>{
