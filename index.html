@@ -44,7 +44,6 @@ const SUB_ORDER = {
   "Comida de sal": ["Quiche","Quiche congeladas","Caja especial","Lasañas y plato fuerte","Crema","Sandwich & Wraps","Bebida","Bebida / Formula Jugo Mango","Parfait de frutas","Relleno panadería salado","Adicional"],
   "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Mise en Place Dulcería"]
 };
-const FORMULA_SUBS = new Set(["Bebida / Formula Jugo Mango","Parfait de frutas","Relleno panadería salado","Topping","Mise en Place Dulcería"]);
 
 // Fila de Excel -> [subcategoría en Panaderia, nombre del producto] usado por las fórmulas de Relleno panadería salado
 const ROW_PRODUCTS = {
@@ -103,212 +102,193 @@ function rowQty(day, row){
   return it ? it[1] : 0;
 }
 
-// Fórmulas exactas tomadas de la hoja de Excel "RELLENO PANADERIA SALADO"
-const RELLENO_FORMULAS = [
-  {name:"Carne (g)", terms:[[51,40],[75,20],[47,30],[70,15],[136,30],[129,40],[156,15],[160,20]]},
-  {name:"Champi. espinaca (g)", terms:[[52,40],[76,20],[137,40],[161,20]]},
-  {name:"Chorizo (g)", terms:[[10,35],[25,18],[96,35],[111,18],[53,40],[77,20],[138,40],[162,20]]},
-  {name:"Espinaca (g)", terms:[[11,35],[26,18],[97,35],[112,18],[54,40],[78,20],[139,40],[163,20]]},
-  {name:"Italiano (g)", terms:[[57,40],[80,20],[141,40],[165,20]]},
-  {name:"Jamón y queso (g)", terms:[[12,35],[27,18],[98,35],[113,18],[58,40],[81,20],[142,40],[166,20]]},
-  {name:"NYC (g)", terms:[[59,40],[82,20],[143,40],[167,20]]},
-  {name:"Pesto (g)", terms:[[13,35],[28,18],[99,35],[60,40],[83,20],[144,40],[168,20],[114,18]]},
-  {name:"Pollo Vizcencia (g)", terms:[[14,35],[29,18],[100,35],[115,18],[61,40],[84,20],[145,40],[169,20],[62,40],[85,20],[146,40],[170,20]]},
-  {name:"Queso (g)", terms:[[15,35],[30,18],[101,35],[116,18],[63,40],[86,20],[147,40],[171,20]]},
-  {name:"Queso azul (g)", terms:[[16,35],[31,18],[102,35],[117,18],[64,40],[87,20],[148,40],[172,20]]},
-  {name:"Ranchero (g)", terms:[[65,40],[88,20],[149,40],[150,40],[173,20]]},
-  {name:"Tomate pesto (g)", terms:[[18,35],[33,18],[104,35],[119,18],[66,40],[89,20],[151,40],[174,20]]},
-  {name:"Tomate seco (g)", terms:[[19,35],[34,18],[105,35],[120,18],[67,40],[90,20],[152,40],[175,20]]}
-];
-
-function computeRelleno(day){
-  const out = [];
-  let queso_palito = rowQty(day,49) + rowQty(day,132) + rowQty(day,133) + rowQty(day,134);
-  let queso_palito_mini = rowQty(day,73) + rowQty(day,158);
-  RELLENO_FORMULAS.forEach(f=>{
-    const val = f.terms.reduce((s,[row,coef])=>s + rowQty(day,row)*coef, 0);
-    if(val > 0) out.push([f.name, val]);
-  });
-  if(queso_palito > 0) out.push(["Queso palito unid.", queso_palito]);
-  if(queso_palito_mini > 0) out.push(["Queso palito mini unid.", queso_palito_mini]);
-  const queso_palito_g = queso_palito*30 + queso_palito_mini*15;
-  if(queso_palito_g > 0) out.push(["Queso palito (g)", queso_palito_g]);
-  return out;
-}
-
-// Fórmula "CODIGO 535 - G DE TOPPING" tomada de Excel (D641+D649).
-// Agrupa por tamaño de torta sin distinguir PM/particular/marcada (el mismo tamaño = el mismo producto).
+// ============================================================
+// MOTOR GENÉRICO DE FÓRMULAS
+// ============================================================
+// Cada fórmula (FORMULA_DEFS) se define de forma declarativa:
+//  - channels: demanda cruda. Cada canal es una lista de "términos" que se
+//    suman: qty(término) × coef. Un término puede ser:
+//      { row, coef }                 -> busca en Panadería vía ROW_PRODUCTS (fila Excel)
+//      { group, sub, name, coef }    -> busca por nombre exacto en DATA[group][sub]
+//  - outputs: líneas que se muestran en la tarjeta. Cada output tiene un
+//    label y una función calc(channels) que combina los canales como haga
+//    falta (paso directo, suma, escalado por lote, fórmula cruzada, etc).
+// Para agregar una fórmula nueva: solo hay que agregar una entrada aquí,
+// con sus canales (de dónde sale la demanda) y sus outputs (qué se calcula).
+// No hay que tocar SUB_ORDER, FORMULA_SUBS, FORMULA_DETAIL_FN ni render():
+// todo eso se arma automáticamente a partir de FORMULA_DEFS.
 function qtyOf(list, name){
   const it = (list||[]).find(x => x[0].trim() === name);
   return it ? it[1] : 0;
 }
-function computeTopping(day){
-  const tortas = (day.Batido && day.Batido["Tortas"]) || [];
-  const dulceria = (day.Reposteria && day.Reposteria["Dulceria"]) || [];
-
-  const rv14 = qtyOf(tortas, "Red velvet 1/4 libra");
-  const rv12 = qtyOf(tortas, "Red velvet 1/2 libra");
-  const rv1  = qtyOf(tortas, "Red velvet 1 libra");
-  const rv2  = qtyOf(tortas, "Red velvet 2 libras");
-
-  const zan14 = qtyOf(tortas, "Zanahoria 1/4 libra");
-  const zan12 = qtyOf(tortas, "Zanahoria 1/2 libra");
-  const zan1  = qtyOf(tortas, "Zanahoria 1 libra");
-
-  const tlMilo = qtyOf(tortas, "Tres leches Milo PM") + qtyOf(tortas, "Tres leches Milo");
-  const tlAreq = qtyOf(tortas, "Tres leches Arequipe PM") + qtyOf(tortas, "Tres leches Arequipe")
-               + qtyOf(tortas, "Tres leches arequipe PM") + qtyOf(tortas, "Tres leches arequipe");
-
-  const rvMini = qtyOf(dulceria, "Red velvet Mini");
-
-  const parfait = (day["Comida de sal"] && day["Comida de sal"]["Parfait de frutas"]) || [];
-  const parfaitTotal = qtyOf(parfait, "Parfait de frutas") + qtyOf(parfait, "Parfait de frutas *V*");
-
-  const total = rv14*700 + rv12*900 + rv1*1100 + rv2*2200
-              + zan14*100 + zan12*200 + zan1*300
-              + (tlMilo + tlAreq)*825
-              + rvMini*30
-              + parfaitTotal*33;
-
+function qtyForTerm(day, term){
+  if(term.row !== undefined) return rowQty(day, term.row);
+  const list = (day[term.group] && day[term.group][term.sub]) || [];
+  return qtyOf(list, term.name);
+}
+function termLabel(term){
+  if(term.row !== undefined) return (ROW_PRODUCTS[term.row]||[])[1] || `fila ${term.row}`;
+  return term.name;
+}
+function computeChannels(day, def){
+  const ch = {};
+  Object.keys(def.channels).forEach(cname=>{
+    ch[cname] = def.channels[cname].reduce((s,t)=> s + qtyForTerm(day,t)*t.coef, 0);
+  });
+  return ch;
+}
+function round2(n){ return Math.round(n*100)/100; }
+function computeFormula(day, def){
+  const ch = computeChannels(day, def);
   const out = [];
-  if(total > 0) out.push(["G de Topping (g)", Math.round(total)]);
+  def.outputs.forEach(o=>{
+    const v = o.calc(ch, day);
+    if(v > 0) out.push([o.label, round2(v)]);
+  });
   return out;
+}
+function formulaDetailLines(day, def){
+  const ch = computeChannels(day, def);
+  const lines = [];
+  Object.keys(def.channels).forEach(cname=>{
+    if(ch[cname] > 0){
+      def.channels[cname].forEach(t=>{
+        const q = qtyForTerm(day,t);
+        if(q>0) lines.push(`${termLabel(t)}: ${q} × ${t.coef} = ${round2(q*t.coef)} g`);
+      });
+    }
+  });
+  let any = lines.length > 0;
+  def.outputs.forEach(o=>{
+    const v = o.calc(ch, day);
+    if(v>0){ any = true; lines.push(`<b>${o.label}: ${round2(v)}</b>`); }
+  });
+  if(def.note && any) lines.push(`<span style="font-style:italic;">${def.note}</span>`);
+  return any ? lines : [];
 }
 
 // Sub-subcategorías por tamaño dentro de Panadería > Nevera / Congelador
 const SIZE_SPLIT_SUBS = new Set(["Nevera","Congelador"]);
 function isMini(name){ return /\bmini\b/i.test(name); }
 
-// Detalle de fórmula (para el desplegable "Fórmula" en cada tarjeta)
-function toppingDetailLines(day){
-  const tortas = (day.Batido && day.Batido["Tortas"]) || [];
-  const dulceria = (day.Reposteria && day.Reposteria["Dulceria"]) || [];
-  const parfait = (day["Comida de sal"] && day["Comida de sal"]["Parfait de frutas"]) || [];
-  const rows = [
-    ["Red velvet 1/4 libra", qtyOf(tortas,"Red velvet 1/4 libra"), 700],
-    ["Red velvet 1/2 libra", qtyOf(tortas,"Red velvet 1/2 libra"), 900],
-    ["Red velvet 1 libra", qtyOf(tortas,"Red velvet 1 libra"), 1100],
-    ["Red velvet 2 libras", qtyOf(tortas,"Red velvet 2 libras"), 2200],
-    ["Zanahoria 1/4 libra", qtyOf(tortas,"Zanahoria 1/4 libra"), 100],
-    ["Zanahoria 1/2 libra", qtyOf(tortas,"Zanahoria 1/2 libra"), 200],
-    ["Zanahoria 1 libra", qtyOf(tortas,"Zanahoria 1 libra"), 300],
-  ];
-  const tlTotal = qtyOf(tortas,"Tres leches Milo PM")+qtyOf(tortas,"Tres leches Milo")
-    + qtyOf(tortas,"Tres leches Arequipe PM")+qtyOf(tortas,"Tres leches Arequipe")
-    + qtyOf(tortas,"Tres leches arequipe PM")+qtyOf(tortas,"Tres leches arequipe");
-  rows.push(["Tres leches (Milo/Arequipe)", tlTotal, 825]);
-  rows.push(["Red velvet Mini (Dulcería)", qtyOf(dulceria,"Red velvet Mini"), 30]);
-  const parfaitTotal = qtyOf(parfait,"Parfait de frutas")+qtyOf(parfait,"Parfait de frutas *V*");
-  rows.push(["Parfait de frutas", parfaitTotal, 33]);
-  const lines = [];
-  let total = 0;
-  rows.forEach(([name,qty,w])=>{
-    if(qty>0){ const g = qty*w; total+=g; lines.push(`${name}: ${qty} × ${w} g = ${g} g`); }
-  });
-  if(lines.length) lines.push(`<b>Total: ${Math.round(total)} g</b>`);
-  return lines;
-}
-function rellenoDetailLines(day){
-  const lines = [];
-  RELLENO_FORMULAS.forEach(f=>{
-    const parts = f.terms.filter(([row])=>rowQty(day,row)>0).map(([row,coef])=>{
-      const name = (ROW_PRODUCTS[row]||[])[1] || `fila ${row}`;
-      const q = rowQty(day,row);
-      return `${name} (${q}×${coef})`;
-    });
-    if(parts.length){
-      const val = f.terms.reduce((s,[row,coef])=>s+rowQty(day,row)*coef,0);
-      lines.push(`${f.name}: ${parts.join(' + ')} = ${val} g`);
-    }
-  });
-  const queso_palito = rowQty(day,49) + rowQty(day,132) + rowQty(day,133) + rowQty(day,134);
-  const queso_palito_mini = rowQty(day,73) + rowQty(day,158);
-  if(queso_palito_mini>0 || queso_palito>0){
-    const queso_palito_g = queso_palito*30 + queso_palito_mini*15;
-    lines.push(`Queso palito (g): ${queso_palito}×30 + ${queso_palito_mini}×15 = ${queso_palito_g} g`);
-  }
-  return lines;
-}
-// Fórmula "Mise en Place Dulcería" — crema pastelera (COD.530 café, 531 vainilla, 532 chocolate)
-// Solo se implementa la parte de crema pastelera (leche, mantequilla, azúcar, fécula, huevos, yemas).
-// Aún faltan por definir: esencia de vainilla, chocolate en bloque y café instantáneo por separado.
-function creamPastryDemand(day){
-  const dulceria = (day.Reposteria && day.Reposteria["Dulceria"]) || [];
-  const tartas = (day.Reposteria && day.Reposteria["Tartas"]) || [];
-  const tortas = (day.Batido && day.Batido["Tortas"]) || [];
+// ---- Fórmulas ----
 
-  const profiterol = qtyOf(dulceria, "Profiterol");
-  const rayoVainilla = qtyOf(dulceria, "Rayo vainilla");
-  const rayoMiniVainilla = qtyOf(dulceria, "Rayo mini vainilla");
-  const tartaFresaMini = qtyOf(tartas, "Tarta fresa mini");
-  const tartaFresaIndiv = qtyOf(tartas, "Tarta fresa indiv.");
-  const tartaFresa8_10 = qtyOf(tartas, "Tarta fresa 8-10 porc.");
-  const tartaMultifruta8_10 = qtyOf(tartas, "Tarta multifruta 8-10 porc.");
-  const saintHonore = qtyOf(tortas, "Saint-Honoré");
+const FORMULA_DEFS = [
+  {
+    // Fórmula "CODIGO 535 - G DE TOPPING" tomada de Excel (D641+D649).
+    id: "Topping",
+    group: "Batido",
+    channels: {
+      total: [
+        {group:"Batido", sub:"Tortas", name:"Red velvet 1/4 libra", coef:700},
+        {group:"Batido", sub:"Tortas", name:"Red velvet 1/2 libra", coef:900},
+        {group:"Batido", sub:"Tortas", name:"Red velvet 1 libra", coef:1100},
+        {group:"Batido", sub:"Tortas", name:"Red velvet 2 libras", coef:2200},
+        {group:"Batido", sub:"Tortas", name:"Zanahoria 1/4 libra", coef:100},
+        {group:"Batido", sub:"Tortas", name:"Zanahoria 1/2 libra", coef:200},
+        {group:"Batido", sub:"Tortas", name:"Zanahoria 1 libra", coef:300},
+        {group:"Batido", sub:"Tortas", name:"Tres leches Milo PM", coef:825},
+        {group:"Batido", sub:"Tortas", name:"Tres leches Milo", coef:825},
+        {group:"Batido", sub:"Tortas", name:"Tres leches Arequipe PM", coef:825},
+        {group:"Batido", sub:"Tortas", name:"Tres leches Arequipe", coef:825},
+        {group:"Batido", sub:"Tortas", name:"Tres leches arequipe PM", coef:825},
+        {group:"Batido", sub:"Tortas", name:"Tres leches arequipe", coef:825},
+        {group:"Reposteria", sub:"Dulceria", name:"Red velvet Mini", coef:30},
+        {group:"Comida de sal", sub:"Parfait de frutas", name:"Parfait de frutas", coef:33},
+        {group:"Comida de sal", sub:"Parfait de frutas", name:"Parfait de frutas *V*", coef:33},
+      ]
+    },
+    outputs: [
+      {label:"G de Topping (g)", calc: ch=>ch.total}
+    ]
+  },
+  // Fórmulas exactas tomadas de la hoja de Excel "RELLENO PANADERIA SALADO"
+  {
+  id: "Relleno panadería salado",
+  group: "Comida de sal",
+  channels: {
+    carne: [{row:51,coef:40}, {row:75,coef:20}, {row:47,coef:30}, {row:70,coef:15}, {row:136,coef:30}, {row:129,coef:40}, {row:156,coef:15}, {row:160,coef:20}],
+    champi_espinaca: [{row:52,coef:40}, {row:76,coef:20}, {row:137,coef:40}, {row:161,coef:20}],
+    chorizo: [{row:10,coef:35}, {row:25,coef:18}, {row:96,coef:35}, {row:111,coef:18}, {row:53,coef:40}, {row:77,coef:20}, {row:138,coef:40}, {row:162,coef:20}],
+    espinaca: [{row:11,coef:35}, {row:26,coef:18}, {row:97,coef:35}, {row:112,coef:18}, {row:54,coef:40}, {row:78,coef:20}, {row:139,coef:40}, {row:163,coef:20}],
+    italiano: [{row:57,coef:40}, {row:80,coef:20}, {row:141,coef:40}, {row:165,coef:20}],
+    jamon_y_queso: [{row:12,coef:35}, {row:27,coef:18}, {row:98,coef:35}, {row:113,coef:18}, {row:58,coef:40}, {row:81,coef:20}, {row:142,coef:40}, {row:166,coef:20}],
+    nyc: [{row:59,coef:40}, {row:82,coef:20}, {row:143,coef:40}, {row:167,coef:20}],
+    pesto: [{row:13,coef:35}, {row:28,coef:18}, {row:99,coef:35}, {row:60,coef:40}, {row:83,coef:20}, {row:144,coef:40}, {row:168,coef:20}, {row:114,coef:18}],
+    pollo_vizcencia: [{row:14,coef:35}, {row:29,coef:18}, {row:100,coef:35}, {row:115,coef:18}, {row:61,coef:40}, {row:84,coef:20}, {row:145,coef:40}, {row:169,coef:20}, {row:62,coef:40}, {row:85,coef:20}, {row:146,coef:40}, {row:170,coef:20}],
+    queso: [{row:15,coef:35}, {row:30,coef:18}, {row:101,coef:35}, {row:116,coef:18}, {row:63,coef:40}, {row:86,coef:20}, {row:147,coef:40}, {row:171,coef:20}],
+    queso_azul: [{row:16,coef:35}, {row:31,coef:18}, {row:102,coef:35}, {row:117,coef:18}, {row:64,coef:40}, {row:87,coef:20}, {row:148,coef:40}, {row:172,coef:20}],
+    ranchero: [{row:65,coef:40}, {row:88,coef:20}, {row:149,coef:40}, {row:150,coef:40}, {row:173,coef:20}],
+    tomate_pesto: [{row:18,coef:35}, {row:33,coef:18}, {row:104,coef:35}, {row:119,coef:18}, {row:66,coef:40}, {row:89,coef:20}, {row:151,coef:40}, {row:174,coef:20}],
+    tomate_seco: [{row:19,coef:35}, {row:34,coef:18}, {row:105,coef:35}, {row:120,coef:18}, {row:67,coef:40}, {row:90,coef:20}, {row:152,coef:40}, {row:175,coef:20}],
+    quesoPalitoUnid: [{row:49,coef:1},{row:132,coef:1},{row:133,coef:1},{row:134,coef:1}],
+    quesoPalitoMiniUnid: [{row:73,coef:1},{row:158,coef:1}],
+  },
+  outputs: [
+    {label:"Carne (g)", calc: ch=>ch.carne},
+    {label:"Champi. espinaca (g)", calc: ch=>ch.champi_espinaca},
+    {label:"Chorizo (g)", calc: ch=>ch.chorizo},
+    {label:"Espinaca (g)", calc: ch=>ch.espinaca},
+    {label:"Italiano (g)", calc: ch=>ch.italiano},
+    {label:"Jamón y queso (g)", calc: ch=>ch.jamon_y_queso},
+    {label:"NYC (g)", calc: ch=>ch.nyc},
+    {label:"Pesto (g)", calc: ch=>ch.pesto},
+    {label:"Pollo Vizcencia (g)", calc: ch=>ch.pollo_vizcencia},
+    {label:"Queso (g)", calc: ch=>ch.queso},
+    {label:"Queso azul (g)", calc: ch=>ch.queso_azul},
+    {label:"Ranchero (g)", calc: ch=>ch.ranchero},
+    {label:"Tomate pesto (g)", calc: ch=>ch.tomate_pesto},
+    {label:"Tomate seco (g)", calc: ch=>ch.tomate_seco},
+    {label:"Queso palito unid.", calc: ch=>ch.quesoPalitoUnid},
+    {label:"Queso palito mini unid.", calc: ch=>ch.quesoPalitoMiniUnid},
+    {label:"Queso palito (g)", calc: ch=>ch.quesoPalitoUnid*30 + ch.quesoPalitoMiniUnid*15},
+  ]
+},
+  {
+    // Fórmula "Mise en Place Dulcería" — crema pastelera (COD.530 café, 531 vainilla, 532 chocolate)
+    id: "Mise en Place Dulcería",
+    group: "Reposteria",
+    channels: {
+      vainilla: [
+        {group:"Reposteria", sub:"Dulceria", name:"Profiterol", coef:35},
+        {group:"Reposteria", sub:"Dulceria", name:"Rayo vainilla", coef:50},
+        {group:"Reposteria", sub:"Tartas", name:"Tarta fresa mini", coef:30},
+        {group:"Reposteria", sub:"Tartas", name:"Tarta fresa indiv.", coef:30},
+        {group:"Reposteria", sub:"Dulceria", name:"Rayo mini vainilla", coef:30},
+        {group:"Reposteria", sub:"Tartas", name:"Tarta fresa 8-10 porc.", coef:650},
+        {group:"Reposteria", sub:"Tartas", name:"Tarta multifruta 8-10 porc.", coef:650},
+        {group:"Batido", sub:"Tortas", name:"Saint-Honoré", coef:990},
+      ],
+      chocolate: [
+        {group:"Reposteria", sub:"Dulceria", name:"Rayo mini chocolate", coef:15},
+        {group:"Reposteria", sub:"Dulceria", name:"Rayo chocolate", coef:50},
+      ],
+      cafe: [
+        {group:"Reposteria", sub:"Dulceria", name:"Rayo mini café", coef:35},
+        {group:"Reposteria", sub:"Dulceria", name:"Rayo café", coef:50},
+      ],
+    },
+    outputs: [
+      {label:"G de Crema Pastelera", calc: ch=>ch.vainilla+ch.chocolate+ch.cafe},
+      {label:"Leche entera (g)", calc: ch=>500*((ch.vainilla/620)+(ch.chocolate/720)+(ch.cafe/620))},
+      {label:"Mantequilla (g)", calc: ch=>30*((ch.vainilla/620)+(ch.chocolate/720)+(ch.cafe/620))},
+      {label:"Azúcar común (g)", calc: ch=>115*((ch.vainilla/620)+(ch.chocolate/720)+(ch.cafe/620))},
+      {label:"Fécula de maíz (g)", calc: ch=>35*((ch.vainilla/620)+(ch.chocolate/720)+(ch.cafe/620))},
+      {label:"Huevos (g)", calc: ch=>55*((ch.vainilla/620)+(ch.chocolate/720)+(ch.cafe/620))},
+      {label:"Yemas (g)", calc: ch=>60*((ch.vainilla/620)+(ch.chocolate/720)+(ch.cafe/620))},
+      {label:"Esencia de vainilla (g)", calc: ch=>5*((ch.vainilla/790)+(ch.chocolate/890))},
+      {label:"Chocolate en bloque (g)", calc: ch=>100*(ch.chocolate/890)},
+      {label:"Café instantáneo (g)", calc: ch=>3.4*(ch.cafe/790)},
+    ]
+  },
+];
 
-  const vainilla = profiterol*35 + rayoVainilla*50
-    + (tartaFresaMini + tartaFresaIndiv + rayoMiniVainilla)*30
-    + (tartaFresa8_10 + tartaMultifruta8_10)*650
-    + saintHonore*990;
-
-  const rayoChocolate = qtyOf(dulceria, "Rayo chocolate");
-  const rayoMiniChocolate = qtyOf(dulceria, "Rayo mini chocolate");
-  const chocolate = rayoMiniChocolate*15 + rayoChocolate*50;
-
-  const rayoCafe = qtyOf(dulceria, "Rayo café");
-  const rayoMiniCafe = qtyOf(dulceria, "Rayo mini café");
-  const cafe = rayoMiniCafe*35 + rayoCafe*50;
-
-  return {vainilla, chocolate, cafe};
-}
-function computeCremaPastelera(day){
-  const {vainilla, chocolate, cafe} = creamPastryDemand(day);
-  const total = vainilla + chocolate + cafe;
-  if(total <= 0) return [];
-  const factor = (vainilla/620) + (chocolate/720) + (cafe/620);
-  const esenciaVainilla = 5*((vainilla/790)+(chocolate/890));
-  const chocolateBloque = 100*(chocolate/890);
-  const cafeInstantaneo = 3.4*(cafe/790);
-  const out = [
-    ["G de Crema Pastelera", Math.round(total)],
-    ["Leche entera (g)", Math.round(500*factor)],
-    ["Mantequilla (g)", Math.round(30*factor)],
-    ["Azúcar común (g)", Math.round(115*factor)],
-    ["Fécula de maíz (g)", Math.round(35*factor)],
-    ["Huevos (g)", Math.round(55*factor)],
-    ["Yemas (g)", Math.round(60*factor)],
-    ["Esencia de vainilla (g)", Math.round(esenciaVainilla)],
-    ["Chocolate en bloque (g)", Math.round(chocolateBloque)],
-    ["Café instantáneo (g)", Math.round(cafeInstantaneo)],
-  ];
-  return out.filter(([,v])=>v>0);
-}
-function cremaPasteleraDetailLines(day){
-  const {vainilla, chocolate, cafe} = creamPastryDemand(day);
-  const total = vainilla + chocolate + cafe;
-  if(total <= 0) return [];
-  const factor = (vainilla/620) + (chocolate/720) + (cafe/620);
-  const esenciaVainilla = 5*((vainilla/790)+(chocolate/890));
-  const chocolateBloque = 100*(chocolate/890);
-  const cafeInstantaneo = 3.4*(cafe/790);
-  const lines = [];
-  if(vainilla>0) lines.push(`Crema pastelera de vainilla (COD.531): ${Math.round(vainilla)} g`);
-  if(chocolate>0) lines.push(`Crema pastelera de chocolate (COD.532): ${Math.round(chocolate)} g`);
-  if(cafe>0) lines.push(`Crema pastelera de café (COD.530): ${Math.round(cafe)} g`);
-  lines.push(`Leche entera: 500 × ${factor.toFixed(3)} = ${Math.round(500*factor)} g`);
-  lines.push(`Mantequilla: 30 × ${factor.toFixed(3)} = ${Math.round(30*factor)} g`);
-  lines.push(`Azúcar común: 115 × ${factor.toFixed(3)} = ${Math.round(115*factor)} g`);
-  lines.push(`Fécula de maíz: 35 × ${factor.toFixed(3)} = ${Math.round(35*factor)} g`);
-  lines.push(`Huevos: 55 × ${factor.toFixed(3)} = ${Math.round(55*factor)} g`);
-  lines.push(`Yemas: 60 × ${factor.toFixed(3)} = ${Math.round(60*factor)} g`);
-  if(esenciaVainilla>0) lines.push(`Esencia de vainilla: ${Math.round(esenciaVainilla)} g`);
-  if(chocolateBloque>0) lines.push(`Chocolate en bloque: ${Math.round(chocolateBloque)} g`);
-  if(cafeInstantaneo>0) lines.push(`Café instantáneo: ${Math.round(cafeInstantaneo)} g`);
-  lines.push(`<b>Total crema pastelera: ${Math.round(total)} g</b>`);
-  return lines;
-}
-
-const FORMULA_DETAIL_FN = { "Topping": toppingDetailLines, "Relleno panadería salado": rellenoDetailLines, "Mise en Place Dulcería": cremaPasteleraDetailLines };
+// FORMULA_SUBS y FORMULA_DETAIL_FN se arman solos a partir de FORMULA_DEFS.
+// "Bebida / Formula Jugo Mango" y "Parfait de frutas" llevan el badge de
+// fórmula pero aún no tienen definición (aparece "pendiente de definir").
+const FORMULA_SUBS = new Set([...FORMULA_DEFS.map(d=>d.id), "Bebida / Formula Jugo Mango", "Parfait de frutas"]);
+const FORMULA_DETAIL_FN = {};
+FORMULA_DEFS.forEach(def=>{ FORMULA_DETAIL_FN[def.id] = (day)=>formulaDetailLines(day||{}, def); });
 
 const TODAY_ISO = "2026-09-12";
 const dates = Object.keys(DATA).filter(d => d >= TODAY_ISO).sort();
@@ -371,23 +351,20 @@ function render(){
 
   groups.forEach(g=>{
     const subs = Object.assign({}, day[g] || {});
-    if(g === "Comida de sal"){
-      const relleno = computeRelleno(day || {});
-      if(relleno.length) subs["Relleno panadería salado"] = relleno;
-    }
     if(g === "Batido"){
-      delete subs["Tortas"];
-      const topping = computeTopping(day || {});
-      if(topping.length) subs["Topping"] = topping;
+      delete subs["Tortas"]; // Tortas ahora es su propio grupo (ver abajo)
     }
     if(g === "Tortas"){
       const tortas = (day.Batido && day.Batido["Tortas"]) || [];
       if(tortas.length) subs["Tortas"] = tortas;
     }
-    if(g === "Reposteria"){
-      const mise = computeCremaPastelera(day || {});
-      if(mise.length) subs["Mise en Place Dulcería"] = mise;
-    }
+    // Inyección genérica: cualquier fórmula definida en FORMULA_DEFS para este grupo
+    // aparece automáticamente como subcategoría con badge "Fórmula".
+    FORMULA_DEFS.forEach(def=>{
+      if(def.group !== g) return;
+      const rows = computeFormula(day || {}, def);
+      if(rows.length) subs[def.id] = rows;
+    });
     const subKeys = Object.keys(subs);
     if(subKeys.length === 0) return;
     any = true;
