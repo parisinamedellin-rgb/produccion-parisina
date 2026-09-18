@@ -640,7 +640,8 @@ async function borrarUltimoLote(def){
 }
 
 function avisoStockHTML(def, st){
-  if(!st.alerta) return '';
+  // Sin base de datos no se conoce el stock: avisar sería una falsa alarma.
+  if(!DB || !st.alerta) return '';
   const msg = !st.lotes.length
     ? `Todavía no se ha registrado ningún lote de ${def.id.toLowerCase()}.`
     : (st.stock <= 0
