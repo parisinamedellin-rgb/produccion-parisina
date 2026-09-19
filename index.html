@@ -18,6 +18,7 @@
 
   <nav id="days" style="display:flex;gap:8px;overflow-x:auto;padding:18px 0 4px;-webkit-overflow-scrolling:touch;"></nav>
   <div id="cats" style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 0 6px;"></div>
+  <div id="aviso" style="display:none;"></div>
 
   <main id="main" style="padding-top:8px;"></main>
 
@@ -29,8 +30,6 @@
 </div>
 <script type="application/json" id="completed-json">{"2026-09-10::Panaderia::Nevera::Pastel Ranchero": true, "2026-09-10::Panaderia::Nevera::Croiss. mini chocolate": true, "2026-09-10::Panaderia::Nevera::Pastel mini pollo": true}</script>
 <script id="main-script">
-const SCRIPT_SRC = document.currentScript.textContent;
-
 const C = {
   bg:"#F7F3EA", paper:"#FFFFFF", ink:"#2A241C", inkSoft:"#6B6255",
   line:"#E4DBC9", accent:"#3D6B58", accentSoft:"#E6EEE8",
@@ -42,7 +41,7 @@ const DATA = {"2026-07-28": {"Reposteria": {"Caja especial": [["Caja Especial Pa
 const GROUP_ORDER = ["Panaderia","Batido","Tortas","Topping","Comida de sal","Reposteria"];
 const GROUP_LABEL = {"Panaderia":"Panadería","Batido":"Batido","Tortas":"Tortas","Topping":"Topping","Comida de sal":"Comida de sal","Reposteria":"Repostería"};
 const SUB_ORDER = {
-  "Panaderia": ["Nevera","Congelador","Panes","Adicional"],
+  "Panaderia": ["Nevera","Congelador","Panes","Relleno chocolate","Adicional"],
   "Batido": ["Batido"],
   "Tortas": ["Por mayor - PM","PM Marcada","Particular"],
   "Topping": ["Topping"],
@@ -351,6 +350,41 @@ const FORMULA_DEFS = [
       {label:"Café instantáneo (g)", calc: ch=>3.4*(ch.cafe/790)},
     ]
   },
+
+  {
+    // Fórmula "Relleno Chocolate (croissant)" — SE-RELLENO-CHOCO, validada 18/09/26 en el Recetario.
+    // Reemplaza la fórmula antigua con Nutella. Receta por 7.200 g de relleno.
+    // Croissant chocolate 40 g · Croiss. mini chocolate 20 g (nevera y congelador).
+    id: "Relleno chocolate",
+    code: "SE-RELLENO-CHOCO",
+    group: "Panaderia",
+    channels: {
+      total: [
+        {row:9,   coef:40},   // Croissant chocolate
+        {row:95,  coef:40},   // Croissant chocolate *C*
+        {row:24,  coef:20},   // Croiss. mini chocolate
+        {row:110, coef:20},   // Croiss. mini Chocolate *C*
+      ]
+    },
+    outputs: [
+      {label:"G de Relleno chocolate (g)", calc: ch=>ch.total}
+    ],
+    titleFmt: v => `${fmtN(v)} g de Relleno chocolate`,
+    // Lote estándar: siempre se hacen 7.200 g, ni más ni menos. Dura varios días.
+    stock: {batch: 7200, unit: "g", alertPct: 20},
+    note: "Se prepara el día anterior. Armar el croissant con el relleno frío (sin congelarlo aparte), dejándolo a 1 cm de las puntas y sellando bien el borde. Si se fuga, el problema es el sellado, no la fórmula.",
+    recipe: {
+      per: 7200, of: "total",
+      steps: [
+        {title:"Paso 1 — Derretir el chocolate a baño maría", items:[
+          ["Chocolate semiamargo 43 %", 1300, "g"]]},
+        {title:"Paso 2 — Con el chocolate derretido, integrar muy bien", items:[
+          ["Azúcar XXX", 250, "g"], ["Cocoa", 300, "g"]]},
+        {title:"Paso 3 — Adicionar alternando una a una e integrar hasta crema homogénea", items:[
+          ["Crema de avellanas", 4250, "g"], ["Hazelnut spread", 1100, "g"]]},
+      ]
+    }
+  },
 ];
 
 // FORMULA_SUBS y FORMULA_DETAIL_FN se arman solos a partir de FORMULA_DEFS.
@@ -366,11 +400,115 @@ const dayNames = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","S�
 let activeDate = dates.find(d => d === TODAY_ISO) || dates[0];
 let activeCat = "ALL";
 
+// ---- Estado de chulos: se guarda en la base del artefacto (capability "db") ----
+// Un documento por fecha: estado/<YYYY-MM-DD> = { items: { "<clave>": true } }
 let COMPLETED = {};
 try {
   const raw = document.getElementById("completed-json").textContent;
   COMPLETED = raw ? JSON.parse(raw) : {};
 } catch(e) { COMPLETED = {}; }
+
+let DB = null, dbReady = false;
+const dirtyDates = new Set();
+let saving = false;
+const dateOfKey = k => String(k).split("::")[0];
+
+async function bootDb(){
+  try{
+    if(!window.claude || !window.claude.use) return;
+    DB = await window.claude.use("db");
+    if(!DB) return;
+    DB.collection("estado").onSnapshot(snap=>{
+      const next = {};
+      snap.docs.forEach(d=>{
+        const items = (d.data() || {}).items || {};
+        Object.keys(items).forEach(k=>{ if(items[k]) next[k] = true; });
+      });
+      // la primera vez conservamos lo que ya venía marcado en la página
+      if(!dbReady){ Object.keys(COMPLETED).forEach(k=>{ if(COMPLETED[k]) next[k] = true; }); dbReady = true; }
+      COMPLETED = next;
+      render();
+    }, err=>console.warn("No se pudo leer el estado:", err));
+    bootLotes();
+  }catch(err){ console.warn("Sin base de datos:", err); }
+}
+
+async function flushDb(){
+  if(!DB || saving) return;
+  saving = true;
+  try{
+    while(dirtyDates.size){
+      const iso = dirtyDates.values().next().value;
+      dirtyDates.delete(iso);
+      const items = {};
+      Object.keys(COMPLETED).forEach(k=>{ if(COMPLETED[k] && dateOfKey(k) === iso) items[k] = true; });
+      await DB.doc("estado/" + iso).set({items});
+    }
+  }catch(err){
+    console.warn("No se pudo guardar el estado:", err);
+  }finally{
+    saving = false;
+    if(dirtyDates.size) flushDb();
+  }
+}
+
+// ---- Pendientes de Panadería (las demás áreas se hacen el mismo día) ----
+function hoyISO(){
+  try{
+    return new Intl.DateTimeFormat('en-CA',{timeZone:'America/Bogota',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  }catch(e){ return TODAY_ISO; }
+}
+function diasAtras(iso, n){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m-1, d - n));
+  return dt.toISOString().slice(0,10);
+}
+// Desde cuándo se empieza a avisar: el día en que se activó el guardado de chulos.
+// Antes de esa fecha nadie pudo chulear, así que no tiene sentido reclamarlo.
+const AVISO_DESDE = "2026-09-18";
+function pendientesPanaderia(){
+  const hoy = hoyISO(), out = [];
+  const desde = [diasAtras(hoy, 7), AVISO_DESDE].sort().pop();
+  Object.keys(DATA).sort().forEach(iso=>{
+    if(iso >= hoy || iso < desde) return;
+    const pan = DATA[iso] && DATA[iso].Panaderia;
+    if(!pan) return;
+    Object.keys(pan).forEach(sub=>{
+      if(FORMULA_SUBS.has(sub)) return;
+      (pan[sub] || []).forEach(([name, qty])=>{
+        const key = [iso, "Panaderia", sub, name].join("::");
+        if(!COMPLETED[key]) out.push({iso, sub, name, qty});
+      });
+    });
+  });
+  return out;
+}
+function renderAviso(){
+  const el = document.getElementById("aviso");
+  if(!el) return;
+  // Sin base de datos (p. ej. la copia publicada fuera de claude.ai) no se pueden
+  // guardar los chulos, así que reclamar pendientes sería falso: no se avisa.
+  const pend = DB ? pendientesPanaderia() : [];
+  if(!pend.length){ el.innerHTML = ""; el.style.display = "none"; return; }
+  el.style.display = "block";
+  const porDia = {};
+  pend.forEach(p=>{ (porDia[p.iso] = porDia[p.iso] || []).push(p); });
+  const bloques = Object.keys(porDia).sort().map(iso=>{
+    const {dow, dm} = fmtDay(iso);
+    const items = porDia[iso];
+    const muestra = items.slice(0, 8).map(p=>`${fmtN(p.qty)} ${p.name}`).join(" · ");
+    const resto = items.length > 8 ? ` <span style="opacity:.8;">y ${items.length - 8} más</span>` : "";
+    return `<div style="margin-top:6px;"><b>${dow} ${dm}</b> — ${muestra}${resto}</div>`;
+  }).join("");
+  el.innerHTML = `<div style="border:2px solid #A3252B;background:#FDE8E7;color:#7A1A1F;border-radius:14px;padding:14px 16px;margin-top:16px;">
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:700;font-size:0.95rem;">
+      <span style="background:#A3252B;color:#fff;border-radius:100px;padding:3px 10px;font-size:0.7rem;letter-spacing:.06em;text-transform:uppercase;">⚠️ Urgente</span>
+      <span>Panadería — súper prioridad de hoy: ${fmtN(pend.length)} ${pend.length === 1 ? "producto quedó" : "productos quedaron"} sin marcar de días anteriores</span>
+    </div>
+    <div style="font-size:0.86rem;line-height:1.5;margin-top:6px;">${bloques}</div>
+    <div style="font-size:0.76rem;margin-top:10px;opacity:.85;">Hacerlo primero, antes del pedido del día. Cuando quede listo, chuléalo en el día que corresponde y este aviso desaparece.</div>
+  </div>`;
+}
 
 function fmtDay(iso){
   const [y,m,d] = iso.split("-").map(Number);
@@ -399,7 +537,7 @@ function renderDays(){
 function renderCats(){
   const el = document.getElementById("cats");
   el.innerHTML = "";
-  const opts = [["ALL","Todo"], ...GROUP_ORDER.map(g=>[g,GROUP_LABEL[g]])];
+  const opts = [["ALL","Todo"], ...GROUP_ORDER.map(g=>[g,GROUP_LABEL[g]]), ["FORMULAS","📄 Fórmulas"]];
   opts.forEach(([key,label])=>{
     const active = key === activeCat;
     const btn = document.createElement("button");
@@ -410,9 +548,234 @@ function renderCats(){
   });
 }
 
+// ============================================================
+// FÓRMULAS DE STOCK (lote estándar que dura varios días)
+// ============================================================
+// Una fórmula con `stock` NO se muestra como receta en la vista del día:
+// en su categoría solo aparecen los gramos que necesita ese día, con un botón
+// que lleva a la hoja "Fórmulas". Allí está la receta del lote estándar, el
+// botón "hoy hice este lote", el stock que queda y la alerta de reposición.
+// Los lotes se guardan en db: formulas/<code> = { lotes:[{fecha, cantidad, ts}] }
+const STOCK_DEFS = FORMULA_DEFS.filter(d => d.stock);
+let LOTES = {};
+
+function bootLotes(){
+  if(!DB) return;
+  DB.collection("formulas").onSnapshot(snap=>{
+    const next = {};
+    snap.docs.forEach(d=>{ next[d.id] = ((d.data() || {}).lotes) || []; });
+    LOTES = next;
+    render();
+  }, err=>console.warn("No se pudieron leer los lotes:", err));
+}
+
+// clave de chulo -> gramos de la fórmula que consume ese producto
+function stockKeyMap(def){
+  const map = {};
+  Object.keys(DATA).forEach(iso=>{
+    (def.channels.total || []).forEach(t=>{
+      const info = t.row !== undefined ? ROW_PRODUCTS[t.row] : null;
+      if(!info) return;
+      const q = qtyForTerm(DATA[iso] || {}, t);
+      if(!q) return;
+      const key = [iso, "Panaderia", info[0], info[1]].join("::");
+      map[key] = (map[key] || 0) + q * t.coef;
+    });
+  });
+  return map;
+}
+function demandaPorDia(def){
+  const out = {};
+  Object.keys(DATA).forEach(iso=>{
+    const v = computeChannels(DATA[iso] || {}, def).total || 0;
+    if(v > 0) out[iso] = v;
+  });
+  return out;
+}
+function estadoStock(def){
+  const batch = def.stock.batch;
+  const lotes = (LOTES[def.code] || []).slice().sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
+  const producido = lotes.reduce((s,l)=>s + (+l.cantidad || 0), 0);
+  const desde = lotes.length ? lotes[0].fecha : null;
+  let consumido = 0;
+  if(desde){
+    const km = stockKeyMap(def);
+    Object.keys(km).forEach(k=>{ if(COMPLETED[k] && dateOfKey(k) >= desde) consumido += km[k]; });
+  }
+  const stock = producido - consumido;
+  const dem = demandaPorDia(def), hoy = hoyISO();
+  let rest = Math.max(stock, 0), dias = 0, seAcaba = null;
+  Object.keys(dem).sort().forEach(iso=>{
+    if(iso < hoy || seAcaba) return;
+    if(rest >= dem[iso]){ rest -= dem[iso]; dias++; } else { seAcaba = iso; }
+  });
+  const pct = batch ? (stock / batch) * 100 : 0;
+  return {batch, lotes, producido, consumido, stock, dias, seAcaba, pct,
+          alerta: !lotes.length || pct <= (def.stock.alertPct || 20)};
+}
+
+async function registrarLote(def){
+  if(!DB) return;
+  try{
+    const ref = DB.doc("formulas/" + def.code);
+    const snap = await ref.get();
+    const lotes = ((snap.exists && snap.data().lotes) || []).slice();
+    lotes.push({fecha: hoyISO(), cantidad: def.stock.batch, ts: new Date().toISOString()});
+    await ref.set({lotes: lotes.slice(-30)});
+  }catch(err){ console.warn("No se pudo registrar el lote:", err); }
+}
+async function borrarUltimoLote(def){
+  if(!DB) return;
+  try{
+    const ref = DB.doc("formulas/" + def.code);
+    const snap = await ref.get();
+    const lotes = ((snap.exists && snap.data().lotes) || []).slice();
+    lotes.pop();
+    await ref.set({lotes});
+  }catch(err){ console.warn("No se pudo deshacer el lote:", err); }
+}
+
+function avisoStockHTML(def, st){
+  // Sin base de datos no se conoce el stock: avisar sería una falsa alarma.
+  if(!DB || !st.alerta) return '';
+  const msg = !st.lotes.length
+    ? `Todavía no se ha registrado ningún lote de ${def.id.toLowerCase()}.`
+    : (st.stock <= 0
+        ? `No queda ${def.id.toLowerCase()}. Hacer el lote HOY.`
+        : `Queda ${fmtN(round2(st.stock))} g (${Math.round(st.pct)} % del lote). Volver a hacerlo hoy para no quedarse sin nada.`);
+  return `<div style="border:2px solid #A3252B;background:#FDE8E7;color:#7A1A1F;border-radius:12px;padding:11px 14px;margin:10px 0;font-size:0.86rem;font-weight:600;">
+    <span style="background:#A3252B;color:#fff;border-radius:100px;padding:2px 9px;font-size:0.68rem;letter-spacing:.06em;text-transform:uppercase;margin-right:6px;">⚠️ Reponer</span>${msg}</div>`;
+}
+
+// Bloque que se muestra en la categoría del día para una fórmula de stock
+function stockDayBlock(def, gramos){
+  const st = estadoStock(def);
+  const wrap = document.createElement("div");
+  wrap.setAttribute("style", "padding:14px 16px;");
+  if(!DB){
+    wrap.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;">${fmtN(round2(gramos))} g para hoy</div>
+      <div style="font-size:0.82rem;color:${C.inkSoft};margin-top:4px;">La receta del lote está en la pestaña 📄 Fórmulas.</div>
+      <button type="button" class="ir-formulas" style="margin-top:8px;font-size:0.8rem;font-weight:600;background:${C.paper};color:${C.accent};border:1px solid ${C.accent};border-radius:8px;padding:8px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">📄 Ver la fórmula</button>`;
+    wrap.querySelector(".ir-formulas").onclick = ()=>{ activeCat = "FORMULAS"; render(); window.scrollTo(0,0); };
+    return wrap;
+  }
+  const stockTxt = st.lotes.length
+    ? `Stock: <b>${fmtN(round2(st.stock))} g</b>${st.dias ? ` · alcanza ${st.dias} ${st.dias === 1 ? "día" : "días"} más` : ""}`
+    : `Stock: <b>sin registrar</b>`;
+  wrap.innerHTML = `
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;">${fmtN(round2(gramos))} g para hoy</div>
+    <div style="font-size:0.82rem;color:${C.inkSoft};margin-top:4px;">${stockTxt}</div>
+    ${avisoStockHTML(def, st)}
+    <button type="button" class="ir-formulas" style="margin-top:8px;font-size:0.8rem;font-weight:600;background:${C.paper};color:${C.accent};border:1px solid ${C.accent};border-radius:8px;padding:8px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">📄 Ver la fórmula y registrar el lote</button>`;
+  wrap.querySelector(".ir-formulas").onclick = ()=>{ activeCat = "FORMULAS"; render(); window.scrollTo(0,0); };
+  return wrap;
+}
+
+// ---- Hoja "Fórmulas" ----
+function renderFormulas(){
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  if(!STOCK_DEFS.length){
+    main.innerHTML = `<div style="color:${C.inkSoft};font-size:0.9rem;padding:20px 4px;font-style:italic;">Todavía no hay fórmulas de stock.</div>`;
+    return;
+  }
+  const head = document.createElement("div");
+  head.setAttribute("style", `margin-top:20px;`);
+  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Fórmulas</h2>
+    <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Recetas de lote estándar. Se hacen completas, siempre la misma cantidad, y duran varios días. Cuando termines un lote, marca el botón: así el reporte sabe cuánto hay y avisa cuándo volver a hacerlo.</div>`;
+  main.appendChild(head);
+
+  STOCK_DEFS.forEach(def=>{
+    const st = estadoStock(def);
+    const dem = demandaPorDia(def), hoy = hoyISO();
+    const prox = Object.keys(dem).sort().filter(iso=>iso >= hoy).slice(0, 6);
+    const card = document.createElement("div");
+    card.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-top:14px;overflow:hidden;`);
+
+    const pasos = def.recipe.steps.map(st2=>`
+      <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
+      <ul style="list-style:none;margin:0;padding:0;">
+        ${st2.items.map(([n,q,u])=>`<li style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid ${C.line};">
+          <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:3.4em;text-align:center;">${u === "ml" ? fmtN(Number(q.toFixed(1))) : fmtN(q)}</span>
+          <span style="flex:1;margin:0 12px;font-size:0.95rem;">${n} <span style="color:${C.inkSoft};font-size:0.8rem;">(${u})</span></span>
+        </li>`).join("")}
+      </ul>`).join("");
+
+    const hist = st.lotes.slice().reverse().slice(0, 6).map(l=>{
+      const {dow, dm} = fmtDay(l.fecha);
+      return `<div>${dow} ${dm} — ${fmtN(l.cantidad)} g</div>`;
+    }).join("") || `<div style="font-style:italic;">Sin lotes registrados.</div>`;
+
+    const barra = Math.max(0, Math.min(100, st.pct));
+    card.innerHTML = `
+      <div style="padding:12px 16px;background:${C.accentSoft};border-bottom:1px solid ${C.line};display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:0.95rem;font-weight:700;color:${C.accent};">${def.id}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${GROUP_LABEL[def.group] || def.group} · lote de ${fmtN(def.stock.batch)} g</span>
+      </div>
+      <div style="padding:14px 16px;">
+        <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;">${st.lotes.length ? fmtN(round2(st.stock)) + " g en stock" : "Sin stock registrado"}</div>
+        <div style="height:9px;border-radius:100px;background:${C.bg};border:1px solid ${C.line};margin:8px 0 6px;overflow:hidden;">
+          <div style="height:100%;width:${barra}%;background:${st.alerta ? "#A3252B" : C.accent};"></div>
+        </div>
+        <div style="font-size:0.82rem;color:${C.inkSoft};">
+          ${st.lotes.length ? `${Math.round(st.pct)} % del lote · ${st.dias ? `alcanza ${st.dias} ${st.dias === 1 ? "día" : "días"} más` : "no alcanza para el próximo día con pedido"}${st.seAcaba ? ` · se acaba el ${fmtDay(st.seAcaba).dm}` : ""}` : "Registra el primer lote para empezar a contar."}
+        </div>
+        ${st.stock < 0 ? `<div style="font-size:0.8rem;color:#A3252B;font-weight:600;margin-top:6px;">Se consumió más de lo producido (${fmtN(round2(-st.stock))} g). Falta registrar un lote.</div>` : ""}
+        ${avisoStockHTML(def, st)}
+        ${!DB ? `<div style="font-size:0.8rem;color:${C.inkSoft};margin-top:10px;font-style:italic;">El registro de lotes y el stock funcionan en la versión interna del reporte (la que abre con la cuenta de Parisina). Aquí solo se consulta la receta.</div>` : ""}
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;${!DB ? "display:none;" : ""}">
+          <button type="button" class="hice-lote" style="font-size:0.84rem;font-weight:600;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;font-family:'Work Sans',sans-serif;">✅ Hoy hice este lote (${fmtN(def.stock.batch)} g)</button>
+          ${st.lotes.length ? `<button type="button" class="undo-lote" style="font-size:0.78rem;background:transparent;color:${C.inkSoft};border:1px solid ${C.line};border-radius:8px;padding:10px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">Deshacer el último</button>` : ""}
+        </div>
+        ${DB ? `<div style="font-size:0.76rem;color:${C.inkSoft};margin-top:8px;">El stock baja cuando Panadería chulea los productos que llevan esta fórmula.</div>` : ""}
+      </div>
+      <div style="padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;border-top:1px solid ${C.line};">Receta del lote — ${fmtN(def.stock.batch)} g</div>
+      ${pasos}
+      ${def.note ? `<div style="padding:12px 16px;font-size:0.84rem;line-height:1.5;background:${C.bg};border-top:1px solid ${C.line};">${def.note}</div>` : ""}
+      <div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
+        <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Se usa en</div>
+        ${(def.channels.total || []).map(t=>`<div>${termLabel(t)} — ${fmtN(t.coef)} g c/u</div>`).join("")}
+      </div>
+      <div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
+        <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Próximos días</div>
+        ${prox.length ? prox.map(iso=>{const f = fmtDay(iso); return `<div>${f.dow} ${f.dm} — ${fmtN(round2(dem[iso]))} g</div>`;}).join("") : "<div style='font-style:italic;'>Sin pedidos próximos.</div>"}
+      </div>
+      <div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
+        <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Últimos lotes</div>
+        ${hist}
+      </div>`;
+
+    const bh = card.querySelector(".hice-lote");
+    if(bh) bh.onclick = ()=>{
+      if(!DB){ bh.textContent = "No hay conexión para guardar"; return; }
+      if(bh.dataset.armed){ registrarLote(def); return; }
+      bh.dataset.armed = "1";
+      bh.textContent = "Confirmar: hice el lote completo";
+      setTimeout(()=>{ if(bh.dataset.armed){ delete bh.dataset.armed; bh.textContent = `✅ Hoy hice este lote (${fmtN(def.stock.batch)} g)`; } }, 4000);
+    };
+    const bu = card.querySelector(".undo-lote");
+    if(bu) bu.onclick = ()=>{
+      if(bu.dataset.armed){ borrarUltimoLote(def); return; }
+      bu.dataset.armed = "1";
+      bu.textContent = "Confirmar: borrar el último lote";
+      setTimeout(()=>{ if(bu.dataset.armed){ delete bu.dataset.armed; bu.textContent = "Deshacer el último"; } }, 4000);
+    };
+    main.appendChild(card);
+  });
+}
+
 function render(){
   renderDays();
   renderCats();
+  const navDays = document.getElementById("days");
+  if(navDays) navDays.style.display = activeCat === "FORMULAS" ? "none" : "flex";
+  if(activeCat === "FORMULAS"){
+    const av = document.getElementById("aviso");
+    if(av){ av.innerHTML = ""; av.style.display = "none"; }
+    renderFormulas();
+    return;
+  }
+  renderAviso();
   const main = document.getElementById("main");
   main.innerHTML = "";
   const day = DATA[activeDate];
@@ -486,9 +849,12 @@ function render(){
       const subCount = isFormula ? '' : ` <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.8;">${fmtN(subs[sk].reduce((s2,it)=>s2+it[1],0))} und.</span>`;
       subEl.innerHTML = `<div style="padding:11px 16px;font-size:0.82rem;font-weight:600;color:${C.accent};border-bottom:1px solid ${C.line};background:${C.accentSoft};display:flex;justify-content:space-between;align-items:center;"><span>${sk}${subCount}</span>${flag}</div>`;
 
-      const recipeDef = isFormula ? FORMULA_DEFS.find(d=>d.id===sk && d.recipe) : null;
+      const stockDef = isFormula ? FORMULA_DEFS.find(d=>d.id===sk && d.stock) : null;
+      const recipeDef = isFormula && !stockDef ? FORMULA_DEFS.find(d=>d.id===sk && d.recipe) : null;
       const recipeK = recipeDef ? recipeScale(computeChannels(day||{}, recipeDef), recipeDef) : 0;
-      if(recipeDef && recipeK > 0){
+      if(stockDef){
+        subEl.appendChild(stockDayBlock(stockDef, (subs[sk][0] || ["",0])[1]));
+      } else if(recipeDef && recipeK > 0){
         // Título = total del día; luego los pasos de la receta en su orden original
         const total = subs[sk][0] ? subs[sk][0][1] : 0;
         const titleEl = document.createElement("div");
@@ -606,50 +972,13 @@ document.getElementById("main").addEventListener("change", (e)=>{
     nameEl.style.textDecoration = chk.checked ? "line-through" : "none";
     nameEl.style.color = chk.checked ? C.inkSoft : "";
   }
-  saveAndPublish();
+  dirtyDates.add(dateOfKey(key));
+  flushDb();
+  renderAviso();
 });
 
-const HEAD_HTML = `<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Producción Parisina</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">`;
-
-function shellHTML(completedJSON){
-  const wrapHTML = document.querySelector("body > div").outerHTML;
-  return `${wrapHTML}
-<script type="application/json" id="completed-json">${completedJSON}<\/script>
-<script id="main-script">${SCRIPT_SRC}<\/script>`;
-}
-
-function fullDocument(completed){
-  return `<!doctype html>
-<html lang="es">
-<head>
-${HEAD_HTML}
-</head>
-<body style="margin:0;padding:0;background:#F7F3EA;">
-${shellHTML(JSON.stringify(completed))}
-</body>
-</html>`;
-}
-
-let publishing = false;
-async function saveAndPublish(){
-  if(publishing) return;
-  try{
-    if(!window.claude || !window.claude.use) return;
-    const cap = await window.claude.use("artifact");
-    if(!cap) return;
-    publishing = true;
-    await cap.publish(fullDocument(COMPLETED));
-  }catch(err){
-    console.warn("No se pudo guardar el estado (se mantiene en esta vista):", err);
-  }finally{
-    publishing = false;
-  }
-}
-
 render();
+bootDb();
 </script>
 
 
