@@ -1,0 +1,45 @@
+name: Publicar web desde OneDrive
+
+# Parisina · Producción
+# Todos los días a las 3:44 a.m. (Medellín) toma index.html de la carpeta
+# compartida de OneDrive "WEB PRODUCCION" y lo sube al repo si cambió.
+# También se puede correr a mano: Actions → este workflow → "Run workflow".
+
+on:
+  schedule:
+    - cron: '44 8 * * *'   # 08:44 UTC = 3:44 a.m. Bogotá
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar index.html de OneDrive
+        run: |
+          LINK='https://1drv.ms/f/c/6ab1f215578ef6c1/IgCyIfA7exqjToam4AG0wOK-AdG4FVwaMfG91uRc-gTYx4A?e=jfQaSJ'
+          ENC=$(printf '%s' "$LINK" | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          curl -fsSL --retry 3 -o /tmp/nuevo.html "https://api.onedrive.com/v1.0/shares/u!$ENC/root:/index.html:/content"
+          test -s /tmp/nuevo.html
+          grep -q 'Datos actualizados' /tmp/nuevo.html
+          grep -q 'const DATA = ' /tmp/nuevo.html
+          grep -o 'Datos actualizados: <b[^>]*>[^<]*' /tmp/nuevo.html | sed 's/.*>/Descargado: /'
+
+      - name: Subir al repo si cambió
+        run: |
+          if cmp -s /tmp/nuevo.html index.html; then
+            echo "Sin cambios: la web ya tiene esta versión."
+            exit 0
+          fi
+          cp /tmp/nuevo.html index.html
+          FECHA=$(grep -o 'Datos actualizados: <b[^>]*>[^<]*' index.html | sed 's/.*>//')
+          git config user.name "Parisina bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Datos actualizados: $FECHA"
+          git push
+          echo "Publicado: $FECHA"
