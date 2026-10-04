@@ -1,8 +1,8 @@
 name: Publicar web desde OneDrive
 
 # Parisina · Producción
-# Todos los días a las 3:44 a.m. (Medellín) toma index.html de la carpeta
-# compartida de OneDrive "WEB PRODUCCION" y lo sube al repo si cambió.
+# Todos los días a las 3:44 a.m. (Medellín) toma index.html compartido en OneDrive
+# (carpeta "WEB PRODUCCION") y lo sube al repo si cambió.
 # También se puede correr a mano: Actions → este workflow → "Run workflow".
 
 on:
@@ -21,12 +21,33 @@ jobs:
 
       - name: Descargar index.html de OneDrive
         run: |
-          LINK='https://1drv.ms/f/c/6ab1f215578ef6c1/IgCyIfA7exqjToam4AG0wOK-AdG4FVwaMfG91uRc-gTYx4A?e=jfQaSJ'
+          set +e
+          LINK='https://1drv.ms/u/c/6ab1f215578ef6c1/IQD6YaM6iPODQrEaZ-X9008gAdnWTiYQ6pzi37vDFmKfjHg?e=fRhrxS'
+          CID='6ab1f215578ef6c1'
+          TOKEN='IQD6YaM6iPODQrEaZ-X9008gAdnWTiYQ6pzi37vDFmKfjHg'
           ENC=$(printf '%s' "$LINK" | base64 -w0 | tr '+/' '-_' | tr -d '=')
-          curl -fsSL --retry 3 -o /tmp/nuevo.html "https://api.onedrive.com/v1.0/shares/u!$ENC/root:/index.html:/content"
-          test -s /tmp/nuevo.html
-          grep -q 'Datos actualizados' /tmp/nuevo.html
-          grep -q 'const DATA = ' /tmp/nuevo.html
+          UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+          ok=0
+          intentar () {
+            echo "== Método $1: $2"
+            curl -sSL --retry 2 -A "$UA" -o /tmp/nuevo.html -w 'HTTP %{http_code} bytes %{size_download} final %{url_effective}\n' "$2"
+            if grep -q 'const DATA = ' /tmp/nuevo.html 2>/dev/null && grep -q 'Datos actualizados' /tmp/nuevo.html; then
+              echo "   -> OK con método $1"; ok=1; return 0
+            fi
+            echo "   -> no sirvió (inicio: $(head -c 120 /tmp/nuevo.html 2>/dev/null | tr '\n' ' '))"
+            rm -f /tmp/nuevo.html; return 1
+          }
+          intentar 1 "https://my.microsoftpersonalcontent.com/personal/$CID/_layouts/15/download.aspx?share=$TOKEN" || \
+          intentar 2 "${LINK}&download=1" || \
+          intentar 3 "https://api.onedrive.com/v1.0/shares/u!$ENC/root/content" || \
+          intentar 4 "https://onedrive.live.com/download?resid=$CID&share=$TOKEN"
+          if [ "$ok" != 1 ]; then
+            FINAL=$(curl -sSL -A "$UA" -o /dev/null -w '%{url_effective}' "$LINK")
+            echo "URL final del link: $FINAL"
+            intentar 5 "$(echo "$FINAL" | sed 's#onedrive\.aspx#download.aspx#')"
+          fi
+          set -e
+          [ "$ok" = 1 ] || { echo "::error::No se pudo descargar index.html de OneDrive"; exit 1; }
           grep -o 'Datos actualizados: <b[^>]*>[^<]*' /tmp/nuevo.html | sed 's/.*>/Descargado: /'
 
       - name: Subir al repo si cambió
