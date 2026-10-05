@@ -1,9 +1,4 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
-
-
-
-
-
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -75,7 +70,7 @@ const SUB_ORDER = {
   "Topping": ["Topping"],
   "Otro": ["Otro"],
   "Comida de sal": ["Mise en place","Quiche","Quiche congeladas","Caja especial","Lasañas y plato fuerte","Crema","Sandwich & Wraps","Bebida","Parfait de frutas","Almuerzo","Relleno panadería salado","Bombita de atún","Adicional"],
-  "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Cookies red velvet","Mise en Place Dulcería"]
+  "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Cookies red velvet","Galletas de macadamia","Mise en Place Dulcería"]
 };
 
 // Fila de Excel -> [subcategoría en Panaderia, nombre del producto] usado por las fórmulas de Relleno panadería salado
@@ -550,6 +545,41 @@ const FORMULA_DEFS = [
           ["Chips de chocolate blanco", 160, "g"]]},
         {title:"Paso 5 — Rellenar cada cookie (10 g por galleta) y congelar", items:[
           ["Topping de queso crema", 440, "g"]]},
+      ]
+    }
+  },
+  {
+    // "Galleta de Macadamia" — RP-GALLETA-MACADAMIA, validada 05/10/26 en el Recetario (puente 5 oct, tarde).
+    // Alban 5 oct: producto de STOCK, lote DOBLE de 58 galletas (receta del Recetario ×2; base 29).
+    // Es el producto "Galleta Macadamia" del pedido. Ingredientes en el orden original de la fórmula.
+    id: "Galletas de macadamia",
+    code: "RP-GALLETA-MACADAMIA",
+    group: "Reposteria",
+    unit: "unid",
+    channels: {
+      total: [
+        {group:"Reposteria", sub:"Galletas", name:"Galleta Macadamia", coef:1},
+      ]
+    },
+    outputs: [
+      {label:"Galletas de macadamia (unid)", calc: ch=>ch.total}
+    ],
+    titleFmt: v => `${fmtN(v)} galletas de macadamia`,
+    stock: {batch: 58, unit: "unid", alertPct: 20},
+    note: "Lote doble: masa ≈ 2.340 g = 58 galletas en bolas de 40 g, sobre latas con tapete silpat. Decorado: 4 nueces de macadamia por galleta (no almendras). Llevar a congelación. Hornear desde congelado: 180 °C arriba / 180 °C abajo, 20 minutos.",
+    recipe: {
+      per: 58, of: "total",
+      steps: [
+        {title:"Chips y decorado — los chips van al cremado con los secos; las nueces, 4 encima de cada galleta", items:[
+          ["Chips de chocolate blanco", 200, "g"], ["Nueces de macadamia", 200, "g"]]},
+        {title:"Paso 1 — En la batidora con pala, cremar mantequilla + azúcares + vainilla", items:[
+          ["Mantequilla", 500, "g"], ["Azúcar común", 100, "g"], ["Azúcar morena", 300, "g"]]},
+        {title:"Paso 2 — Agregar los huevos uno a uno", items:[
+          ["Huevos AA (≈ 220 g)", 4, "unid"]]},
+        {title:"Paso 3 — Pesar aparte los secos; agregarlos al cremado con los chips y batir hasta homogenizar", items:[
+          ["Harina Haz de Oros", 800, "g"], ["Polvo de hornear", 6, "g"], ["Sal", 4, "g"]]},
+        {title:"Va en el paso 1, con el cremado", items:[
+          ["Esencia de vainilla", 10, "ml"]]},
       ]
     }
   },
@@ -2369,9 +2399,4 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
-
-
-
-
-
 </body></html>
