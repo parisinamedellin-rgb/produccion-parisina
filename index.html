@@ -1,8 +1,4 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
-
-
-
-
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -18,8 +14,8 @@
     </div>
   </header>
 
-  <nav id="days" style="display:flex;gap:8px;overflow-x:auto;padding:18px 0 4px;-webkit-overflow-scrolling:touch;"></nav>
-  <div id="cats" style="display:flex;gap:8px;flex-wrap:wrap;padding:14px 0 6px;"></div>
+  <div id="cats" style="display:flex;gap:8px;flex-wrap:wrap;padding:4px 0 2px;"></div>
+  <nav id="days" style="display:flex;gap:8px;overflow-x:auto;padding:14px 0 4px;-webkit-overflow-scrolling:touch;"></nav>
   <div id="aviso" style="display:none;"></div>
   <div id="adelantos" style="display:none;"></div>
 
@@ -531,6 +527,83 @@ const FORMULA_DEFS = [
       ]
     }
   },
+  // ---- Fórmulas de BATIDO (Recetario, validadas 05/10/26; puente 5 oct) ----
+  // Alban 5 oct: son de lote y SIEMPRE se hace la fórmula completa (lote: true). No se calculan por
+  // pedido (channels vacío -> no salen en la vista del día). El inventario se lleva en tortas,
+  // en "Stock de Batido" (batidoStockEl). Ingredientes en el orden original de la fórmula.
+  {
+    id: "Batido chocolate", code: "SE-BAT-CHOCO", group: "Batido", lote: true,
+    channels: { total: [] }, outputs: [],
+    note: "Se hace el día anterior. Horneo: 145 °C 40 min + 165 °C 60 min. Batido total 14.808 g: rinde 8 tortas de 1 libra (1.800 g por molde).",
+    recipe: { per: 14808, of: "total", steps: [
+      {title:"Ingredientes — en el orden de la fórmula", items:[
+        ["Huevos AA", 48, "unid"], ["Azúcar común", 3840, "g"], ["Leche líquida", 1920, "ml"], ["Harina Haz de Oros", 2880, "g"],
+        ["Polvo de hornear", 40, "g"], ["Sal", 20, "g"], ["Café en polvo", 48, "g"], ["Agua", 1440, "ml"],
+        ["Esencia de vainilla", 10, "ml"], ["Color caramelo", 130, "g"], ["Cocoa", 320, "g"], ["Aceite vegetal", 1760, "ml"]]},
+    ]}
+  },
+  {
+    id: "Batido Maria Luisa", code: "SE-BAT-ML", group: "Batido", lote: true,
+    channels: { total: [] }, outputs: [],
+    note: "Se hace el día anterior. Horneo: 150 °C arriba / 160 °C abajo, 120 min. Con el escudo. Molde 1.350 g. Batido total 11.021 g.",
+    recipe: { per: 11021, of: "total", steps: [
+      {title:"Ingredientes — en el orden de la fórmula", items:[
+        ["Margarina", 2577, "g"], ["Azúcar común", 2577, "g"], ["Huevos AA", 48, "unid"], ["Harina Haz de Oros", 2577, "g"],
+        ["Polvo de hornear", 25, "g"], ["Leche en polvo", 329, "g"], ["Leche líquida", 329, "ml"], ["Esencia de naranja", 42, "ml"],
+        ["Limón Tahití", 17, "g"]]},
+    ]}
+  },
+  {
+    id: "Batido zanahoria", code: "SE-BAT-ZAN", group: "Batido", lote: true,
+    channels: { total: [] }, outputs: [],
+    note: "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 70 min. Molde de 1 libra: 1.600 g. NO se corta. Batido total 12.694 g.",
+    recipe: { per: 12694, of: "total", steps: [
+      {title:"Ingredientes — en el orden de la fórmula", items:[
+        ["Azúcar morena", 1550, "g"], ["Azúcar común", 670, "g"], ["Huevos AA", 36, "unid"], ["Aceite vegetal", 1820, "ml"],
+        ["Harina Haz de Oros", 3420, "g"], ["Polvo de hornear", 85, "g"], ["Bicarbonato", 37, "g"], ["Canela en polvo", 26, "g"],
+        ["Clavos en polvo", 3, "g"], ["Nuez moscada", 3, "g"], ["Sal", 18, "g"], ["Zanahoria", 3000, "g"],
+        ["Almendras", 400, "g"], ["Leche líquida", 220, "ml"]]},
+    ]}
+  },
+  {
+    id: "Batido red velvet", code: "SE-BIZ-RV", group: "Batido", lote: true,
+    channels: { total: [] }, outputs: [],
+    note: "Se hace el día anterior. Antes de empezar: engrasar los moldes con desmoldante. Pesar en moldes: ¼ lb 750 g · ½ lb 1.500 g · 1 lb 1.900 g · 2 lb 3.300 g. Horneo en dos etapas: 165 °C arriba / 175 °C abajo 55 min, luego 170 °C arriba / 175 °C abajo 32 min. Enfriar 2 horas antes de desmoldar y cortar. Batido total 15.084 g: rinde 10 de ½ libra u 8 de 1 libra.",
+    recipe: { per: 15084, of: "total", steps: [
+      {title:"Paso 1 — Con el globo, velocidad mínima 30 segundos", items:[
+        ["Aceite vegetal", 2890, "ml"], ["Azúcar común", 2550, "g"], ["Azúcar morena", 440, "g"]]},
+      {title:"Paso 2 — Huevos uno a uno, luego velocidad máxima 8 minutos", items:[
+        ["Huevos AA", 28, "unid"]]},
+      {title:"Paso 3 — Sólidos: intercalar con los líquidos, sin sobrebatir", items:[
+        ["Harina Haz de Oros", 3820, "g"], ["Fécula de maíz", 280, "g"], ["Cocoa", 142, "g"], ["Polvo de hornear", 12, "g"],
+        ["Bicarbonato", 11, "g"], ["Sal", 9, "g"]]},
+      {title:"Paso 3 — Líquidos: intercalar con los sólidos", items:[
+        ["Leche líquida", 3387, "ml"], ["Vinagre blanco", 13, "ml"], ["Colorante en polvo", 45, "g"]]},
+    ]}
+  },
+  {
+    id: "Bizcochuelo", code: "SE-BIZCOCHUELO", group: "Batido", lote: true,
+    channels: { total: [] }, outputs: [],
+    note: "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 75 min. Peso en molde: ½ lb 600 g · 1 lb 800 g. Batido total 7.051 g: rinde 8 moldes.",
+    recipe: { per: 7051, of: "total", steps: [
+      {title:"Paso 1 — Separar claras y yemas. Batir las claras a punto de nieve", items:[
+        ["Huevos AA", 52, "unid"]]},
+      {title:"Paso 2 — Batir las yemas con el azúcar", items:[
+        ["Azúcar común", 2151, "g"]]},
+      {title:"Paso 3 — Integrar con movimientos envolventes y la harina cernida", items:[
+        ["Harina Haz de Oros", 1882, "g"], ["Fécula de maíz", 268, "g"]]},
+    ]}
+  },
+  {
+    id: "Joconda (Ópera)", code: "SE-JOCONDA", group: "Batido", lote: true,
+    channels: { total: [] }, outputs: [],
+    note: "Se hace el día anterior. Horneo: 180 °C arriba / 180 °C abajo, 20 min. Rinde 4 latas. Batido total 2.512 g.",
+    recipe: { per: 2512, of: "total", steps: [
+      {title:"Ingredientes — en el orden de la fórmula", items:[
+        ["Claras", 1080, "g"], ["Huevos AA", 0.4, "unid"], ["Azúcar común", 130, "g"], ["Azúcar XXX", 800, "g"],
+        ["Harina Haz de Oros", 360, "g"], ["Maní triturado", 120, "g"]]},
+    ]}
+  },
 ];
 
 // FORMULA_SUBS y FORMULA_DETAIL_FN se arman solos a partir de FORMULA_DEFS.
@@ -544,7 +617,30 @@ const TODAY_ISO = "2026-10-05";
 const dates = Object.keys(DATA).filter(d => d >= TODAY_ISO).sort();
 const dayNames = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 let activeDate = dates.find(d => d === TODAY_ISO) || dates[0];
-let activeCat = "ALL";
+let activeCat = "HOME";
+// ---- Navegación (Alban 5 oct): 1) primera página = elegir categoría; 2) dentro: Producción / Stock / Fórmulas ----
+// Repostería agrupa Repostería + Tortas + Topping. "Todo" queda como enlace discreto (solo para Alban).
+const FAMS = [
+  {key:"Panaderia", label:"Panadería", emoji:"🥐", subs:["Panaderia"]},
+  {key:"Comida de sal", label:"Comida de sal", emoji:"🥪", subs:["Comida de sal"]},
+  {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Tortas","Topping"], nota:"Repostería · Tortas · Topping"},
+  {key:"Batido", label:"Batido", emoji:"🥣", subs:["Batido"]}
+];
+const FAM_ALL = {key:"ALL", label:"Todo", emoji:"📋", subs:null};
+let navFam = "ALL";      // categoría elegida en la primera página
+let navSub = "ALL";      // área de producción dentro de la categoría
+function famObj(){ return FAMS.find(f=>f.key === navFam) || FAM_ALL; }
+function famGroups(){ return famObj().subs; }           // null = todas las áreas
+function enFam(g){ const gs = famGroups(); return !gs || gs.includes(g); }
+function syncNav(){
+  // activeCat manda (hay botones que saltan directo a FORMULAS / STOCK / un área)
+  if(activeCat === "HOME" || activeCat === "FORMULAS" || activeCat === "STOCK" || activeCat === "SEMANA") return;
+  if(activeCat === "ALL"){ navFam = "ALL"; navSub = "ALL"; return; }
+  if(!enFam(activeCat)){ const f = FAMS.find(x=>x.subs.includes(activeCat)); navFam = f ? f.key : "ALL"; }   // en "Todo" se queda en Todo
+  navSub = activeCat;
+}
+function irA(cat){ activeCat = cat; render(); window.scrollTo(0,0); }
+function entrarFam(f){ navFam = f.key; navSub = f.subs ? f.subs[0] : "ALL"; irA(navSub); }
 
 // ---- Estado de chulos: se guarda en la base del artefacto (capability "db") ----
 // Un documento por fecha: estado/<YYYY-MM-DD> = { items: { "<clave>": true } }
@@ -623,7 +719,7 @@ function avisosAdelanto(area, hoy){
   FORMULA_DEFS.forEach(def=>{
     if(!def.adelantos || !def.recipe) return;
     Object.keys(DATA).sort().forEach(iso=>{
-      if(iso < hoy) return;
+      if(iso <= hoy) return;   // Alban 5 oct: el día de la entrega el aviso ya no aparece (ya pasó el momento de adelantar)
       const info = ajusteInfo(DATA[iso], def);
       if(!(info.k > 0)) return;
       def.adelantos.forEach(a=>{
@@ -648,7 +744,7 @@ function avisosAdelanto(area, hoy){
   ADELANTOS_PRODUCTO.forEach(r=>{
     if(area !== "ALL" && !r.areas.includes(area)) return;
     Object.keys(DATA).sort().forEach(iso=>{
-      if(iso < hoy) return;
+      if(iso <= hoy) return;   // Alban 5 oct: el día de la entrega el aviso ya no aparece (ya pasó el momento de adelantar)
       const subs = (DATA[iso] || {})[r.grupo] || {};
       const acc = {};
       Object.keys(subs).forEach(sub=>subs[sub].forEach(([n,q])=>{ if(r.match.test(n)){ const k = n.trim(); acc[k] = (acc[k]||0) + q; } }));
@@ -667,7 +763,7 @@ function avisosAdelanto(area, hoy){
 function renderAdelantos(){
   const el = document.getElementById("adelantos");
   if(!el) return;
-  const list = (activeCat === "FORMULAS" || activeCat === "STOCK") ? [] : avisosAdelanto(activeCat, hoyISO());
+  const list = (activeCat === "FORMULAS" || activeCat === "STOCK" || activeCat === "SEMANA") ? [] : avisosAdelanto(activeCat, hoyISO());
   if(!list.length){ el.innerHTML = ""; el.style.display = "none"; return; }
   const AREA_NOMBRE = {"Reposteria":"Repostería","Panaderia":"Panadería"};
   el.style.display = "block";
@@ -787,15 +883,157 @@ function renderDays(){
 function renderCats(){
   const el = document.getElementById("cats");
   el.innerHTML = "";
-  const opts = [["ALL","Todo"], ...GROUP_ORDER.map(g=>[g,GROUP_LABEL[g]]), ["FORMULAS","📄 Fórmulas"], ["STOCK","📦 Stock"]];
-  opts.forEach(([key,label])=>{
-    const active = key === activeCat;
+  el.style.display = "block";
+  const f = famObj(), col = PALETTE[navFam] || PALETTE.ALL;
+  const modo = activeCat === "STOCK" ? "STOCK" : activeCat === "FORMULAS" ? "FORMULAS" : activeCat === "SEMANA" ? "SEMANA" : "PROD";
+  // Fila 1: volver + nombre de la categoría
+  const top = document.createElement("div");
+  top.setAttribute("style", "display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:14px;");
+  top.innerHTML = `<button id="nav-home" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:9px 14px;border-radius:100px;border:1.5px solid ${C.line};background:${C.paper};color:${C.ink};cursor:pointer;">← Categorías</button>
+    <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;color:${col.a};">${f.emoji} ${f.label}</span>`;
+  el.appendChild(top);
+  top.querySelector("#nav-home").onclick = ()=>irA("HOME");
+  // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
+  const tabs = document.createElement("div");
+  tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"]].forEach(([key,label],i)=>{
+    const on = key === modo;
     const btn = document.createElement("button");
     btn.textContent = label;
-    btn.setAttribute("style", catBtnStyle(active, key));
-    btn.onclick = ()=>{ activeCat = key; render(); };
-    el.appendChild(btn);
+    btn.setAttribute("style", `flex:1 1 0;min-width:0;font-family:'Work Sans',sans-serif;font-size:0.8rem;line-height:1.25;font-weight:700;padding:11px 4px;border:none;${i ? "border-left:1.5px solid " + col.a + ";" : ""}background:${on ? col.a : "transparent"};color:${on ? "#fff" : col.a};cursor:pointer;`);
+    btn.onclick = ()=>irA(key === "PROD" ? navSub : key);
+    tabs.appendChild(btn);
   });
+  el.appendChild(tabs);
+  // Fila 3: áreas dentro de la categoría (solo en Producción y si hay más de una)
+  const subs = f.subs ? f.subs : ["ALL", ...GROUP_ORDER];
+  if(modo === "PROD" && subs.length > 1){
+    const row = document.createElement("div");
+    row.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
+    subs.forEach(key=>{
+      const btn = document.createElement("button");
+      btn.textContent = key === "ALL" ? "Todo" : GROUP_LABEL[key];
+      btn.setAttribute("style", catBtnStyle(key === activeCat, key));
+      btn.onclick = ()=>{ activeCat = key; render(); };
+      row.appendChild(btn);
+    });
+    el.appendChild(row);
+  }
+}
+
+// ---- "De una vez" de la categoría (Alban 5 oct): todo lo programado, sumado por producto ----
+// Así el área ve de un vistazo lo que tiene que hacer en la semana (ej. 15 quiche chorizo mini) y lo adelanta junto.
+let SEM_RANGO = "SEMANA";   // "SEMANA" = de hoy al domingo · "TODO" = todo lo programado
+function finSemana(iso){
+  const [y,m,d] = iso.split("-").map(Number);
+  const dow = new Date(Date.UTC(y,m-1,d)).getUTCDay();          // 0 = domingo
+  return new Date(Date.UTC(y,m-1,d + (dow === 0 ? 0 : 7 - dow))).toISOString().slice(0,10);
+}
+function renderSemana(){
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  const col = PALETTE[navFam] || PALETTE.ALL;
+  const hoy = hoyISO(), fin = finSemana(hoy);
+  const fechas = Object.keys(DATA).sort().filter(iso=>iso >= hoy && (SEM_RANGO === "TODO" || iso <= fin));
+  const fd = iso => { const f = fmtDay(iso); return (iso === hoy ? "hoy" : f.dow.slice(0,3).toLowerCase() + " " + f.dm); };
+  const head = document.createElement("div");
+  head.setAttribute("style", "margin-top:20px;");
+  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">De una vez</h2>
+    <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Todo lo que ya está programado, sumado por producto. Sirve para adelantar y preparar junto. Si entran pedidos nuevos, los totales suben.</div>
+    <div id="sem-r" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;"></div>
+    <div style="font-size:0.76rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:10px;">${fechas.length ? fechas.map(fd).join(" · ") : "sin pedidos programados"}</div>`;
+  main.appendChild(head);
+  [["SEMANA","Esta semana"], ["TODO","Todo lo programado"]].forEach(([k,l])=>{
+    const b = document.createElement("button");
+    b.textContent = l;
+    b.setAttribute("style", catBtnStyle(k === SEM_RANGO, navFam));
+    b.onclick = ()=>{ SEM_RANGO = k; render(); };
+    head.querySelector("#sem-r").appendChild(b);
+  });
+  const grupos = famGroups() || GROUP_ORDER;
+  let any = false;
+  grupos.forEach(g=>{
+    // sub -> nombre -> {total, dias:[[iso,q]]}
+    const acc = {};
+    fechas.forEach(iso=>{
+      const subs = areaSubs(DATA[iso], g);
+      Object.keys(subs).forEach(sub=>subs[sub].forEach(([n,q])=>{
+        const k = n.trim();
+        const o = ((acc[sub] = acc[sub] || {})[k] = acc[sub][k] || {total:0, dias:[]});
+        o.total += q;
+        const last = o.dias[o.dias.length-1];
+        if(last && last[0] === iso) last[1] += q; else o.dias.push([iso, q]);
+      }));
+    });
+    const subKeys = sortSubs(g, Object.keys(acc));
+    if(!subKeys.length) return;
+    any = true;
+    const gc = PALETTE[g] || col;
+    const sec = document.createElement("div");
+    sec.setAttribute("style", "margin-top:22px;");
+    const totalG = subKeys.reduce((t,sk)=>t + Object.values(acc[sk]).reduce((a,o)=>a + o.total, 0), 0);
+    sec.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-family:'Fraunces',serif;font-weight:700;font-size:1.08rem;color:${gc.a};border-bottom:2px solid ${gc.a};padding-bottom:5px;">
+        <span>${GROUP_LABEL[g] || g}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:600;">${fmtN(totalG)} und.</span></div>`;
+    main.appendChild(sec);
+    const card = document.createElement("div");
+    card.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-top:12px;overflow:hidden;`);
+    subKeys.forEach(sk=>{
+      const items = Object.keys(acc[sk]).map(n=>[n, acc[sk][n]]).sort((a,b)=> b[1].total - a[1].total || a[0].localeCompare(b[0]));
+      const tot = items.reduce((t,x)=>t + x[1].total, 0);
+      const h = document.createElement("div");
+      h.setAttribute("style", `padding:9px 16px;background:${gc.s};font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700;color:${gc.a};`);
+      h.textContent = `${sk} · ${fmtN(tot)} und.`;
+      card.appendChild(h);
+      items.forEach(([n,o])=>{
+        const row = document.createElement("div");
+        row.setAttribute("style", `display:flex;align-items:center;gap:14px;padding:10px 16px;border-top:1px solid ${C.line};`);
+        row.innerHTML = `<span style="min-width:58px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.05rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:5px 6px;">${fmtN(o.total)}</span>
+          <span style="flex:1;min-width:0;"><span style="font-size:0.95rem;">${n}</span>
+          <span style="display:block;font-size:0.72rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${o.dias.map(([iso,q])=>fd(iso) + ": " + fmtN(q)).join(" · ")}</span></span>`;
+        card.appendChild(row);
+      });
+    });
+    main.appendChild(card);
+  });
+  if(!any){
+    const v = document.createElement("div");
+    v.setAttribute("style", `font-size:0.88rem;color:${C.inkSoft};font-style:italic;padding:16px 4px;`);
+    v.textContent = "No hay nada programado para esta categoría en este rango.";
+    main.appendChild(v);
+  }
+}
+
+// Primera página: elegir categoría
+function renderHome(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id=>{ const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  const h = document.createElement("div");
+  h.setAttribute("style", "margin-top:26px;");
+  h.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:0 0 4px;">¿Cuál es tu área?</h2>
+    <div style="font-size:0.9rem;color:${C.inkSoft};">Elige tu categoría para ver tu producción, tu stock y tus fórmulas.</div>`;
+  main.appendChild(h);
+  const grid = document.createElement("div");
+  grid.setAttribute("style", "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px;");
+  FAMS.forEach(f=>{
+    const col = PALETTE[f.key] || PALETTE.ALL;
+    const btn = document.createElement("button");
+    btn.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${col.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    btn.innerHTML = `<span style="font-size:2.2rem;line-height:1;">${f.emoji}</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${col.a};">${f.label}</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">${f.nota || "Producción · Stock · Fórmulas"}</span>
+      </span>`;
+    btn.onclick = ()=>entrarFam(f);
+    grid.appendChild(btn);
+  });
+  main.appendChild(grid);
+  const todo = document.createElement("div");
+  todo.setAttribute("style", "margin-top:28px;text-align:center;");
+  todo.innerHTML = `<button style="font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:8px;">Ver todo</button>`;
+  todo.querySelector("button").onclick = ()=>entrarFam(FAM_ALL);
+  main.appendChild(todo);
 }
 
 // ============================================================
@@ -1075,6 +1313,96 @@ function stockPanelEl(def){
 // ---- Pestaña "Stock": inventario por área ----
 const STOCK_AREAS = ["Reposteria","Comida de sal","Panaderia","Tortas"];   // orden pedido por Alban (3 oct); Tortas en vez de Batido
 const STOCK_OPEN = {};   // tarjetas plegadas: un clic abre el registro, otro clic lo oculta (Alban 3 oct)
+// ---- Stock de Batido (Alban 5 oct): el operador escribe cada día cuántos batidos hizo de cada tipo ----
+// Se guarda en db: formulas/BT-<tipo> = { lotes:[{fecha, cantidad, ts}] } (misma colección de los lotes).
+// En stock = lo hecho desde el primer registro − lo pedido (Batido del día) desde ese día hasta hoy.
+const BATIDO_TIPOS = ["Aro hojaldre","Bizcochuelo 1/2 libra","Bizcochuelo 1 libra","Chocolate 1/2 libra","Chocolate 1 libra","Chocolate 2 libras",
+  "Maria Luisa 1/2 libra","Maria Luisa 1 libra","Red velvet 1/4 libra","Red velvet 1/2 libra","Red velvet 1 libra","Red velvet 2 libras",
+  "Joconda x 3 tapas","Zanahoria 1/2 libra","Zanahoria 1 libra"];   // orden de la hoja de stock de Alban (5 oct)
+const BAT_DRAFT = {};
+function batCode(n){ return "BT-" + normTxt(n).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+function batPedido(iso, n){
+  const l = (((DATA[iso] || {})["Batido"] || {})["Tortas"]) || [];
+  return l.reduce((t,[x,q])=> t + (x.trim() === n ? q : 0), 0);
+}
+function batEstado(n){
+  const hoy = hoyISO();
+  const lotes = (LOTES[batCode(n)] || []).slice().sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
+  const desde = lotes.length ? lotes[0].fecha : null;
+  const hecho = lotes.reduce((t,l)=>t + (+l.cantidad || 0), 0);
+  const hechoHoy = lotes.filter(l=>l.fecha === hoy).reduce((t,l)=>t + (+l.cantidad || 0), 0);
+  let usado = 0;
+  if(desde) Object.keys(DATA).forEach(iso=>{ if(iso >= desde && iso <= hoy) usado += batPedido(iso, n); });
+  // Pedidos programados (Alban 5 oct): todo lo que está programado de hoy en adelante, con su detalle por día
+  const prog = Object.keys(DATA).sort().filter(iso=>iso >= hoy).map(iso=>[iso, batPedido(iso, n)]).filter(x=>x[1] > 0);
+  const progTotal = prog.reduce((t,x)=>t + x[1], 0);
+  // "En stock" = al FINAL del día: ya descontado lo de hoy (Alban 5 oct)
+  return {lotes, stock: hecho - usado, hechoHoy, prog, progTotal};
+}
+async function batGuardar(){
+  if(!DB) return;
+  const hoy = hoyISO();
+  for(const n of BATIDO_TIPOS){
+    const q = numAj(BAT_DRAFT[n]);
+    if(!(q > 0)) continue;
+    try{
+      const ref = DB.doc("formulas/" + batCode(n));
+      const snap = await ref.get();
+      const lotes = ((snap.exists && snap.data().lotes) || []).slice();
+      lotes.push({fecha: hoy, cantidad: q, ts: new Date().toISOString()});
+      await ref.set({lotes: lotes.slice(-200)});
+      delete BAT_DRAFT[n];
+    }catch(err){ console.warn("No se pudo guardar el batido:", err); }
+  }
+  render();
+}
+async function batDeshacer(n){
+  if(!DB) return;
+  try{
+    const ref = DB.doc("formulas/" + batCode(n));
+    const snap = await ref.get();
+    const lotes = ((snap.exists && snap.data().lotes) || []).slice();
+    lotes.pop();
+    await ref.set({lotes});
+  }catch(err){ console.warn("No se pudo deshacer:", err); }
+}
+function batidoStockEl(col){
+  const wrap = document.createElement("div");
+  const hoyF = fmtDay(hoyISO());
+  wrap.innerHTML = `<div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;padding:8px 2px 0;">Escribe cuántos batidos hiciste <b>hoy (${hoyF.dow} ${hoyF.dm})</b> de cada tipo y dale a <b>Guardar</b>. Deja en blanco lo que no hiciste.</div>`;
+  const card = document.createElement("div");
+  card.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-top:12px;overflow:hidden;`);
+  BATIDO_TIPOS.forEach(n=>{
+    const st = batEstado(n);
+    const row = document.createElement("div");
+    row.setAttribute("style", `display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid ${C.line};`);
+    const hoyI = hoyISO();
+    const sub = [`pedidos programados: ${fmtN(st.progTotal)}`];
+    if(st.prog.length) sub.push(st.prog.map(([iso,q])=>{ const f = fmtDay(iso); return `${iso === hoyI ? "hoy" : f.dow.slice(0,3).toLowerCase() + " " + f.dm} ${fmtN(q)}`; }).join(" · "));
+    row.innerHTML = `<div style="flex:1;min-width:0;">
+        <div style="font-size:0.95rem;font-weight:600;">${n}</div>
+        <div style="font-size:0.74rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${sub.join("<br>")}</div>
+        ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)} <button type="button" class="b-undo" style="font-size:0.72rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0 4px;font-family:'Work Sans',sans-serif;">deshacer</button></div>` : ""}
+      </div>
+      <div style="text-align:right;min-width:74px;">
+        <div style="font-size:0.66rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};line-height:1.2;">stock<br>fin del día</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:600;color:${st.lotes.length && st.stock < 0 ? "#A3252B" : C.ink};">${!DB || !st.lotes.length ? "—" : fmtN(st.stock)}</div>
+      </div>
+      <input type="number" inputmode="numeric" min="0" placeholder="0" ${DB ? "" : "disabled"} value="${BAT_DRAFT[n] || ""}" style="width:68px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;text-align:center;padding:9px 4px;border:1.5px solid ${C.line};border-radius:10px;background:${DB ? "#fff" : C.bg};color:${C.ink};">`;
+    const inp = row.querySelector("input");
+    inp.oninput = ()=>{ BAT_DRAFT[n] = inp.value; };
+    const un = row.querySelector(".b-undo");
+    if(un) un.onclick = ()=>batDeshacer(n);
+    card.appendChild(row);
+  });
+  const foot = document.createElement("div");
+  foot.setAttribute("style", "padding:14px 16px;");
+  foot.innerHTML = `<button type="button" ${DB ? "" : "disabled"} style="width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:13px;border-radius:12px;border:none;background:${col.a};color:#fff;cursor:${DB ? "pointer" : "not-allowed"};opacity:${DB ? 1 : .45};">💾 Guardar lo que hice hoy</button>`;
+  foot.querySelector("button").onclick = ()=>batGuardar();
+  card.appendChild(foot);
+  wrap.appendChild(card);
+  return wrap;
+}
 function renderStock(){
   const main = document.getElementById("main");
   main.innerHTML = "";
@@ -1084,7 +1412,7 @@ function renderStock(){
     <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Productos que se hacen por lote y se guardan. Cada vez que hagas uno, regístralo aquí con la cantidad real.</div>
     ${!DB ? `<div style="margin-top:10px;font-size:0.84rem;border:1.5px solid #C4791E;background:#FFF4D6;color:#8A5A00;border-radius:12px;padding:10px 14px;">El stock solo se puede registrar en la versión interna del reporte (la que abre con la cuenta de Parisina). En esta página no se guardan datos.</div>` : ""}`;
   main.appendChild(head);
-  const areas = [...STOCK_AREAS, ...GROUP_ORDER.filter(g=>!STOCK_AREAS.includes(g) && STOCK_DEFS.some(d=>d.group===g))];
+  const areas = [...STOCK_AREAS, ...GROUP_ORDER.filter(g=>!STOCK_AREAS.includes(g) && (g === "Batido" || STOCK_DEFS.some(d=>d.group===g) || (famGroups() && enFam(g))))].filter(enFam);
   areas.forEach(area=>{
     const col = (PALETTE[area] || PALETTE.ALL);
     const defs = STOCK_DEFS.filter(d=>d.group===area);
@@ -1092,6 +1420,7 @@ function renderStock(){
     sec.setAttribute("style", "margin-top:22px;");
     sec.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.08rem;color:${col.a};border-bottom:2px solid ${col.a};padding-bottom:5px;">Stock de ${GROUP_LABEL[area] || area}</div>`;
     main.appendChild(sec);
+    if(area === "Batido"){ main.appendChild(batidoStockEl(col)); return; }
     if(!defs.length){
       const v = document.createElement("div");
       v.setAttribute("style", `font-size:0.84rem;color:${C.inkSoft};font-style:italic;padding:10px 2px;`);
@@ -1148,7 +1477,15 @@ function renderFormulas(){
   main.appendChild(head);
   const cards = [];
 
-  RECIPE_DEFS.forEach(def=>{
+  const DEFS_FAM = RECIPE_DEFS.filter(d=>enFam(d.group));
+  if(!DEFS_FAM.length){
+    const v = document.createElement("div");
+    v.setAttribute("style", `font-size:0.88rem;color:${C.inkSoft};font-style:italic;padding:16px 4px;`);
+    v.textContent = "Todavía no hay fórmulas cargadas para esta categoría.";
+    main.appendChild(v);
+    const q0 = document.getElementById("form-q"); if(q0) q0.style.display = "none";
+  }
+  DEFS_FAM.forEach(def=>{
     const esStock = !!def.stock;
     const unit = def.unit || "g";
     const st = esStock ? estadoStock(def) : null;
@@ -1174,11 +1511,17 @@ function renderFormulas(){
         <span style="font-size:0.9rem;">${st.lotes.length ? `En stock: <b>${fmtN(round2(st.stock))} ${def.stock.unit || "g"}</b>` : "<b>Sin stock registrado</b>"}</span>
         <button type="button" class="ir-stock" style="font-size:0.82rem;font-weight:700;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">📦 Registrar lote / ver stock</button>
       </div>`;
+    } else if(def.lote){
+      // Fórmula de lote completo (batidos): el inventario se lleva en tortas, en Stock de Batido.
+      stockHTML = `<div style="padding:12px 16px;border-bottom:1px solid ${C.line};display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:0.86rem;"><b>Siempre se hace la fórmula completa.</b> Después, registra las tortas que salieron.</span>
+        <button type="button" class="ir-stock" style="font-size:0.82rem;font-weight:700;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">📦 Stock de ${GROUP_LABEL[def.group] || def.group}</button>
+      </div>`;
     } else if(esStock){
       stockHTML = `<div style="padding:12px 16px;border-bottom:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};font-style:italic;">El registro de lotes y el stock solo funcionan en la versión interna del reporte (la que abre con la cuenta de Parisina). Aquí se consulta la receta.</div>`;
     }
 
-    const base = esStock ? `lote de ${fmtN(def.stock.batch)} ${def.stock.unit || "g"}` : `receta por ${fmtN(def.recipe.per)} ${unit}`;
+    const base = esStock ? `lote de ${fmtN(def.stock.batch)} ${def.stock.unit || "g"}` : def.lote ? `fórmula completa · ${fmtN(def.recipe.per)} ${unit}` : `receta por ${fmtN(def.recipe.per)} ${unit}`;
     const alerta = esStock && DB && st.alerta ? `<span style="background:#A3252B;color:#fff;border-radius:100px;padding:2px 9px;font-size:0.66rem;letter-spacing:.05em;text-transform:uppercase;font-weight:700;">Reponer</span>` : "";
     const usaEn = unit === "g" ? (def.channels.total || []) : [];
     card.innerHTML = `
@@ -1198,7 +1541,7 @@ function renderFormulas(){
           <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Se usa en</div>
           ${usaEn.map(t=>`<div>${termLabel(t)} — ${fmtN(t.coef)} g c/u</div>`).join("")}
         </div>` : ""}
-        <div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
+        <div style="${def.lote ? "display:none;" : ""}padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
           <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Próximos días</div>
           ${prox.length ? prox.map(iso=>{const f = fmtDay(iso); return `<div>${f.dow} ${f.dm} — ${fmtN(round2(dem[iso]))} ${unit}</div>`;}).join("") : "<div style='font-style:italic;'>Sin pedidos próximos.</div>"}
         </div>
@@ -1563,18 +1906,20 @@ function renderPrioridades(main){
 }
 
 function render(){
+  if(activeCat === "HOME"){ renderHome(); return; }
+  syncNav();
   renderAdelantos();
-  const HOJA = activeCat === "FORMULAS" || activeCat === "STOCK";
-  setAccent(HOJA ? "ALL" : activeCat);
+  const HOJA = activeCat === "FORMULAS" || activeCat === "STOCK" || activeCat === "SEMANA";
+  setAccent(HOJA ? navFam : activeCat);
   renderDays();
   renderCats();
   const navDays = document.getElementById("days");
   if(navDays) navDays.style.display = HOJA ? "none" : "flex";
   if(HOJA){
-    setAccent("ALL"); tintPage("ALL");
+    setAccent(navFam); tintPage(navFam);
     const av = document.getElementById("aviso");
     if(av){ av.innerHTML = ""; av.style.display = "none"; }
-    if(activeCat === "STOCK") renderStock(); else renderFormulas();
+    if(activeCat === "STOCK") renderStock(); else if(activeCat === "SEMANA") renderSemana(); else renderFormulas();
     return;
   }
   setAccent(activeCat);
@@ -1840,8 +2185,4 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
-
-
-
-
 </body></html>
