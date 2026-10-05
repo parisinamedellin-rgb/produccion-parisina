@@ -1,4 +1,6 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
+
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -267,6 +269,27 @@ function computeFormula(day, def){
   });
   return out;
 }
+// ---- Nota de la fórmula en tarjeta (Alban 5 oct: más grande, más bonita, más atractiva) ----
+// Parte la nota en frases; cada una con su ícono, su etiqueta y los números resaltados.
+function notaHTML(note, compact){
+  const ICONOS = [[/d[ií]a anterior/i,"📅"],[/horne/i,"🔥"],[/congel/i,"❄️"],[/^antes de|engras/i,"🧈"],[/rinde|batido total|lote|masa total/i,"🥣"],[/molde|pesar|peso/i,"⚖️"],[/no se|ojo|siempre|nunca/i,"⚠️"]];
+  const frases = String(note).split(/\.\s+(?=[A-ZÁÉÍÓÚÑ¼½¿¡])/).map(f=>f.replace(/\.$/,"").trim()).filter(Boolean);
+  const num = t => t.replace(/(\d[\d.,]*\s?(?:°C|g\b|kg\b|ml\b|min\b|minutos|lb\b|libras?|unid\b|tortas|moldes|latas|galletas))/g,
+    '<b style="font-family:\'IBM Plex Mono\',monospace;font-weight:600;background:#FFE9B0;border-radius:6px;padding:1px 6px;white-space:nowrap;">$1</b>');
+  const filas = frases.map((f,i)=>{
+    const ic = (ICONOS.find(([re])=>re.test(f)) || [null,"👉"])[1];
+    const m = f.match(/^([^:]{2,28}):\s*(.+)$/);
+    const cuerpo = m ? `<span style="display:block;font-size:0.68rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#8A5A00;margin-bottom:2px;">${m[1]}</span>${num(m[2])}` : num(f);
+    return `<div style="display:flex;gap:12px;align-items:flex-start;padding:11px 14px;${i ? "border-top:1px dashed #E9CF8E;" : ""}">
+      <span style="flex:0 0 38px;height:38px;border-radius:50%;background:#fff;border:1.5px solid #E9CF8E;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">${ic}</span>
+      <span style="flex:1;min-width:0;font-size:${i === 0 ? "1.1rem" : "1rem"};font-weight:${i === 0 ? 700 : 500};line-height:1.6;color:#2A241C;padding-top:${m ? 0 : 6}px;">${cuerpo}</span>
+    </div>`;
+  }).join("");
+  return `<div style="${compact ? "margin-top:10px;" : ""}font-style:normal;background:linear-gradient(180deg,#FFF8E1,#FFF1CC);border:1.5px solid #E9CF8E;border-radius:16px;overflow:hidden;box-shadow:0 2px 0 #E9CF8E;">
+    <div style="background:#C4791E;color:#fff;font-family:'Fraunces',serif;font-weight:700;font-size:1rem;padding:8px 14px;letter-spacing:.01em;">📌 Antes de empezar</div>
+    ${filas}
+  </div>`;
+}
 function formulaDetailLines(day, def){
   const ch = computeChannels(day, def);
   const lines = [];
@@ -283,7 +306,7 @@ function formulaDetailLines(day, def){
     const v = o.calc(ch, day);
     if(v>0){ any = true; lines.push(`<b>${o.label}: ${fmtN(round2(v))}</b>`); }
   });
-  if(def.note && any) lines.push(`<span style="font-style:italic;">${def.note}</span>`);
+  if(def.note && any) lines.push(notaHTML(def.note, true));   // nota en tarjeta (Alban 5 oct)
   return any ? lines : [];
 }
 
@@ -1536,7 +1559,7 @@ function renderFormulas(){
         ${stockHTML}
         <div style="padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
         ${pasos}
-        ${def.note ? `<div style="padding:12px 16px;font-size:0.84rem;line-height:1.5;background:${C.bg};border-top:1px solid ${C.line};">${def.note}</div>` : ""}
+        ${def.note ? `<div style="padding:14px 16px;border-top:1px solid ${C.line};">${notaHTML(def.note)}</div>` : ""}
         ${usaEn.length ? `<div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
           <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Se usa en</div>
           ${usaEn.map(t=>`<div>${termLabel(t)} — ${fmtN(t.coef)} g c/u</div>`).join("")}
@@ -2185,4 +2208,6 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
+
 </body></html>
