@@ -1,6 +1,9 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>
 
 
+
+
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -556,6 +559,7 @@ const FORMULA_DEFS = [
   // en "Stock de Batido" (batidoStockEl). Ingredientes en el orden original de la fórmula.
   {
     id: "Batido chocolate", code: "SE-BAT-CHOCO", group: "Batido", lote: true,
+    formatos: {"Chocolate 1/2 libra":null,"Chocolate 1 libra":8,"Chocolate 2 libras":null},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 145 °C 40 min + 165 °C 60 min. Batido total 14.808 g: rinde 8 tortas de 1 libra (1.800 g por molde).",
     recipe: { per: 14808, of: "total", steps: [
@@ -567,6 +571,7 @@ const FORMULA_DEFS = [
   },
   {
     id: "Batido Maria Luisa", code: "SE-BAT-ML", group: "Batido", lote: true,
+    formatos: {"Maria Luisa 1/2 libra":null,"Maria Luisa 1 libra":8},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 150 °C arriba / 160 °C abajo, 120 min. Con el escudo. Molde 1.350 g. Batido total 11.021 g.",
     recipe: { per: 11021, of: "total", steps: [
@@ -578,6 +583,7 @@ const FORMULA_DEFS = [
   },
   {
     id: "Batido zanahoria", code: "SE-BAT-ZAN", group: "Batido", lote: true,
+    formatos: {"Zanahoria 1/2 libra":null,"Zanahoria 1 libra":7},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 70 min. Molde de 1 libra: 1.600 g. NO se corta. Batido total 12.694 g.",
     recipe: { per: 12694, of: "total", steps: [
@@ -590,6 +596,7 @@ const FORMULA_DEFS = [
   },
   {
     id: "Batido red velvet", code: "SE-BIZ-RV", group: "Batido", lote: true,
+    formatos: {"Red velvet 1/4 libra":20,"Red velvet 1/2 libra":10,"Red velvet 1 libra":7,"Red velvet 2 libras":4},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Antes de empezar: engrasar los moldes con desmoldante. Pesar en moldes: ¼ lb 750 g · ½ lb 1.500 g · 1 lb 1.900 g · 2 lb 3.300 g. Horneo en dos etapas: 165 °C arriba / 175 °C abajo 55 min, luego 170 °C arriba / 175 °C abajo 32 min. Enfriar 2 horas antes de desmoldar y cortar. Batido total 15.084 g: rinde 10 de ½ libra u 8 de 1 libra.",
     recipe: { per: 15084, of: "total", steps: [
@@ -606,6 +613,7 @@ const FORMULA_DEFS = [
   },
   {
     id: "Bizcochuelo", code: "SE-BIZCOCHUELO", group: "Batido", lote: true,
+    formatos: {"Bizcochuelo 1/2 libra":11,"Bizcochuelo 1 libra":8},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 75 min. Peso en molde: ½ lb 600 g · 1 lb 800 g. Batido total 7.051 g: rinde 8 moldes.",
     recipe: { per: 7051, of: "total", steps: [
@@ -619,6 +627,7 @@ const FORMULA_DEFS = [
   },
   {
     id: "Joconda (Ópera)", code: "SE-JOCONDA", group: "Batido", lote: true,
+    formatos: {"Joconda x 3 tapas":null},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 180 °C arriba / 180 °C abajo, 20 min. Rinde 4 latas. Batido total 2.512 g.",
     recipe: { per: 2512, of: "total", steps: [
@@ -643,11 +652,59 @@ let activeDate = dates.find(d => d === TODAY_ISO) || dates[0];
 let activeCat = "HOME";
 // ---- Navegación (Alban 5 oct): 1) primera página = elegir categoría; 2) dentro: Producción / Stock / Fórmulas ----
 // Repostería agrupa Repostería + Tortas + Topping. "Todo" queda como enlace discreto (solo para Alban).
+const ICON_BATIDORA = `<svg viewBox="0 0 48 48" aria-label="batidora" style="height:1.05em;width:1.05em;vertical-align:-0.16em;display:inline-block;">
+  <rect x="8" y="39" width="30" height="5" rx="2.5" fill="#55585E"/>
+  <path d="M10 39V17a6 6 0 0 1 6-6h1v28z" fill="#8E949C"/>
+  <path d="M15 8h21a6 6 0 0 1 6 6v1a4 4 0 0 1-4 4H15z" fill="#C7483F"/>
+  <circle cx="20" cy="13.5" r="2" fill="#fff" opacity=".85"/>
+  <rect x="31" y="19" width="2.4" height="5" fill="#55585E"/>
+  <path d="M32.2 23c-3.6 2.5-3.6 7 0 10 3.6-3 3.6-7.5 0-10z" fill="none" stroke="#55585E" stroke-width="1.6"/>
+  <path d="M22 27h21c0 6.5-4 12-10.5 12S22 33.500 22 27z" fill="#E9EDF1" stroke="#8E949C" stroke-width="1.6"/>
+  <rect x="21" y="26" width="23" height="2.6" rx="1.3" fill="#8E949C"/>
+</svg>`;
+// Guardado para la web pública (Alban 5 oct): la web no tiene la base de datos de Claude, así que
+// guarda en un Google Sheet de Parisina a través de un pequeño programa (Apps Script). Vacío = sin guardado.
+const WEB_API_URL = "https://script.google.com/macros/s/AKfycbzgFGdhFm7gBGp5QIAteflJqVa9jKPRo6d441Q2VfDVgK5YfsX-VUA9VOD8MRq39Nd9kQ/exec";
+function webDb(url){
+  const cache = {}, subs = [];
+  const snapCol = name => ({docs: Object.keys(cache).filter(k=>k.indexOf(name + "/") === 0).map(k=>({id: k.slice(name.length + 1), data: ()=>cache[k]}))});
+  const avisar = ()=>subs.forEach(su=>{ try{ su.cb(snapCol(su.name)); }catch(e){ console.warn(e); } });
+  let ultimo = "";
+  async function cargar(){
+    const r = await fetch(url + "?a=all&t=" + Date.now(), {credentials:"omit"});
+    const j = await r.json();
+    if(!j || !j.ok) throw new Error("respuesta inválida");
+    const txt = JSON.stringify(j.docs || {});
+    if(txt === ultimo) return;
+    ultimo = txt;
+    Object.keys(cache).forEach(k=>delete cache[k]);
+    Object.assign(cache, j.docs || {});
+    avisar();
+  }
+  const listo = cargar().catch(e=>console.warn("No se pudo leer el guardado web:", e));
+  setInterval(()=>{ if(!document.hidden) cargar().catch(()=>{}); }, 45000);
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) cargar().catch(()=>{}); });
+  const doc = path => ({
+    get: async ()=>{
+      try{ const r = await fetch(url + "?a=get&path=" + encodeURIComponent(path) + "&t=" + Date.now(), {credentials:"omit"}); const j = await r.json();
+           if(j && j.ok){ if(j.docs && j.docs[path] !== undefined) cache[path] = j.docs[path]; else delete cache[path]; } }catch(e){ await listo; }
+      return {exists: path in cache, data: ()=>cache[path]};
+    },
+    set: async data =>{
+      const r = await fetch(url, {method:"POST", credentials:"omit", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({a:"set", path, data})});
+      const j = await r.json();
+      if(!j || !j.ok) throw new Error((j && j.error) || "no se pudo guardar");
+      cache[path] = data; ultimo = ""; avisar();
+    }
+  });
+  return {web: true, doc, collection: name => ({ doc: id => doc(name + "/" + id),
+    onSnapshot: (cb, onErr)=>{ subs.push({name, cb}); listo.then(()=>cb(snapCol(name))).catch(e=>onErr && onErr(e)); return ()=>{}; } })};
+}
 const FAMS = [
   {key:"Panaderia", label:"Panadería", emoji:"🥐", subs:["Panaderia"]},
-  {key:"Comida de sal", label:"Comida de sal", emoji:"🥪", subs:["Comida de sal"]},
+  {key:"Comida de sal", label:"Comida de sal", emoji:"🐷", subs:["Comida de sal"]},
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Tortas","Topping"], nota:"Repostería · Tortas · Topping"},
-  {key:"Batido", label:"Batido", emoji:"🥣", subs:["Batido"]}
+  {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS"], nota:"Stock · Fórmulas"}   // Alban 5 oct: sin Producción ni De una vez
 ];
 const FAM_ALL = {key:"ALL", label:"Todo", emoji:"📋", subs:null};
 let navFam = "ALL";      // categoría elegida en la primera página
@@ -663,7 +720,7 @@ function syncNav(){
   navSub = activeCat;
 }
 function irA(cat){ activeCat = cat; render(); window.scrollTo(0,0); }
-function entrarFam(f){ navFam = f.key; navSub = f.subs ? f.subs[0] : "ALL"; irA(navSub); }
+function entrarFam(f){ navFam = f.key; navSub = f.subs ? f.subs[0] : "ALL"; irA(f.modos ? f.modos[0] : navSub); }
 
 // ---- Estado de chulos: se guarda en la base del artefacto (capability "db") ----
 // Un documento por fecha: estado/<YYYY-MM-DD> = { items: { "<clave>": true } }
@@ -680,8 +737,9 @@ const dateOfKey = k => String(k).split("::")[0];
 
 async function bootDb(){
   try{
-    if(!window.claude || !window.claude.use) return;
-    DB = await window.claude.use("db");
+    if(window.claude && window.claude.use) DB = await window.claude.use("db");
+    else if(WEB_API_URL && typeof location !== "undefined" && /^https?:$/.test(location.protocol)) DB = webDb(WEB_API_URL);     // web pública: guarda en el Google Sheet (solo en un navegador real)
+    else return;
     if(!DB) return;
     DB.collection("estado").onSnapshot(snap=>{
       const next = {};
@@ -919,7 +977,7 @@ function renderCats(){
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"]].forEach(([key,label],i)=>{
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"]].filter(t=>!f.modos || f.modos.includes(t[0])).forEach(([key,label],i)=>{
     const on = key === modo;
     const btn = document.createElement("button");
     btn.textContent = label;
@@ -930,7 +988,7 @@ function renderCats(){
   el.appendChild(tabs);
   // Fila 3: áreas dentro de la categoría (solo en Producción y si hay más de una)
   const subs = f.subs ? f.subs : ["ALL", ...GROUP_ORDER];
-  if(modo === "PROD" && subs.length > 1){
+  if(modo === "PROD" && subs.length > 1 && (!f.modos || f.modos.includes("PROD"))){
     const row = document.createElement("div");
     row.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
     subs.forEach(key=>{
@@ -1336,46 +1394,73 @@ function stockPanelEl(def){
 // ---- Pestaña "Stock": inventario por área ----
 const STOCK_AREAS = ["Reposteria","Comida de sal","Panaderia","Tortas"];   // orden pedido por Alban (3 oct); Tortas en vez de Batido
 const STOCK_OPEN = {};   // tarjetas plegadas: un clic abre el registro, otro clic lo oculta (Alban 3 oct)
-// ---- Stock de Batido (Alban 5 oct): el operador escribe cada día cuántos batidos hizo de cada tipo ----
-// Se guarda en db: formulas/BT-<tipo> = { lotes:[{fecha, cantidad, ts}] } (misma colección de los lotes).
-// En stock = lo hecho desde el primer registro − lo pedido (Batido del día) desde ese día hasta hoy.
+// ---- Stock de Batido (Alban 5 oct) ----
+// 1) En FÓRMULAS: al hacer un batido el operador elige el formato (1/2 libra, 1 libra…); la página propone
+//    cuántas tortas rinde (def.formatos), él confirma o corrige, y eso entra al stock. Si salen menos → alerta.
+// 2) En STOCK: puede corregir a mano con un CONTEO real; si no coincide con lo que el sistema esperaba → alerta.
+// db: formulas/BT-<tipo> = { lotes:[ {fecha, cantidad, esperado, formula, ts} | {tipo:"conteo", fecha, cantidad, sistema, ts} ] }
+// Stock (fin del día) = último conteo + lo hecho después − lo pedido después (hasta hoy incluido).
 const BATIDO_TIPOS = ["Aro hojaldre","Bizcochuelo 1/2 libra","Bizcochuelo 1 libra","Chocolate 1/2 libra","Chocolate 1 libra","Chocolate 2 libras",
   "Maria Luisa 1/2 libra","Maria Luisa 1 libra","Red velvet 1/4 libra","Red velvet 1/2 libra","Red velvet 1 libra","Red velvet 2 libras",
   "Joconda x 3 tapas","Zanahoria 1/2 libra","Zanahoria 1 libra"];   // orden de la hoja de stock de Alban (5 oct)
-const BAT_DRAFT = {};
+const BAT_DRAFT = {};      // conteos escritos y aún no guardados
+const BAT_SEL = {};        // formato elegido por fórmula
+const BAT_Q = {};          // cantidad escrita por fórmula
 function batCode(n){ return "BT-" + normTxt(n).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
 function batPedido(iso, n){
   const l = (((DATA[iso] || {})["Batido"] || {})["Tortas"]) || [];
   return l.reduce((t,[x,q])=> t + (x.trim() === n ? q : 0), 0);
 }
+function batEntradas(n){
+  return (LOTES[batCode(n)] || []).slice().sort((a,b)=>String(a.ts || a.fecha).localeCompare(String(b.ts || b.fecha)));
+}
 function batEstado(n){
   const hoy = hoyISO();
-  const lotes = (LOTES[batCode(n)] || []).slice().sort((a,b)=>String(a.fecha).localeCompare(String(b.fecha)));
-  const desde = lotes.length ? lotes[0].fecha : null;
-  const hecho = lotes.reduce((t,l)=>t + (+l.cantidad || 0), 0);
-  const hechoHoy = lotes.filter(l=>l.fecha === hoy).reduce((t,l)=>t + (+l.cantidad || 0), 0);
+  const ent = batEntradas(n);
+  let ic = -1; ent.forEach((e,i)=>{ if(e.tipo === "conteo") ic = i; });
+  const conteo = ic >= 0 ? ent[ic] : null;
+  const despues = ent.slice(ic + 1).filter(e=>e.tipo !== "conteo");
+  const hecho = despues.reduce((t,l)=>t + (+l.cantidad || 0), 0);
+  const hechoHoy = ent.filter(l=>l.tipo !== "conteo" && l.fecha === hoy).reduce((t,l)=>t + (+l.cantidad || 0), 0);
+  const desde = conteo ? conteo.fecha : (ent.length ? ent[0].fecha : null);
   let usado = 0;
-  if(desde) Object.keys(DATA).forEach(iso=>{ if(iso >= desde && iso <= hoy) usado += batPedido(iso, n); });
-  // Pedidos programados (Alban 5 oct): todo lo que está programado de hoy en adelante, con su detalle por día
+  if(desde) Object.keys(DATA).forEach(iso=>{ if((conteo ? iso > desde : iso >= desde) && iso <= hoy) usado += batPedido(iso, n); });
+  // Pedidos programados: todo lo que está programado de hoy en adelante, con su detalle por día
   const prog = Object.keys(DATA).sort().filter(iso=>iso >= hoy).map(iso=>[iso, batPedido(iso, n)]).filter(x=>x[1] > 0);
   const progTotal = prog.reduce((t,x)=>t + x[1], 0);
-  // "En stock" = al FINAL del día: ya descontado lo de hoy (Alban 5 oct)
-  return {lotes, stock: hecho - usado, hechoHoy, prog, progTotal};
+  return {lotes: ent, conteo, stock: (conteo ? +conteo.cantidad : 0) + hecho - usado, hechoHoy, prog, progTotal};
 }
-async function batGuardar(){
+async function batPush(n, entrada){
+  const ref = DB.doc("formulas/" + batCode(n));
+  const snap = await ref.get();
+  const lotes = ((snap.exists && snap.data().lotes) || []).slice();
+  lotes.push(Object.assign({fecha: hoyISO(), ts: new Date().toISOString()}, entrada));
+  await ref.set({lotes: lotes.slice(-300)});
+}
+// Registrar las tortas que salieron de un batido (desde la fórmula)
+async function batRegistrar(def){
   if(!DB) return;
-  const hoy = hoyISO();
+  const n = BAT_SEL[def.id], q = numAj(BAT_Q[def.id]);
+  if(!n || !(q > 0)) return;
+  const esp = (def.formatos || {})[n];
+  try{
+    await batPush(n, {cantidad: q, esperado: esp || null, formula: def.id});
+    delete BAT_SEL[def.id]; delete BAT_Q[def.id];
+  }catch(err){ console.warn("No se pudo guardar el batido:", err); }
+  render();
+}
+// Conteo manual (desde Stock): guarda lo que hay de verdad y lo que el sistema esperaba
+async function batGuardarConteos(){
+  if(!DB) return;
   for(const n of BATIDO_TIPOS){
+    if(BAT_DRAFT[n] === undefined || String(BAT_DRAFT[n]).trim() === "") continue;
     const q = numAj(BAT_DRAFT[n]);
-    if(!(q > 0)) continue;
+    if(q === null || q < 0) continue;
+    const st = batEstado(n);
     try{
-      const ref = DB.doc("formulas/" + batCode(n));
-      const snap = await ref.get();
-      const lotes = ((snap.exists && snap.data().lotes) || []).slice();
-      lotes.push({fecha: hoy, cantidad: q, ts: new Date().toISOString()});
-      await ref.set({lotes: lotes.slice(-200)});
+      await batPush(n, {tipo: "conteo", cantidad: q, sistema: st.lotes.length ? st.stock : null});
       delete BAT_DRAFT[n];
-    }catch(err){ console.warn("No se pudo guardar el batido:", err); }
+    }catch(err){ console.warn("No se pudo guardar el conteo:", err); }
   }
   render();
 }
@@ -1389,10 +1474,83 @@ async function batDeshacer(n){
     await ref.set({lotes});
   }catch(err){ console.warn("No se pudo deshacer:", err); }
 }
+// Alertas para Alban: batidos que rindieron menos y conteos que no cuadran (últimos 14 días)
+function batAlertas(){
+  const out = [], lim = diasAtras(hoyISO(), 14);
+  BATIDO_TIPOS.forEach(n=>batEntradas(n).forEach(e=>{
+    if(String(e.fecha) < lim) return;
+    if(e.tipo === "conteo"){
+      if(e.sistema !== null && e.sistema !== undefined && +e.cantidad !== +e.sistema){
+        const d = +e.cantidad - +e.sistema;
+        out.push({ts: e.ts, fecha: e.fecha, grave: d < 0, titulo: `Conteo no cuadra · ${n}`,
+          texto: `Contó <b>${fmtN(+e.cantidad)}</b>; el sistema esperaba <b>${fmtN(+e.sistema)}</b> → ${d < 0 ? "<b>faltan " + fmtN(-d) + "</b>" : "sobran " + fmtN(d)}.`});
+      }
+    } else if(e.esperado && +e.cantidad < +e.esperado){
+      out.push({ts: e.ts, fecha: e.fecha, grave: true, titulo: `Batido incompleto · ${n}`,
+        texto: `Salieron <b>${fmtN(+e.cantidad)}</b> de <b>${fmtN(+e.esperado)}</b> (${e.formula || "batido"}) → <b>faltan ${fmtN(+e.esperado - +e.cantidad)}</b>.`});
+    }
+  }));
+  return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+}
+function batAlertasEl(){
+  const al = batAlertas();
+  const wrap = document.createElement("div");
+  wrap.setAttribute("style", "margin-top:14px;");
+  wrap.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.02rem;color:#A3252B;">⚠️ Alertas de Batido <span style="font-family:'IBM Plex Mono',monospace;font-size:0.74rem;font-weight:600;">· últimos 14 días</span></div>` +
+    (al.length ? al.map(a=>{ const f = fmtDay(a.fecha); return `<div style="margin-top:8px;background:${a.grave ? "#FBE4E4" : "#FFF4D6"};border:1.5px solid ${a.grave ? "#A3252B" : "#C4791E"};border-radius:12px;padding:10px 14px;font-size:0.9rem;line-height:1.5;">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:700;color:${a.grave ? "#A3252B" : "#8A5A00"};"><span>${a.titulo}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.76rem;">${f.dow} ${f.dm}</span></div>
+        <div style="color:#2A241C;">${a.texto}</div></div>`; }).join("")
+     : `<div style="font-size:0.84rem;color:${C.inkSoft};font-style:italic;padding:8px 2px;">Sin alertas: los batidos salieron completos y los conteos cuadran.</div>`);
+  return wrap;
+}
+// Panel dentro de la fórmula: "¿qué formato hiciste?" → propuesta de tortas → guardar en stock
+function batRegistroEl(def, col){
+  const wrap = document.createElement("div");
+  wrap.setAttribute("style", `padding:14px 16px;border-bottom:1px solid ${C.line};background:${col.s};`);
+  const formatos = Object.keys(def.formatos || {});
+  const sel = BAT_SEL[def.id], esp = sel ? def.formatos[sel] : null;
+  const hoy = hoyISO();
+  const hechos = formatos.map(n=>[n, batEntradas(n).filter(e=>e.tipo !== "conteo" && e.fecha === hoy && e.formula === def.id)]).filter(x=>x[1].length);
+  wrap.innerHTML = `<div style="font-size:0.95rem;font-weight:700;">Siempre se hace la fórmula completa.</div>
+    <div style="font-size:0.88rem;margin-top:2px;">Cuando termines, registra aquí las tortas que salieron: entran a tu stock.</div>
+    <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:${C.inkSoft};margin-top:12px;">1 · ¿Qué formato hiciste?</div>
+    <div class="b-fmt" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;"></div>
+    <div class="b-cant"></div>
+    ${hechos.length ? `<div style="margin-top:12px;font-size:0.86rem;border-top:1px dashed ${col.a};padding-top:10px;">${hechos.map(([n,l])=>`<div>✅ Registrado hoy: <b>${fmtN(l.reduce((t,e)=>t + (+e.cantidad || 0), 0))} × ${n}</b> <button type="button" class="b-undo" data-n="${n}" style="font-size:0.74rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;font-family:'Work Sans',sans-serif;">deshacer</button></div>`).join("")}</div>` : ""}
+    ${!DB ? `<div style="margin-top:10px;font-size:0.8rem;color:#8A5A00;">En esta página todavía no se puede guardar. Por ahora es solo de consulta.</div>` : ""}`;
+  const fmt = wrap.querySelector(".b-fmt");
+  formatos.forEach(n=>{
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = n.replace(/^(Bizcochuelo|Chocolate|Maria Luisa|Red velvet|Zanahoria)\s+/, "");
+    b.title = n;
+    b.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;padding:11px 16px;border-radius:12px;cursor:pointer;border:2px solid ${col.a};background:${n === sel ? col.a : "#fff"};color:${n === sel ? "#fff" : col.a};`);
+    b.onclick = ()=>{ BAT_SEL[def.id] = n; const e = def.formatos[n]; BAT_Q[def.id] = e ? String(e) : ""; render(); };
+    fmt.appendChild(b);
+  });
+  if(sel){
+    const box = wrap.querySelector(".b-cant");
+    box.innerHTML = `<div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:${C.inkSoft};margin-top:14px;">2 · ¿Cuántas tortas salieron?</div>
+      <div style="font-size:0.9rem;margin-top:4px;">${esp ? `Normalmente salen <b>${fmtN(esp)}</b> de ${sel}. Si salieron otras, corrige el número.` : `Escribe cuántas salieron de ${sel}.`}</div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+        <input type="number" inputmode="numeric" min="0" ${DB ? "" : "disabled"} value="${BAT_Q[def.id] || ""}" style="width:96px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.4rem;font-weight:600;text-align:center;padding:10px 4px;border:2px solid ${col.a};border-radius:12px;background:#fff;color:${C.ink};">
+        <button type="button" class="b-ok" ${DB ? "" : "disabled"} style="flex:1;min-width:160px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:14px;border-radius:12px;border:none;background:${col.a};color:#fff;cursor:${DB ? "pointer" : "not-allowed"};opacity:${DB ? 1 : .45};">✅ Guardar en mi stock</button>
+      </div>
+      <div class="b-warn" style="display:none;margin-top:8px;font-size:0.88rem;font-weight:600;color:#A3252B;background:#FBE4E4;border:1.5px solid #A3252B;border-radius:10px;padding:8px 12px;"></div>`;
+    const inp = box.querySelector("input"), warn = box.querySelector(".b-warn");
+    const chk = ()=>{ const q = numAj(inp.value); const falta = esp && q !== null && q < esp;
+      warn.style.display = falta ? "block" : "none";
+      if(falta) warn.textContent = `Faltan ${fmtN(esp - q)}: el batido no salió completo. Queda avisado.`; };
+    inp.oninput = ()=>{ BAT_Q[def.id] = inp.value; chk(); };
+    chk();
+    box.querySelector(".b-ok").onclick = ()=>batRegistrar(def);
+  }
+  wrap.querySelectorAll(".b-undo").forEach(u=>{ u.onclick = ()=>batDeshacer(u.dataset.n); });
+  return wrap;
+}
 function batidoStockEl(col){
   const wrap = document.createElement("div");
-  const hoyF = fmtDay(hoyISO());
-  wrap.innerHTML = `<div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;padding:8px 2px 0;">Escribe cuántos batidos hiciste <b>hoy (${hoyF.dow} ${hoyF.dm})</b> de cada tipo y dale a <b>Guardar</b>. Deja en blanco lo que no hiciste.</div>`;
+  wrap.innerHTML = `<div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;padding:8px 2px 0;">Lo que haces se registra en <b>📄 Fórmulas</b> al terminar cada batido. Aquí ves lo que tienes. Si al contar no coincide, escribe la <b>cantidad real</b> y guarda el conteo.</div>`;
   const card = document.createElement("div");
   card.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-top:12px;overflow:hidden;`);
   BATIDO_TIPOS.forEach(n=>{
@@ -1402,28 +1560,32 @@ function batidoStockEl(col){
     const hoyI = hoyISO();
     const sub = [`pedidos programados: ${fmtN(st.progTotal)}`];
     if(st.prog.length) sub.push(st.prog.map(([iso,q])=>{ const f = fmtDay(iso); return `${iso === hoyI ? "hoy" : f.dow.slice(0,3).toLowerCase() + " " + f.dm} ${fmtN(q)}`; }).join(" · "));
+    const falta = DB && st.lotes.length && st.stock < st.progTotal - (st.prog.length && st.prog[0][0] === hoyI ? st.prog[0][1] : 0);
     row.innerHTML = `<div style="flex:1;min-width:0;">
         <div style="font-size:0.95rem;font-weight:600;">${n}</div>
         <div style="font-size:0.74rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${sub.join("<br>")}</div>
-        ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)} <button type="button" class="b-undo" style="font-size:0.72rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0 4px;font-family:'Work Sans',sans-serif;">deshacer</button></div>` : ""}
+        ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)}</div>` : ""}
       </div>
       <div style="text-align:right;min-width:74px;">
         <div style="font-size:0.66rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};line-height:1.2;">stock<br>fin del día</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.05rem;font-weight:600;color:${st.lotes.length && st.stock < 0 ? "#A3252B" : C.ink};">${!DB || !st.lotes.length ? "—" : fmtN(st.stock)}</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:1.15rem;font-weight:600;color:${st.lotes.length && (st.stock < 0 || falta) ? "#A3252B" : C.ink};">${!DB || !st.lotes.length ? "—" : fmtN(st.stock)}</div>
       </div>
-      <input type="number" inputmode="numeric" min="0" placeholder="0" ${DB ? "" : "disabled"} value="${BAT_DRAFT[n] || ""}" style="width:68px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;text-align:center;padding:9px 4px;border:1.5px solid ${C.line};border-radius:10px;background:${DB ? "#fff" : C.bg};color:${C.ink};">`;
+      <div style="text-align:center;">
+        <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};margin-bottom:2px;">conteo</div>
+        <input type="number" inputmode="numeric" min="0" placeholder="${DB && st.lotes.length ? fmtN(st.stock) : "0"}" ${DB ? "" : "disabled"} value="${BAT_DRAFT[n] !== undefined ? BAT_DRAFT[n] : ""}" style="width:68px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;text-align:center;padding:9px 4px;border:1.5px solid ${C.line};border-radius:10px;background:${DB ? "#fff" : C.bg};color:${C.ink};">
+      </div>`;
     const inp = row.querySelector("input");
     inp.oninput = ()=>{ BAT_DRAFT[n] = inp.value; };
-    const un = row.querySelector(".b-undo");
-    if(un) un.onclick = ()=>batDeshacer(n);
     card.appendChild(row);
   });
   const foot = document.createElement("div");
   foot.setAttribute("style", "padding:14px 16px;");
-  foot.innerHTML = `<button type="button" ${DB ? "" : "disabled"} style="width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:13px;border-radius:12px;border:none;background:${col.a};color:#fff;cursor:${DB ? "pointer" : "not-allowed"};opacity:${DB ? 1 : .45};">💾 Guardar lo que hice hoy</button>`;
-  foot.querySelector("button").onclick = ()=>batGuardar();
+  foot.innerHTML = `<button type="button" ${DB ? "" : "disabled"} style="width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:13px;border-radius:12px;border:none;background:${col.a};color:#fff;cursor:${DB ? "pointer" : "not-allowed"};opacity:${DB ? 1 : .45};">💾 Guardar conteo</button>
+    <div style="font-size:0.76rem;color:${C.inkSoft};margin-top:8px;text-align:center;">Solo se guardan las casillas que llenes. El conteo es al final del día.</div>`;
+  foot.querySelector("button").onclick = ()=>batGuardarConteos();
   card.appendChild(foot);
   wrap.appendChild(card);
+  if(navFam === "ALL" && DB) wrap.appendChild(batAlertasEl());   // las alertas son para Alban ("Ver todo")
   return wrap;
 }
 function renderStock(){
@@ -1433,7 +1595,7 @@ function renderStock(){
   head.setAttribute("style", "margin-top:20px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Stock</h2>
     <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Productos que se hacen por lote y se guardan. Cada vez que hagas uno, regístralo aquí con la cantidad real.</div>
-    ${!DB ? `<div style="margin-top:10px;font-size:0.84rem;border:1.5px solid #C4791E;background:#FFF4D6;color:#8A5A00;border-radius:12px;padding:10px 14px;">El stock solo se puede registrar en la versión interna del reporte (la que abre con la cuenta de Parisina). En esta página no se guardan datos.</div>` : ""}`;
+    ${!DB ? `<div style="margin-top:10px;font-size:0.84rem;border:1.5px solid #C4791E;background:#FFF4D6;color:#8A5A00;border-radius:12px;padding:10px 14px;">Por ahora el stock es solo de consulta: en esta página todavía no se puede guardar.</div>` : ""}`;
   main.appendChild(head);
   const areas = [...STOCK_AREAS, ...GROUP_ORDER.filter(g=>!STOCK_AREAS.includes(g) && (g === "Batido" || STOCK_DEFS.some(d=>d.group===g) || (famGroups() && enFam(g))))].filter(enFam);
   areas.forEach(area=>{
@@ -1535,11 +1697,8 @@ function renderFormulas(){
         <button type="button" class="ir-stock" style="font-size:0.82rem;font-weight:700;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">📦 Registrar lote / ver stock</button>
       </div>`;
     } else if(def.lote){
-      // Fórmula de lote completo (batidos): el inventario se lleva en tortas, en Stock de Batido.
-      stockHTML = `<div style="padding:12px 16px;border-bottom:1px solid ${C.line};display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span style="font-size:0.86rem;"><b>Siempre se hace la fórmula completa.</b> Después, registra las tortas que salieron.</span>
-        <button type="button" class="ir-stock" style="font-size:0.82rem;font-weight:700;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">📦 Stock de ${GROUP_LABEL[def.group] || def.group}</button>
-      </div>`;
+      // Fórmula de lote completo (batidos): se registra aquí cuántas tortas salieron (batRegistroEl).
+      stockHTML = `<div class="bat-reg"></div>`;
     } else if(esStock){
       stockHTML = `<div style="padding:12px 16px;border-bottom:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};font-style:italic;">El registro de lotes y el stock solo funcionan en la versión interna del reporte (la que abre con la cuenta de Parisina). Aquí se consulta la receta.</div>`;
     }
@@ -1575,6 +1734,8 @@ function renderFormulas(){
     setOpen(!!FORM_OPEN[def.id]);
     card.querySelector(".f-head").onclick = ()=>{ FORM_OPEN[def.id] = !FORM_OPEN[def.id]; setOpen(FORM_OPEN[def.id]); };
 
+    const br = card.querySelector(".bat-reg");
+    if(br) br.appendChild(batRegistroEl(def, PALETTE[def.group] || PALETTE.ALL));
     const bs = card.querySelector(".ir-stock");
     if(bs) bs.onclick = (e)=>{ e.stopPropagation(); activeCat = "STOCK"; render(); window.scrollTo(0,0); };
     main.appendChild(card);
@@ -2208,6 +2369,9 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
+
+
 
 
 </body></html>
