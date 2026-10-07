@@ -2481,7 +2481,8 @@ function renderRotulos(main, col){
   main.appendChild(ayuda);
 }
 // ---- PEDIDOS (Alban 6 oct): todas las comandas del día en orden de entrega, con asignación a mensajero ----
-let PED_FILTRO = "T";
+let PED_FILTRO = "T", PED_Q = "";   // PED_Q: buscador de Pedidos (Alban 7 oct)
+function pedNorm(t){ return String(t == null ? "" : t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
 function renderPedidos(main, col){
   const iso = activeDate, {r, rec, sinDir} = logRutas(iso);
   const asig = {};
@@ -2503,6 +2504,22 @@ function renderPedidos(main, col){
     fil.appendChild(b);
   });
   main.appendChild(fil);
+  // ---- Buscador (Alban 7 oct): escribe "red velvet" y quedan solo los pedidos que lo llevan ----
+  const prodTot = {}, clis = new Set();
+  todos.forEach(p=>{ (p.todo || p.items || []).forEach(([c,nm,q])=>{ const k = nm.trim(); prodTot[k] = (prodTot[k] || 0) + Number(q || 0); }); if(p.cli) clis.add(p.cli); });
+  const sug = [...Object.keys(prodTot).map(n=>({t:n, d:fmtN(prodTot[n]) + " unid", k:"p"})), ...[...clis].map(n=>({t:n, d:"cliente", k:"c"}))];
+  const bus = document.createElement("div");
+  bus.setAttribute("style", "margin-top:12px;position:relative;");
+  bus.innerHTML = `<div style="display:flex;align-items:center;gap:10px;background:#fff;border:2px solid ${col.a};border-radius:14px;padding:4px 6px 4px 14px;box-shadow:0 2px 10px rgba(140,90,43,.12);">
+      <span style="font-size:1.15rem;">🔎</span>
+      <input type="text" enterkeyhint="search" class="pq" autocomplete="off" placeholder="Buscar producto, cliente o # de pedido…" style="flex:1;min-width:0;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 0;background:transparent;color:${C.ink};">
+      <button type="button" class="px" style="display:none;font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;border:none;background:${C.bg};color:${col.a};border-radius:10px;padding:8px 12px;cursor:pointer;">✕ Borrar</button>
+    </div>
+    <div class="ps" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;background:#fff;border:1px solid ${C.line};border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.14);overflow:hidden;"></div>
+    <div class="pr" style="display:none;margin-top:10px;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:600;color:${col.a};background:${col.s};border-radius:10px;padding:9px 14px;"></div>`;
+  main.appendChild(bus);
+  const qIn = bus.querySelector(".pq"), qX = bus.querySelector(".px"), qS = bus.querySelector(".ps"), qR = bus.querySelector(".pr");
+  qIn.value = PED_Q;
   const lista = todos.filter(p=> PED_FILTRO === "T" || (PED_FILTRO === "R" ? p.rec : asig[p.n] && String(asig[p.n].m) === PED_FILTRO));
   if(!lista.length){ const v = document.createElement("div"); v.setAttribute("style", `font-size:0.9rem;color:${C.inkSoft};font-style:italic;padding:16px 4px;`); v.textContent = "No hay pedidos aquí."; main.appendChild(v); return; }
   const din = n=> "$" + Math.round(Number(n) || 0).toLocaleString("es-CO");
@@ -2513,7 +2530,7 @@ function renderPedidos(main, col){
     const pagoPend = /aprobar/i.test(p.pago || "");
     const card = document.createElement("div");
     card.setAttribute("style", `background:#fff;border:1px solid ${C.line};border-radius:6px;box-shadow:0 2px 8px rgba(60,40,20,.10);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#222;display:flex;flex-direction:column;`);
-    const items = (p.todo || p.items || []).map(([c,nm,q])=>`<div style="display:flex;gap:8px;${/^empaque/i.test(nm) ? "color:" + col.a + ";font-weight:700;" : ""}"><span style="min-width:22px;text-align:right;">${fmtN(q)}</span><span style="flex:1;">${logEsc(nm).toUpperCase()}</span><span style="color:#777;">${logEsc(c)}</span></div>`).join("");
+    const items = (p.todo || p.items || []).map(([c,nm,q])=>`<div class="pi" data-n="${logEsc(pedNorm(nm + " " + c))}" data-q="${Number(q) || 0}" style="border-radius:4px;display:flex;gap:8px;${/^empaque/i.test(nm) ? "color:" + col.a + ";font-weight:700;" : ""}"><span style="min-width:22px;text-align:right;">${fmtN(q)}</span><span style="flex:1;">${logEsc(nm).toUpperCase()}</span><span style="color:#777;">${logEsc(c)}</span></div>`).join("");
     const estado = p.rec ? `<span style="color:#2E6B3A;">🏠 Recoge en Parisina</span>`
       : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>`
       : a ? `<span style="color:${col.a};">🛵 Mensajero ${a.m} · parada ${a.i}</span>` : "";
@@ -2542,9 +2559,55 @@ function renderPedidos(main, col){
         ${!p.rec && !sd ? [1,2].map(k=>`<button type="button" data-m="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === k ? col.a : "#fff"};color:${a && a.m === k ? "#fff" : col.a};cursor:pointer;">🛵 ${k}</button>`).join("") : ""}
       </div>`;
     card.querySelectorAll("button[data-m]").forEach(b=>{ b.onclick = ()=>logMover(iso, p.n, Number(b.dataset.m)); });
+    card.dataset.s = pedNorm([p.n, String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."), p.cod, p.cli, p.para, p.dir, p.comp, p.barrio, p.nota].concat((p.todo || p.items || []).map(x=>x[1] + " " + x[0])).join(" | "));
+    card.dataset.cli = pedNorm([p.n, p.cod, p.cli, p.para].join(" "));
     wrap.appendChild(card);
   });
   main.appendChild(wrap);
+  const nada = document.createElement("div");
+  nada.setAttribute("style", `display:none;font-size:0.95rem;color:${C.inkSoft};font-style:italic;padding:18px 4px;`);
+  main.appendChild(nada);
+  // filtra en vivo sin redibujar (así no se pierde lo que se está escribiendo)
+  const aplicar = ()=>{
+    const q = pedNorm(PED_Q), pals = q ? q.split(" ") : [];
+    let nPed = 0, uni = 0;
+    wrap.querySelectorAll(":scope > div").forEach(card=>{
+      const ok = pals.every(w=>card.dataset.s.includes(w));
+      card.style.display = ok ? "" : "none";
+      let marcadas = 0;
+      card.querySelectorAll(".pi").forEach(li=>{
+        const hit = q && pals.every(w=>li.dataset.n.includes(w));
+        li.style.background = hit ? "#FFE58A" : "";
+        li.style.fontWeight = hit ? "700" : "";
+        if(hit && ok){ marcadas++; uni += Number(li.dataset.q) || 0; }
+      });
+      if(ok) nPed++;
+    });
+    qX.style.display = q ? "" : "none";
+    nada.style.display = q && !nPed ? "" : "none";
+    nada.textContent = `Ningún pedido de este día lleva “${PED_Q}”.`;
+    if(q && nPed){
+      qR.style.display = "";
+      qR.textContent = `🔎 ${nPed} ${nPed === 1 ? "pedido" : "pedidos"}` + (uni ? ` · ${fmtN(uni)} unid de “${PED_Q}”` : "");
+    } else qR.style.display = "none";
+  };
+  const sugerir = ()=>{
+    const q = pedNorm(qIn.value);
+    if(!q){ qS.style.display = "none"; return; }
+    const pals = q.split(" ");
+    const m = sug.filter(x=>{ const t = pedNorm(x.t); return pals.every(w=>t.includes(w)) && t !== q; })
+      .sort((a,b)=> (pedNorm(a.t).startsWith(q) ? 0 : 1) - (pedNorm(b.t).startsWith(q) ? 0 : 1) || (a.k === b.k ? 0 : a.k === "p" ? -1 : 1) || a.t.localeCompare(b.t)).slice(0, 8);
+    if(!m.length){ qS.style.display = "none"; return; }
+    qS.innerHTML = m.map((x,i)=>`<button type="button" data-i="${i}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;${i ? "border-top:1px solid " + C.line + ";" : ""}background:#fff;padding:11px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span>${x.k === "p" ? "🧁" : "👤"}</span><span style="flex:1;">${logEsc(x.t)}</span><span style="font-size:0.78rem;color:${C.inkSoft};">${logEsc(x.d)}</span></button>`).join("");
+    qS.style.display = "";
+    qS.querySelectorAll("button").forEach(b=>{ b.onmousedown = e=>e.preventDefault(); b.onclick = ()=>{ qIn.value = PED_Q = m[Number(b.dataset.i)].t; qS.style.display = "none"; aplicar(); }; });
+  };
+  qIn.oninput = ()=>{ PED_Q = qIn.value; aplicar(); sugerir(); };
+  qIn.onfocus = sugerir;
+  qIn.onblur = ()=>setTimeout(()=>{ qS.style.display = "none"; }, 150);
+  qIn.onkeydown = e=>{ if(e.key === "Enter"){ qS.style.display = "none"; qIn.blur(); } if(e.key === "Escape"){ qIn.value = PED_Q = ""; aplicar(); sugerir(); } };
+  qX.onclick = ()=>{ qIn.value = PED_Q = ""; aplicar(); sugerir(); qIn.focus(); };
+  aplicar();
 }
 function renderLogistica(){
   const main = document.getElementById("main");
