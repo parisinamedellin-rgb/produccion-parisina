@@ -880,7 +880,8 @@ function avisosAdelanto(area, hoy){
                 estado: limite < hoy ? "atrasado" : (limite === hoy ? "hoy" : "futuro")});
     });
   });
-  return out.sort((x,y)=> x.limite < y.limite ? -1 : x.limite > y.limite ? 1 : 0);
+  // Alban 7 oct: el aviso sale solo desde el día hábil anterior (no días antes)
+  return out.filter(x=>x.limite <= hoy).sort((x,y)=> x.limite < y.limite ? -1 : x.limite > y.limite ? 1 : 0);
 }
 function renderAdelantos(){
   const el = document.getElementById("adelantos");
@@ -1018,7 +1019,7 @@ function renderCats(){
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🚚 Entregas"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos"]].filter(t=>!f.modos || f.modos.includes(t[0])).forEach(([key,label],i)=>{
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🚚 Entregas"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos"]].filter(t=>f.modos ? f.modos.includes(t[0]) : !LOGM.includes(t[0]))   /* Alban 7 oct: Pedidos/Entregas/Cajas/Rótulos solo en Logística */.forEach(([key,label],i)=>{
     const on = key === modo;
     const btn = document.createElement("button");
     btn.textContent = label;
