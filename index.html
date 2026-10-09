@@ -2508,6 +2508,19 @@ function logUnitVol(cod){
   return best;
 }
 // Sugerencia de cajas para un pedido → {cajas:[caja], rotulos:[{cod,name,q}], falta:[name]}
+let _TORTAS_SET = null;
+function esTortaRot(iso, cod, nm){
+  if(/tres\s+leches/i.test(nm)) return true;
+  if(!_TORTAS_SET){
+    _TORTAS_SET = new Set();
+    Object.values(DATA).forEach(day=>{ ["Tortas","Batido"].forEach(g=>Object.values((day || {})[g] || {}).forEach(its=>its.forEach(([n])=>_TORTAS_SET.add(String(n).trim().toLowerCase())))); });
+  }
+  const nombres = [nm];
+  if(typeof LOGISTICA !== "undefined" && LOGISTICA.prod && LOGISTICA.prod[cod]) nombres.push(LOGISTICA.prod[cod][0]);
+  if(nombres.some(n=>_TORTAS_SET.has(String(n).trim().toLowerCase()))) return true;
+  // tamaños de torta en el nombre (1 Libra, 1/2 lb, 1/4 lb) sin ser "mini"
+  return /\b(1\s*libra|1\/2\s*l(ib|b)|1\/4\s*l(ib|b))/i.test(nm) && !/mini/i.test(nm);
+}
 function logEmpaque(p, iso){
   const items = p.items.filter(it=>!/jugo|bebida/i.test(it[1]) || logUnitVol(it[0]));
   const falta = [], conCap = [];
@@ -2538,6 +2551,8 @@ function logEmpaque(p, iso){
       if(conCap.length === 1 && conCap[0][0] === cod) k = cajas.length;
       else { const uv = logUnitVol(cod); k = uv ? Math.max(1, Math.ceil(q * uv / CAJAS[CAJAS.length-1].vol)) : 1; }
     }
+    // Alban 9 oct: cada torta (y cada tres leches) va en su propia caja → un rótulo por unidad
+    if(iso && esTortaRot(iso, cod, name)){ for(let i = 0; i < Math.round(q); i++) rotulos.push({cod, name, q: 1, cli: p.cli, n: p.n}); return; }
     const base = Math.floor(q / k), extra = q - base * k;
     for(let i = 0; i < k; i++) rotulos.push({cod, name, q: base + (i < extra ? 1 : 0), cli: p.cli, n: p.n});
   });
@@ -2701,32 +2716,61 @@ function pedNorm(t){ return String(t == null ? "" : t).normalize("NFD").replace(
 // Se guarda en estado/EMP-<fecha> = {emp:{"<pedido>|<producto>":true}, bul:{"<pedido>":{b,s}}, env:{"<pedido>":true}}
 let EMP = {};   // iso -> {emp, bul, env}
 const EMP_X_BANDEJA = 10;   // croissant / pastel: 10 por bandeja
-function empDia(iso){ return EMP[iso] || (EMP[iso] = {emp:{}, bul:{}, env:{}, prep:{}}); }
+function empDia(iso){ return EMP[iso] || empVista(iso); }
 function empKey(n, nm){ return String(n) + "|" + String(nm).trim(); }
+// Arreglo 9 oct (Alban: "chuleo en Por empacar y desaparece, reaparece"): antes cada toque leía y guardaba
+// el día por su cuenta, y un refresco del servidor (o otro toque al mismo tiempo) pisaba lo recién marcado.
+// Ahora: EMP_SRV = lo último del servidor; EMP_PEND = cambios de ESTE celular aún sin confirmar; lo que se ve
+// (EMP) = servidor + pendientes encima. Los guardados de un mismo día van en fila, uno detrás de otro.
+let EMP_SRV = {};
+const EMP_PEND = {};     // iso -> [{fn}]
+const EMP_COLA = {};     // iso -> promesa de la fila de guardado
+function empVacio(x){ x = x || {}; return {emp: Object.assign({}, x.emp || {}), bul: Object.assign({}, x.bul || {}), env: Object.assign({}, x.env || {}), prep: Object.assign({}, x.prep || {})}; }
+function empVista(iso){
+  const d = empVacio(EMP_SRV[iso]);
+  (EMP_PEND[iso] || []).forEach(p=>p.fn(d));
+  EMP[iso] = d;
+  return d;
+}
+function empRepintar(){ if(LOGM.includes(activeCat) || activeCat === "EMPAQUE" || activeCat === "Panaderia") render(); }
 function bootEmp(){
   if(!DB) return;
   DB.collection("estado").onSnapshot(snap=>{
     const next = {};
-    snap.docs.forEach(d=>{ if(String(d.id).indexOf("EMP-") === 0){ const x = d.data() || {}; next[d.id.slice(4)] = {emp: x.emp || {}, bul: x.bul || {}, env: x.env || {}, prep: x.prep || {}}; } });
-    if(JSON.stringify(next) === JSON.stringify(EMP)) return;
-    EMP = next;
-    if(LOGM.includes(activeCat) || activeCat === "EMPAQUE") render();
+    snap.docs.forEach(d=>{ if(String(d.id).indexOf("EMP-") === 0) next[d.id.slice(4)] = empVacio(d.data()); });
+    if(JSON.stringify(next) === JSON.stringify(EMP_SRV)) return;
+    EMP_SRV = next;
+    const antes = JSON.stringify(EMP);
+    const isos = new Set([...Object.keys(next), ...Object.keys(EMP_PEND)]);
+    EMP = {}; isos.forEach(iso=>empVista(iso));
+    if(JSON.stringify(EMP) !== antes) empRepintar();
   }, err=>console.warn("No se pudo leer empaque:", err));
 }
-// guarda solo el cambio (lee lo del servidor y le aplica encima) para no pisar lo de otro celular
-async function empGuardar(iso, cambiar){
-  const d = empDia(iso); cambiar(d); render();
-  if(!DB) return true;
-  try{
+function empGuardar(iso, cambiar){
+  (EMP_PEND[iso] || (EMP_PEND[iso] = [])).push({fn: cambiar});
+  empVista(iso); render();
+  if(!DB) return Promise.resolve(true);
+  const paso = async ()=>{
+    const lote = (EMP_PEND[iso] || []).slice();
+    if(!lote.length) return;
     const ref = DB.doc("estado/EMP-" + iso);
-    const sn = await ref.get();
-    const x = (sn.exists && sn.data()) || {};
-    const srv = {emp: Object.assign({}, x.emp || {}), bul: Object.assign({}, x.bul || {}), env: Object.assign({}, x.env || {}), prep: Object.assign({}, x.prep || {})};
-    cambiar(srv);
-    await ref.set(srv);
-    EMP[iso] = srv; render();
-    return true;
-  }catch(e){ console.warn("No se pudo guardar empaque:", e); return false; }
+    for(let intento = 0; intento < 3; intento++){
+      try{
+        const sn = await ref.get();
+        const srv = empVacio((sn.exists && sn.data()) || {});
+        lote.forEach(p=>p.fn(srv));
+        await ref.set(srv);
+        EMP_SRV[iso] = srv;
+        EMP_PEND[iso] = (EMP_PEND[iso] || []).filter(p=>!lote.includes(p));
+        const antes = JSON.stringify(EMP[iso]);
+        empVista(iso);
+        if(JSON.stringify(EMP[iso]) !== antes) empRepintar();
+        return;
+      }catch(e){ console.warn("No se pudo guardar empaque (reintento):", e); await new Promise(r=>setTimeout(r, 1500 * (intento + 1))); }
+    }
+  };
+  EMP_COLA[iso] = (EMP_COLA[iso] || Promise.resolve()).then(paso, paso);
+  return EMP_COLA[iso].then(()=>true, ()=>false);
 }
 // ¿dónde está este producto en la producción del día? -> [[grupo, sub, nombreExacto]]
 let _ubicCache = {iso:null, ref:null, map:{}};
@@ -3034,8 +3078,6 @@ function renderTablero(main, col){
     });
     return c;
   };
-  cols.appendChild(columna(`📦 Por empacar · ${nEmp}`, EST_INFO.EMP, porEmp, i=>!i.emp && i.prod !== "falta", true, "Nada por empacar: lo hecho ya está empacado."));
-  cols.appendChild(columna(`🔴 Esperando producción · ${nProd}`, EST_INFO.PROD, porProd, i=>i.prod === "falta", false, "Producción ya hizo todo lo de hoy."));
   // listos para enviar
   const L = document.createElement("div");
   L.setAttribute("style", `background:${C.paper};border:1.5px solid ${EST_INFO.LISTO.c};border-radius:14px;overflow:hidden;`);
@@ -3058,6 +3100,8 @@ function renderTablero(main, col){
     L.appendChild(e);
   }
   cols.appendChild(L);
+  // Alban 9 oct: izquierda Listos para enviar · derecha Por empacar (se quitó "Esperando producción")
+  cols.appendChild(columna(`📦 Por empacar · ${nEmp}`, EST_INFO.EMP, porEmp, i=>!i.emp && i.prod !== "falta", true, "Nada por empacar: lo hecho ya está empacado."));
 }
 // mensajero asignado (1 / 2) según Entregas
 function asignacion(iso, n){
