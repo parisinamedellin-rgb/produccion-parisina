@@ -3,6 +3,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -76,7 +77,7 @@ const SUB_ORDER = {
   "Tortas": ["Por mayor - PM","PM Marcada","Particular","Ópera","Ópera · Buttercream de café","Ópera · Ganache de chocolate","Ópera · Jarabe de café","Ópera · Glace de chocolate"],
   "Topping": ["Topping"],
   "Otro": ["Otro"],
-  "Comida de sal": ["Mise en place","Quiche","Quiche congeladas","Caja especial","Lasañas y plato fuerte","Crema","Sandwich & Wraps","Bebida","Parfait de frutas","Almuerzo","Relleno panadería salado","Bombita de atún","Adicional"],
+  "Comida de sal": ["Mise en place","Quiche","Quiche congeladas","Caja especial","Lasañas y plato fuerte","Crema","Crema de tomate","Sandwich & Wraps","Bebida","Parfait de frutas","Almuerzo","Relleno panadería salado","Bombita de atún","Adicional"],
   "Reposteria": ["Caja especial","Dulceria","Galletas","Tartas","Cookies red velvet","Galletas de macadamia","Galletas de avena","Galletas de chocolate","Galletas de mantequilla","Mise en Place Dulcería"]
 };
 
@@ -648,6 +649,79 @@ const FORMULA_DEFS = [
         ["Mantequilla (al clima)", 170, "g"]]},
       {title:"Paso 3 — Unificar los huevos — NO BATIR", items:[
         ["Huevos AA", 2, "unid"]]},
+    ]}
+  },
+  // ---- COMIDA DE SAL: tomate (Recetario, validadas 09/10/26; puente 9 oct) ----
+  {
+    // "Crema de Tomate" — CS-CREMA-DE-TOMATE. Alban 9 oct: STOCK, lote de 5 envases (×5 = 1.250 g),
+    // pero se puede escoger cuántos envases hacer (ajustable: la receta se recalcula en Fórmulas y en el registro).
+    id: "Crema de tomate", code: "CS-CREMA-DE-TOMATE", group: "Comida de sal", unit: "envases",
+    channels: { total: [ {group:"Comida de sal", sub:"Crema", name:"Crema de tomate - 250 gr", coef:1} ] },
+    outputs: [ {label:"Crema de tomate (envases)", calc: ch=>ch.total} ],
+    titleFmt: v => `${fmtN(v)} envases de crema de tomate`,
+    stock: {batch: 5, unit: "envases", alertPct: 20, opciones: [1,2,3,4,5,6,7,8,9,10,12,15]},
+    ajustable: {min: 1, max: 30, paso: 1},
+    note: "1 envase = 250 g. Se hace 2 días antes. Hervir agua con los vasos y usar la misma agua para pelar el tomate (GUARDAR el agua para la crema); secar los vasos en el horno unos minutos. ⚠ Por definir: si el tomate de la fórmula es antes o después de pelar (si es después, comprar 175 g de tomate crudo por envase).",
+    recipe: { per: 5, of: "total", steps: [
+      {title:"Pasos 2 y 3 — Pelar y quitar semillas; se sofríe después de la cebolla y el ajo", items:[
+        ["Tomate", 500, "g"]]},
+      {title:"Va en el paso 4 — del agua de pelar los tomates (guardada en el paso 1)", items:[
+        ["Agua", 575, "ml"]]},
+      {title:"Paso 3 — Sofreír primero", items:[
+        ["Cebolla blanca", 175, "g"], ["Ajo (≈ 1 diente)", 1, "g"]]},
+      {title:"Paso 4 — Con el agua, la sal, la pimienta y el orégano; hervir a fuego bajo 5 a 10 min. Licuar en la olla con el mixer: que queden pedazos", items:[
+        ["Azúcar común", 20, "g"]]},
+      {title:"Paso 5 — Agregar a la mezcla", items:[
+        ["Pasta de tomate", 150, "g"], ["Crema de leche", 100, "ml"]]},
+      {title:"Va en el paso 4", items:[
+        ["Sal", 0, "g"], ["Pimienta", 0, "g"], ["Orégano", 0, "g"]]},
+      {title:"Paso 6 — Servir en los envases de vidrio, tapar y voltear el envase", items:[
+        ["Envase de vidrio", 5, "unid"]]},
+    ]}
+  },
+  {
+    // "Salsa Napolitana Cocida (lasaña)" — SE-SALSA-NAPOLITANA. SOLO lasaña de carne. Alban 9 oct: STOCK por lote (g).
+    // Sin canales: no baja sola hasta saber cuántos gramos lleva cada lasaña.
+    id: "Salsa napolitana (lasaña)", code: "SE-SALSA-NAPOLITANA", group: "Comida de sal", unit: "g",
+    channels: { total: [] }, outputs: [],
+    stock: {batch: 1330, unit: "g", alertPct: 20},
+    ajustable: {base: "Tomate pelado", min: 100, max: 20000, paso: 100},   // Alban 9 oct: se escribe cuánto tomate pelado hay
+    note: "Solo para lasaña de carne. Se hace 2 días antes. Sin albahaca (cocida y congelada se oscurece). Enfriar, poner en moldes de silicona grandes y congelar. Escribe arriba cuánto tomate pelado tienes y la fórmula se calcula sola. ⚠ Falta el peso final después de cocinar y licuar. Cuando se sepan los gramos por lasaña, el stock bajará solo al chulear las lasañas de carne.",
+    recipe: { per: 1330, of: "total", steps: [
+      {title:"Pasos 1 y 3 — Pelar y despepar con agua caliente; se agregan en cuartos después del salteado", items:[
+        ["Tomate pelado", 900, "g"]]},
+      {title:"Paso 2 — Saltear en cubos grandes", items:[
+        ["Pimentón rojo", 70, "g"], ["Cebolla blanca", 70, "g"]]},
+      {title:"Paso 4 — Con el orégano y la sal; cocinar 5 minutos", items:[
+        ["Azúcar común", 30, "g"], ["Agua (del escaldado)", 160, "ml"]]},
+      {title:"Paso 4 — Al final, hasta lograr el color. Retirar y licuar con la licuadora invertida", items:[
+        ["Pasta de tomate", 100, "g"]]},
+      {title:"Va en el paso 4", items:[
+        ["Orégano", 0, "g"], ["Sal", 0, "g"], ["Pimienta", 0, "g"]]},
+    ]}
+  },
+  {
+    // "Tomate Pelado (base común)" — SE-TOMATE-PELADO. Solo receta (base de la crema y las dos salsas).
+    id: "Tomate pelado", code: "SE-TOMATE-PELADO", group: "Comida de sal", unit: "g",
+    channels: { total: [] }, outputs: [],
+    ajustable: {min: 100, max: 20000, paso: 100, pregunta: "¿Cuántos g de tomate pelado necesitas?"},
+    note: "Rendimiento: 854 g de tomate (8 unidades) = 490 g sin piel ni pepa (merma 43 %). Por cada 1 kg de tomate pelado que se necesite, comprar 1,75 kg de tomate crudo. GUARDAR el agua de escaldar: se usa en la salsa cocida y en la crema de tomate.",
+    recipe: { per: 490, of: "total", steps: [
+      {title:"Calentar agua. Marcar una cruz en la base y escaldar 20-30 s; pasar a agua fría. Quitar la piel y despepar", items:[
+        ["Tomate crudo", 854, "g"]]},
+    ]}
+  },
+  {
+    // "Salsa de Pizza Napoletana (Marzzana)" — SE-SALSA-PIZZA. Alban 9 oct: también va en la página. Solo receta.
+    id: "Salsa de pizza (La Marzzana)", code: "SE-SALSA-PIZZA", group: "Comida de sal", unit: "g",
+    channels: { total: [] }, outputs: [],
+    ajustable: {base: "Tomate pelado", min: 100, max: 20000, paso: 100},   // Alban 9 oct
+    note: "Para La Marzzana. Salsa CRUDA: NO cocinar; NO lleva azúcar, pasta de tomate, cebolla ni pimentón. Dura 2-3 días en nevera; NO congelar. El tomate seco en polvo arranca en 2 % (20 g por kilo de tomate pelado): si sabe a tomate secado al sol, bajarlo; si el color sigue pálido, subirlo hasta 3 %. Sal 1 % del tomate, ajustar al gusto. Albahaca en hoja fresca y aceite de oliva van sobre la pizza, nunca en la salsa.",
+    recipe: { per: 1030, of: "total", steps: [
+      {title:"Paso 1 — Triturar a mano o con la licuadora a pulsos cortos. NO licuar liso: que quede con pedazos", items:[
+        ["Tomate pelado", 1000, "g"]]},
+      {title:"Paso 2 — Agregar y mezclar bien. Reposar 10 minutos, volver a mezclar y probar. Refrigerar", items:[
+        ["Sal", 10, "g"], ["Tomate seco en polvo", 20, "g"]]},
     ]}
   },
   // ---- ÓPERA (Recetario, validadas 08/10/26; puente 8 oct) ----
@@ -1612,8 +1686,10 @@ function stockPanelEl(def){
           <div style="font-weight:700;font-size:0.9rem;color:${C.accent};margin-bottom:8px;">✅ Registrar lo que hice hoy</div>
           <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:3px;">¿Qué fórmula usaste?</label>
           <select class="lote-mult" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:9px 10px;border:1px solid ${C.line};border-radius:8px;background:${C.paper};color:${C.ink};width:100%;box-sizing:border-box;">
-            ${[[0.25,"Dividida por 4"],[0.5,"Dividida por 2 (media fórmula)"],[1,"La fórmula tal cual (×1)"],[1.5,"Multiplicada por 1,5"],[2,"Multiplicada por 2"],[3,"Multiplicada por 3"],[4,"Multiplicada por 4"]]
-              .map(([v,l])=>`<option value="${v}" ${v === 1 ? "selected" : ""}>${l} → debería dar ${fmtN(Math.round(def.stock.batch*v*10)/10)} ${def.stock.unit || "g"}</option>`).join("")}
+            ${(def.stock.opciones
+                ? def.stock.opciones.map(n=>[n/def.stock.batch, `Fórmula para ${fmtN(n)} ${n === 1 && /s$/.test(def.stock.unit || "") ? def.stock.unit.slice(0, -1) : (def.stock.unit || "g")}${n === def.stock.batch ? " (la de siempre)" : ""}`])
+                : [[0.25,"Dividida por 4"],[0.5,"Dividida por 2 (media fórmula)"],[1,"La fórmula tal cual (×1)"],[1.5,"Multiplicada por 1,5"],[2,"Multiplicada por 2"],[3,"Multiplicada por 3"],[4,"Multiplicada por 4"]])
+              .map(([v,l])=>`<option value="${v}" ${v === 1 ? "selected" : ""}>${l}${def.stock.opciones ? "" : ` → debería dar ${fmtN(Math.round(def.stock.batch*v*10)/10)} ${def.stock.unit || "g"}`}</option>`).join("")}
           </select>
           <label style="display:block;font-size:0.8rem;font-weight:600;margin:10px 0 3px;">¿Cuánto salió de verdad?</label>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -1923,6 +1999,13 @@ let FORM_Q = "";
 const FORM_OPEN = {};
 const RECIPE_DEFS = FORMULA_DEFS.filter(d => d.recipe);
 function normTxt(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
+const FORM_N = {};
+// Cantidad de referencia de una fórmula ajustable: el ingrediente base (p. ej. tomate pelado) o el rendimiento
+function ajBase(def){
+  const b = def.ajustable && def.ajustable.base;
+  if(b){ for(const st of def.recipe.steps) for(const it of st.items) if(it[0] === b) return it[1]; }
+  return def.recipe.per;
+}   // cantidad escogida en las fórmulas ajustables (Alban 9 oct)
 function renderFormulas(){
   const main = document.getElementById("main");
   main.innerHTML = "";
@@ -1989,8 +2072,16 @@ function renderFormulas(){
       </div>
       <div class="f-body" style="display:none;border-top:1px solid ${C.line};">
         ${stockHTML}
-        <div style="padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
-        ${pasos}
+        ${def.ajustable ? `<div class="f-ajus" style="padding:12px 16px;border-bottom:1px solid ${C.line};display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:0.88rem;font-weight:600;flex:1 1 160px;">${def.ajustable.pregunta || (def.ajustable.base ? `¿Cuántos g de ${def.ajustable.base.toLowerCase()} tienes?` : `¿Cuántos ${unit} vas a hacer?`)}</span>
+          <span style="display:flex;align-items:center;gap:10px;">
+            <button type="button" class="fa-menos" aria-label="Menos" style="-webkit-appearance:none;appearance:none;width:40px;height:40px;padding:0;border-radius:10px;border:1.5px solid ${C.accent};background:${C.accentSoft};color:${C.accent};font-family:Arial,Helvetica,sans-serif;font-size:1.5rem;font-weight:700;line-height:1;cursor:pointer;">−</button>
+            <input class="fa-n" type="number" inputmode="numeric" min="${def.ajustable.min}" max="${def.ajustable.max}" step="any" value="${FORM_N[def.id] || ajBase(def)}" onclick="event.stopPropagation()" style="-webkit-appearance:none;appearance:none;-moz-appearance:textfield;width:${def.ajustable.base || def.ajustable.pregunta ? "5.2em" : "3.2em"};padding:6px 4px;border-radius:10px;border:1.5px solid ${C.line};background:#fff;font-family:'IBM Plex Mono',monospace;font-size:1.15rem;font-weight:600;text-align:center;color:${C.ink};">
+            <button type="button" class="fa-mas" aria-label="Más" style="-webkit-appearance:none;appearance:none;width:40px;height:40px;padding:0;border-radius:10px;border:1.5px solid ${C.accent};background:${C.accentSoft};color:${C.accent};font-family:Arial,Helvetica,sans-serif;font-size:1.5rem;font-weight:700;line-height:1;cursor:pointer;">+</button>
+          </span>
+        </div>` : ""}
+        <div style="${def.ajustable ? "display:none;" : ""}padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
+        <div class="f-pasos">${pasos}</div>
         ${def.note ? `<div style="padding:14px 16px;border-top:1px solid ${C.line};">${notaHTML(def.note)}</div>` : ""}
         ${usaEn.length ? `<div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
           <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Se usa en</div>
@@ -2007,6 +2098,29 @@ function renderFormulas(){
     setOpen(!!FORM_OPEN[def.id]);
     card.querySelector(".f-head").onclick = ()=>{ FORM_OPEN[def.id] = !FORM_OPEN[def.id]; setOpen(FORM_OPEN[def.id]); };
 
+    if(def.ajustable){
+      // Alban 9 oct: la fórmula sale para la cantidad que el operador escoja (por defecto, la de siempre)
+      const fp = card.querySelector(".f-pasos"), fn = card.querySelector(".fa-n");
+      const pintarN = ()=>{
+        const b0 = ajBase(def), n = FORM_N[def.id] || b0, k = n / b0;
+        if(document.activeElement !== fn) fn.value = n;
+        const tit = def.ajustable.base ? `Receta con ${fmtN(n)} g de ${def.ajustable.base.toLowerCase()} — sale ≈ ${fmtN(Math.round(def.recipe.per*k))} ${unit}` : `Receta — ${fmtN(n)} ${unit}`;
+        fp.innerHTML = `<div style="padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${tit}</div>` + def.recipe.steps.map(st2=>`
+          <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
+          <ul style="list-style:none;margin:0;padding:0;">${st2.items.map(([nm,q,u])=>{
+            const v = q*k, shown = q === 0 ? "al gusto" : (v >= 10 ? fmtN(Math.round(v)) : (v % 1 ? fmtN(Math.round(v*10)/10) : fmtN(v)));
+            return `<li style="display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid ${C.line};">
+              <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:3.4em;text-align:center;">${shown}</span>
+              <span style="flex:1;font-size:0.95rem;">${nm}${q === 0 ? "" : ` <span style="color:${C.inkSoft};font-size:0.8rem;">(${u})</span>`}</span></li>`;}).join("")}</ul>`).join("");
+      };
+      const a = def.ajustable;
+      const cur = ()=> FORM_N[def.id] || ajBase(def);
+      card.querySelector(".fa-menos").onclick = e=>{ e.stopPropagation(); FORM_N[def.id] = Math.max(a.min, cur() - a.paso); fn.blur(); pintarN(); };
+      card.querySelector(".fa-mas").onclick = e=>{ e.stopPropagation(); FORM_N[def.id] = Math.min(a.max, cur() + a.paso); fn.blur(); pintarN(); };
+      fn.oninput = ()=>{ const v = parseFloat(String(fn.value).replace(",", ".")); if(v > 0){ FORM_N[def.id] = Math.min(a.max, v); pintarN(); } };
+      fn.onchange = ()=>{ const v = parseFloat(String(fn.value).replace(",", ".")); FORM_N[def.id] = v > 0 ? Math.min(a.max, Math.max(a.min, v)) : cur(); fn.value = FORM_N[def.id]; pintarN(); };
+      pintarN();
+    }
     const br = card.querySelector(".bat-reg");
     if(br) br.appendChild(batRegistroEl(def, PALETTE[def.group] || PALETTE.ALL));
     const bs = card.querySelector(".ir-stock");
@@ -3739,6 +3853,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
 
 
 
