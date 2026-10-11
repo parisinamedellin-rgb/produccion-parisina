@@ -1700,6 +1700,13 @@ function admSumar(a, b){
   D.days.forEach((iso, i) => { if(iso >= a && iso <= b) r.dom += (D.dom[i] || 0); });
   r.n = r.ped.size; return r;
 }
+function admProm(list){
+  const n = list.length, r = {v:0, u:0, n:0, dom:0, area:{}, prod:{}, cli:{}};
+  ADM.areas.forEach(x => r.area[x] = {v:0, u:0});
+  if(!n) return r;
+  list.forEach(x => { r.v += x.v/n; r.u += x.u/n; r.n += x.n/n; r.dom += x.dom/n; ADM.areas.forEach(a => { r.area[a].v += x.area[a].v/n; r.area[a].u += x.area[a].u/n; }); });
+  return r;
+}
 function admDelta(act, ant){
   if(!ant) return act ? `<span style="color:${C.inkSoft};">nuevo</span>` : "";
   const p = (act - ant) / Math.abs(ant) * 100;
@@ -1754,7 +1761,19 @@ function admPanel(){
   const dias = Math.round((admD(hoy) - admD(a)) / 864e5);
   const bAct = enCurso ? hoy : b;
   if(enCurso) b0 = admAdd(a0, dias) < b0 ? admAdd(a0, dias) : b0;
-  const R = admSumar(a, bAct), R0 = admSumar(a0, b0);
+  const R = admSumar(a, bAct);
+  // Alban 10 oct: el DÍA se compara con el PROMEDIO de ese mismo día de la semana (los viernes anteriores…), no con el día anterior
+  let R0, compTxt;
+  if(ADM_ST.per === "dia"){
+    const first = D.days.slice().sort()[0] || a, prev = [];
+    for(let d = admAdd(a, -7); d >= first && prev.length < 8; d = admAdd(d, -7)) prev.push(admSumar(d, d));
+    R0 = admProm(prev);
+    const dn = new Intl.DateTimeFormat("es-CO",{timeZone:"UTC", weekday:"long"}).format(admD(a));
+    compTxt = prev.length ? `Comparado con el promedio de los ${dn.endsWith("s") ? dn : dn + "s"} anteriores (${prev.length})` : `Todavía no hay ${dn.endsWith("s") ? dn : dn + "s"} anteriores para comparar`;
+  } else {
+    R0 = admSumar(a0, b0);
+    compTxt = (enCurso ? "Hasta hoy · comparado con los mismos días de: " : "Comparado con: ") + admTitulo(ADM_ST.per, a0, b0);
+  }
   const chip = (k, t, cur, cls) => `<button type="button" class="${cls}" data-k="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:7px 14px;border-radius:100px;cursor:pointer;border:1.5px solid ${C.ink};background:${cur ? C.ink : C.paper};color:${cur ? C.bg : C.ink};">${t}</button>`;
   const card = `background:${C.paper};border:1.5px solid ${C.line};border-radius:16px;padding:16px 18px;margin-top:14px;`;
   const th = `text-align:right;font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;padding:6px 6px;`;
@@ -1768,11 +1787,11 @@ function admPanel(){
       <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;flex:1;text-align:center;">${admCap(admTitulo(ADM_ST.per, a, b))}</span>
       <button type="button" class="adm-next" style="-webkit-appearance:none;appearance:none;width:38px;height:38px;border-radius:10px;border:1.5px solid ${C.line};background:${C.paper};font-family:Arial,sans-serif;font-size:1.1rem;cursor:pointer;color:${C.ink};">▶</button>
     </div>
-    <div style="text-align:center;font-size:0.75rem;color:${C.inkSoft};margin-top:4px;">${enCurso ? "Hasta hoy · comparado con los mismos días de: " : "Comparado con: "}${admTitulo(ADM_ST.per, a0, b0)}</div>`;
+    <div style="text-align:center;font-size:0.75rem;color:${C.inkSoft};margin-top:4px;">${compTxt}</div>`;
   // 2) Indicadores
   const kpi = (t, v, d) => `<div style="${card}margin-top:0;flex:1 1 120px;padding:12px 14px;">
       <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.06em;color:${C.inkSoft};font-weight:700;">${t}</div>
-      <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.45rem;margin-top:4px;">${v}</div>
+      <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin-top:4px;white-space:nowrap;">${v}</div>
       <div style="font-size:0.8rem;margin-top:2px;">${d}</div></div>`;
   h += `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;">
       ${kpi("Ventas", admPeso(R.v), admDelta(R.v, R0.v))}
