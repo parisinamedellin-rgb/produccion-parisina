@@ -2,8 +2,8 @@ name: Publicar web desde OneDrive
 
 # Parisina · Producción
 # Todos los días a las 3:44 a.m. (Medellín) toma index.html compartido en OneDrive
-# (carpeta "WEB PRODUCCION") y lo sube al repo si cambió y si trae la marca de hoy
-# (onedrive-publicado: AAAA-MM-DD) que deja la tarea de las 3:22 a.m.
+# (carpeta "WEB PRODUCCION") y lo sube al repo SOLO si OneDrive cambió desde la última
+# vez que el robot lo subió (huella en .github/ultimo-onedrive.sha256).
 # También se puede correr a mano: Actions → este workflow → "Run workflow".
 
 on:
@@ -53,18 +53,24 @@ jobs:
 
       - name: Subir al repo si cambió
         run: |
-          # Candado (Alban, 11-oct-2026): solo se publica si la tarea de las 3:22 a.m. corrió HOY.
-          # Esa tarea deja al final del index.html la marca <!-- onedrive-publicado: AAAA-MM-DD -->.
-          # Si no corrió (computador apagado), OneDrive tiene el archivo viejo y NO se sube.
-          # Al correrlo a mano ("Run workflow") no se exige la marca.
-          HOY=$(TZ=America/Bogota date +%F)
-          MARCA=$(grep -o 'onedrive-publicado: [0-9-]*' /tmp/nuevo.html | tail -1 | awk '{print $2}')
-          if [ "${{ github.event_name }}" = "schedule" ] && [ "$MARCA" != "$HOY" ]; then
-            echo "::warning::La tarea de las 3:22 no corrió hoy ($HOY). Marca en OneDrive: ${MARCA:-ninguna}. NO se publica: la web se queda como está."
+          # Candado (Alban, 11-oct-2026): solo se publica si el archivo de OneDrive CAMBIÓ
+          # desde la última vez que el robot lo subió (= la tarea de las 3:22 a.m. corrió).
+          # Si no corrió (computador apagado), OneDrive tiene el mismo archivo viejo y NO se sube,
+          # así no pisa lo que se haya publicado a mano en GitHub.
+          # Al correrlo a mano ("Run workflow") no se exige.
+          NUEVO=$(sha256sum /tmp/nuevo.html | cut -d' ' -f1)
+          ULTIMO=$(cat .github/ultimo-onedrive.sha256 2>/dev/null)
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$NUEVO" = "$ULTIMO" ]; then
+            echo "::warning::OneDrive no cambió desde la última publicación del robot (la tarea de las 3:22 no corrió). NO se publica: la web se queda como está."
             exit 0
           fi
+          echo "$NUEVO" > .github/ultimo-onedrive.sha256
+          git add .github/ultimo-onedrive.sha256
           if cmp -s /tmp/nuevo.html index.html; then
             echo "Sin cambios: la web ya tiene esta versión."
+            git config user.name "Parisina bot"
+            git config user.email "actions@users.noreply.github.com"
+            git diff --cached --quiet || { git commit -m "Robot: recordar último archivo de OneDrive"; git push; }
             exit 0
           fi
           cp /tmp/nuevo.html index.html
