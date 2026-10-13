@@ -14,6 +14,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -3824,12 +3825,22 @@ function renderPedidos(main, col){
   const din = n=> "$" + Math.round(Number(n) || 0).toLocaleString("es-CO");
   const wrap = document.createElement("div");
   wrap.setAttribute("style", "display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:14px;");
-  lista.forEach(p=>{
+  // Alban 13 oct: los pedidos ya ENVIADOS bajan al final, en su propio bloque "🛵 Enviados"; arriba quedan solo los pendientes
+  const pendientes = lista.filter(p=>!FL[p.n].env), enviados = lista.filter(p=>FL[p.n].env);
+  if(enviados.length && pendientes.length){
+    const sep = document.createElement("div");
+    sep.dataset.s = ""; sep.dataset.sep = "1";
+    sep.setAttribute("style", `grid-column:1 / -1;margin-top:10px;padding:10px 14px;border-radius:10px;background:${EST_INFO.ENV.bg};color:${EST_INFO.ENV.c};font-family:'Work Sans',sans-serif;font-weight:700;font-size:0.95rem;`);
+    sep.textContent = `🛵 Enviados · ${enviados.length}`;
+    enviados._sep = sep;
+  }
+  pendientes.concat(enviados).forEach((p, idx)=>{
+    if(enviados._sep && idx === pendientes.length) wrap.appendChild(enviados._sep);
     const a = asig[p.n], sd = !p.rec && !p.dir && !p.maps;
     const pagoPend = /aprobar/i.test(p.pago || "");
     const card = document.createElement("div");
-    card.setAttribute("style", `background:#fff;border:1px solid ${C.line};border-radius:6px;box-shadow:0 2px 8px rgba(60,40,20,.10);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#222;display:flex;flex-direction:column;`);
     const fl = FL[p.n], ei = EST_INFO[fl.est];
+    card.setAttribute("style", `background:#fff;border:1px solid ${C.line};border-radius:6px;box-shadow:0 2px 8px rgba(60,40,20,.10);padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;color:#222;display:flex;flex-direction:column;${fl.env ? "opacity:.72;" : ""}`);
     const items = fl.its.map(({c,nm,q,prod,emp,cong},ix)=>{
       const color = prod === "falta" ? "#B3261E" : prod === "hecho" ? "#111" : "#555";
       return `<div class="pi" data-n="${logEsc(pedNorm(nm + " " + c))}" data-k="${logEsc(pedNorm(nm))}" data-t="${logEsc(nm.trim())}" data-q="${Number(q) || 0}" style="border-radius:4px;display:flex;align-items:center;gap:8px;padding:1px 0;color:${color};${prod === "falta" ? "font-weight:600;" : ""}${/^empaque/i.test(nm) ? "font-weight:700;" : ""}">
@@ -4396,6 +4407,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
 
 
 
