@@ -3233,6 +3233,80 @@ function selloImprimir(n, iso){
   area.innerHTML = Array.from({length: n}, ()=>selloHTML(w, h, iso)).join("");
   setTimeout(()=>window.print(), 50);
 }
+// Alban 13 oct: opción de imprimir el nombre del cliente en el rótulo (se recuerda en este equipo)
+// Alban 13 oct: rótulos de UN cliente (buscador) — llevan el nombre del cliente; ROT_SEL = comanda elegida
+let ROT_SEL = null, ROT_QCLI = "";
+// ---- Imprimir el rótulo de un cliente (Alban 13 oct): buscador de cliente → sus rótulos con su nombre + rótulo de nombre ----
+function rotNombreHTML(p, iso, w, h){
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:3mm 4mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:9pt;">
+    <div style="font-size:1.1em;letter-spacing:.4mm;">CLIENTE</div>
+    <div style="font-size:2.6em;font-weight:900;line-height:1.05;margin:1mm 0;text-transform:uppercase;">${logEsc(p.cli)}</div>
+    ${p.para ? `<div style="font-size:1.4em;">Para: <b>${logEsc(p.para)}</b></div>` : ""}
+    ${p.dir ? `<div style="font-size:1.25em;margin-top:.8mm;">${logEsc(p.dir)}${p.comp ? " · " + logEsc(p.comp) : ""}</div>` : ""}
+    ${p.barrio ? `<div style="font-size:1.1em;">${logEsc(p.barrio)}${p.zona ? " · Zona " + p.zona : ""}</div>` : ""}
+    <div style="font-size:1.1em;margin-top:1mm;">Comanda #${logEsc(p.n)} · ${ddmmyy(iso)}${p.h ? " · " + p.h : ""}</div>
+  </div>`;
+}
+function rotClienteUI(el, iso, col){
+  const peds = logPedidos(iso);
+  const todos = logRotulos(iso);
+  const pintar = ()=>{
+    const sel = ROT_SEL != null ? peds.find(p=>String(p.n) === String(ROT_SEL)) : null;
+    if(sel){
+      const mios = todos.filter(r=>String(r.n) === String(sel.n)).map(r=>Object.assign({}, r, {conCli: true}));
+      el.innerHTML = `<div style="background:#fff;color:${C.ink};border-radius:12px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="flex:1;font-weight:700;font-size:0.98rem;">👤 ${logEsc(sel.cli)} <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(sel.n)}</span></span>
+            <button type="button" class="x" style="font-size:0.8rem;font-weight:700;border:none;background:${C.bg};color:${col.a};border-radius:8px;padding:6px 10px;cursor:pointer;">✕ Cambiar</button>
+          </div>
+          <div style="font-size:0.78rem;color:${C.inkSoft};margin:4px 0 10px;">${mios.length} ${mios.length === 1 ? "rótulo" : "rótulos"} de producto: ${mios.map(r=>fmtN(r.q) + " " + logEsc((logProd(r.cod) || [r.name])[0])).join(" · ") || "ninguno"}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button type="button" class="ip" ${mios.length ? "" : "disabled"} style="flex:1;min-width:150px;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Rótulos de sus productos (con su nombre)</button>
+            <button type="button" class="in" style="flex:1;min-width:150px;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:1.5px solid ${col.a};background:#fff;color:${col.a};border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Rótulo con el nombre del cliente</button>
+          </div>
+        </div>`;
+      el.querySelector(".x").onclick = ()=>{ ROT_SEL = null; ROT_QCLI = ""; pintar(); const q = el.querySelector("input"); if(q) q.focus(); };
+      el.querySelector(".ip").onclick = ()=>logImprimir(mios, iso);
+      el.querySelector(".in").onclick = ()=>{
+        const {w, h} = logTam();
+        let area = document.getElementById("print-area");
+        if(!area){ area = document.createElement("div"); area.id = "print-area"; document.body.appendChild(area); }
+        let st = document.getElementById("print-style");
+        if(!st){ st = document.createElement("style"); st.id = "print-style"; document.head.appendChild(st); }
+        st.textContent = `#print-area{position:fixed;left:-10000px;top:0;}
+          @media print{ @page{size:${w}mm ${h}mm;margin:0;} html,body{margin:0!important;padding:0!important;background:#fff!important;}
+            body > *:not(#print-area){display:none!important;} #print-area{position:static;left:0;}
+            #print-area .rot{page-break-after:always;break-after:page;} }`;
+        area.innerHTML = rotNombreHTML(sel, iso, w, h);
+        area.querySelectorAll(".rot").forEach(rotFit);
+        setTimeout(()=>window.print(), 50);
+      };
+      return;
+    }
+    el.innerHTML = `<div style="font-size:0.9rem;font-weight:700;margin-bottom:6px;">🏷️ Imprimir el rótulo de un cliente</div>
+      <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:3px 6px 3px 12px;">
+        <span>🔎</span>
+        <input type="text" class="q" autocomplete="off" placeholder="Buscar cliente o # de comanda…" value="${logEsc(ROT_QCLI)}" style="flex:1;min-width:0;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 0;background:transparent;color:${C.ink};">
+      </div>
+      <div class="lst" style="display:none;position:absolute;left:0;right:0;z-index:20;margin-top:4px;background:#fff;border:1px solid ${C.line};border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden;max-height:320px;overflow-y:auto;"></div>`;
+    const q = el.querySelector(".q"), lst = el.querySelector(".lst");
+    const sugerir = ()=>{
+      ROT_QCLI = q.value;
+      const t = pedNorm(q.value);
+      if(!t){ lst.style.display = "none"; return; }
+      const pals = t.split(" ");
+      const m = peds.filter(p=>{ const x = pedNorm([p.cli, p.para, p.n, p.cod].join(" ")); return pals.every(w=>x.includes(w)); }).slice(0, 10);
+      if(!m.length){ lst.innerHTML = `<div style="padding:10px 14px;font-size:0.88rem;color:${C.inkSoft};">Ningún cliente con ese nombre este día.</div>`; lst.style.display = ""; return; }
+      lst.innerHTML = m.map((p,i)=>`<button type="button" data-i="${i}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;${i ? "border-top:1px solid " + C.line + ";" : ""}background:#fff;padding:11px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span>👤</span><span style="flex:1;">${logEsc(p.cli)}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)}${p.h ? " · " + p.h : ""}</span></button>`).join("");
+      lst.style.display = "";
+      lst.querySelectorAll("button").forEach(b=>{ b.onmousedown = e=>e.preventDefault(); b.onclick = ()=>{ ROT_SEL = m[Number(b.dataset.i)].n; pintar(); }; });
+    };
+    q.oninput = sugerir;
+    q.onfocus = sugerir;
+    q.onblur = ()=>setTimeout(()=>{ lst.style.display = "none"; }, 200);
+  };
+  pintar();
+}
 function rotuloHTML(r, iso, w, h){
   const pr = logProd(r.cod) || [r.name, 0, "", "", ""];
   const [nom, dias, cons, ingr, alerg] = pr;
@@ -3240,6 +3314,7 @@ function rotuloHTML(r, iso, w, h){
   return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:2.5mm 3mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;line-height:1.18;font-size:7pt;">
     <div style="font-size:1.25em;text-align:right;">Elaboración:&nbsp; ${ddmmyy(iso)}&nbsp;&nbsp;&nbsp; Vence:&nbsp; ${ddmmyy(masDias(iso, dias))}</div>
     <div style="font-size:1.25em;text-align:right;">Lote:&nbsp;&nbsp; ${lote}</div>
+    ${r.conCli && r.cli ? `<div style="font-size:1.35em;font-weight:700;text-align:left;border:0.3mm solid #000;border-radius:1mm;padding:.5mm 1.5mm;margin-top:.8mm;">Cliente: ${logEsc(r.cli)}</div>` : ""}
     <div style="font-size:2.1em;font-weight:700;margin:1.2mm 0;text-transform:uppercase;">${logEsc(nom)}</div>
     ${cons ? `<div>${logEsc(cons)}</div>` : ""}
     ${ingr ? `<div style="font-style:italic;margin-top:.6mm;">${logEsc(ingr)}</div>` : ""}
@@ -3300,8 +3375,10 @@ function renderRotulos(main, col){
   top.setAttribute("style", `margin-top:14px;background:${col.a};color:#fff;border-radius:16px;padding:16px;`);
   top.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">🏷️ Para este día necesitas ${lista.length} ${lista.length === 1 ? "rótulo" : "rótulos"}</div>
     <button type="button" class="pa" ${lista.length ? "" : "disabled"} style="margin-top:10px;width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:13px;border-radius:12px;border:none;background:#fff;color:${col.a};cursor:pointer;">🖨️ Imprimir todos de una vez</button>
+    <div class="rcb" style="margin-top:12px;position:relative;"></div>
     <div style="font-size:0.78rem;margin-top:8px;opacity:.9;">Rótulo de ${w} × ${h} mm <button type="button" class="tam" style="font-size:0.78rem;background:none;border:none;color:#fff;text-decoration:underline;cursor:pointer;">cambiar</button></div>`;
   top.querySelector(".pa").onclick = ()=>logImprimir(lista, iso);
+  rotClienteUI(top.querySelector(".rcb"), iso, col);
   top.querySelector(".tam").onclick = ()=>{
     const a = prompt("Largo del rótulo en mm (el ancho del rollo es 62 mm):", String(w));
     if(a === null) return;
