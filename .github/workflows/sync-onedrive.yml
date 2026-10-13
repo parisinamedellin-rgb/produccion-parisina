@@ -8,7 +8,7 @@ name: Publicar web desde OneDrive
 
 on:
   schedule:
-    - cron: '44 8 * * *'   # 08:44 UTC = 3:44 a.m. Bogotá
+        - cron: '*/15 8-11 * * *'
   workflow_dispatch:
 
 permissions:
