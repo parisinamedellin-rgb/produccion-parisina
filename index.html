@@ -3238,14 +3238,27 @@ function selloImprimir(n, iso){
 let ROT_SEL = null, ROT_QCLI = "";
 // ---- Imprimir el rótulo de un cliente (Alban 13 oct): buscador de cliente → sus rótulos con su nombre + rótulo de nombre ----
 function rotNombreHTML(p, iso, w, h){
+  // Alban 13 oct: solo el nombre del cliente y "Comanda #N · DDMMYY" (sin "CLIENTE", sin dirección)
   return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:3mm 4mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:9pt;">
-    <div style="font-size:1.1em;letter-spacing:.4mm;">CLIENTE</div>
-    <div style="font-size:2.6em;font-weight:900;line-height:1.05;margin:1mm 0;text-transform:uppercase;">${logEsc(p.cli)}</div>
+    <div style="font-size:2.8em;font-weight:900;line-height:1.05;margin:1mm 0;text-transform:uppercase;">${logEsc(p.cli)}</div>
     ${p.para ? `<div style="font-size:1.4em;">Para: <b>${logEsc(p.para)}</b></div>` : ""}
-    ${p.dir ? `<div style="font-size:1.25em;margin-top:.8mm;">${logEsc(p.dir)}${p.comp ? " · " + logEsc(p.comp) : ""}</div>` : ""}
-    ${p.barrio ? `<div style="font-size:1.1em;">${logEsc(p.barrio)}${p.zona ? " · Zona " + p.zona : ""}</div>` : ""}
-    <div style="font-size:1.1em;margin-top:1mm;">Comanda #${logEsc(p.n)} · ${ddmmyy(iso)}${p.h ? " · " + p.h : ""}</div>
+    <div style="font-size:1.5em;margin-top:2mm;">Comanda #${logEsc(p.n)} · ${ddmmyy(iso).replace(/-/g, "")}</div>
   </div>`;
+}
+// imprime n rótulos con el nombre del cliente (Alban 13 oct: Panadería imprime uno por bolsa)
+function imprimirNombreCliente(p, iso, n){
+  const {w, h} = logTam();
+  let area = document.getElementById("print-area");
+  if(!area){ area = document.createElement("div"); area.id = "print-area"; document.body.appendChild(area); }
+  let st = document.getElementById("print-style");
+  if(!st){ st = document.createElement("style"); st.id = "print-style"; document.head.appendChild(st); }
+  st.textContent = `#print-area{position:fixed;left:-10000px;top:0;}
+    @media print{ @page{size:${w}mm ${h}mm;margin:0;} html,body{margin:0!important;padding:0!important;background:#fff!important;}
+      body > *:not(#print-area){display:none!important;} #print-area{position:static;left:0;}
+      #print-area .rot{page-break-after:always;break-after:page;} }`;
+  area.innerHTML = Array.from({length: Math.max(1, n)}, ()=>rotNombreHTML(p, iso, w, h)).join("");
+  area.querySelectorAll(".rot").forEach(rotFit);
+  setTimeout(()=>window.print(), 50);
 }
 function rotClienteUI(el, iso, col){
   const peds = logPedidos(iso);
@@ -3267,20 +3280,7 @@ function rotClienteUI(el, iso, col){
         </div>`;
       el.querySelector(".x").onclick = ()=>{ ROT_SEL = null; ROT_QCLI = ""; pintar(); const q = el.querySelector("input"); if(q) q.focus(); };
       el.querySelector(".ip").onclick = ()=>logImprimir(mios, iso);
-      el.querySelector(".in").onclick = ()=>{
-        const {w, h} = logTam();
-        let area = document.getElementById("print-area");
-        if(!area){ area = document.createElement("div"); area.id = "print-area"; document.body.appendChild(area); }
-        let st = document.getElementById("print-style");
-        if(!st){ st = document.createElement("style"); st.id = "print-style"; document.head.appendChild(st); }
-        st.textContent = `#print-area{position:fixed;left:-10000px;top:0;}
-          @media print{ @page{size:${w}mm ${h}mm;margin:0;} html,body{margin:0!important;padding:0!important;background:#fff!important;}
-            body > *:not(#print-area){display:none!important;} #print-area{position:static;left:0;}
-            #print-area .rot{page-break-after:always;break-after:page;} }`;
-        area.innerHTML = rotNombreHTML(sel, iso, w, h);
-        area.querySelectorAll(".rot").forEach(rotFit);
-        setTimeout(()=>window.print(), 50);
-      };
+      el.querySelector(".in").onclick = ()=>imprimirNombreCliente(sel, iso, 1);
       return;
     }
     el.innerHTML = `<div style="font-size:0.9rem;font-weight:700;margin-bottom:6px;">🏷️ Imprimir el rótulo de un cliente</div>
@@ -3702,9 +3702,11 @@ function empacarPanEl(iso){
       box.innerHTML = `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span style="font-weight:700;flex:1;min-width:150px;">✅ ${logEsc(p.cli)} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};font-weight:500;">Cód. ${logEsc(p.cod)} · #${logEsc(p.n)}</span>${p.h ? ` <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${C.inkSoft};font-weight:500;">🕐 ${p.h}</span>` : ""}</span>
           <span style="font-size:0.85rem;color:#2E6B3A;font-weight:600;">${bul.b === "" || bul.b === undefined ? "–" : bul.b} ${Number(bul.b) === 1 ? "bandeja" : "bandejas"} · ${bul.s === "" || bul.s === undefined ? "–" : bul.s} ${Number(bul.s) === 1 ? "bolsa" : "bolsas"}</span>
+          ${Number(bul.s) > 0 ? `<button type="button" class="prc" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;border:1.5px solid ${C.accent};background:#fff;color:${C.accent};border-radius:8px;padding:6px 10px;cursor:pointer;">🖨️ ${fmtN(Number(bul.s))} ${Number(bul.s) === 1 ? "rótulo" : "rótulos"} del cliente</button>` : ""}
           <button type="button" class="corr" style="font-family:'Work Sans',sans-serif;font-size:0.75rem;font-weight:600;border:1px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:8px;padding:5px 9px;cursor:pointer;">Corregir</button>
         </div>
         <div style="font-size:0.82rem;color:${C.inkSoft};margin-top:4px;">${cong.map(i=>fmtN(i.q) + " " + logEsc(i.nm)).join(" · ")}</div>`;
+      { const pb = box.querySelector(".prc"); if(pb) pb.onclick = ()=>imprimirNombreCliente(p, iso, Number(bul.s)); }
       box.querySelector(".corr").onclick = ()=>empGuardar(iso, d=>{ cong.forEach(i=>{ delete d.emp[empKey(p.n, i.nm)]; }); });
     } else {
       const conf = EMP_OK[p.n];
@@ -3715,12 +3717,18 @@ function empacarPanEl(iso){
         <div style="margin:6px 0 10px;font-size:0.95rem;">${lineas}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
           <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:600;">Bandejas
-            <input type="number" inputmode="numeric" min="0" class="eb" value="${bul.b ?? ""}" placeholder="${sug}" style="width:5em;font-size:1.05rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;"></label>
+            <input type="number" inputmode="numeric" min="0" class="eb" value="${bul.b ?? ""}" placeholder="${sug}" style="width:5em;font-size:1.05rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;"></label>
           <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:600;">Bolsas
-            <input type="number" inputmode="numeric" min="0" class="es" value="${bul.s ?? ""}" style="width:5em;font-size:1.05rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;"></label>
+            <input type="number" inputmode="numeric" min="0" class="es" value="${bul.s ?? ""}" style="width:5em;font-size:1.05rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;"></label>
           <button type="button" class="val" style="flex:1;min-width:120px;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;padding:11px 12px;border-radius:10px;border:none;background:${conf ? "#B3261E" : C.accent};color:#fff;cursor:pointer;">${conf ? "⚠️ Toca otra vez para validar igual" : "✓ Validar empaque"}</button>
         </div>
+        <button type="button" class="prc" style="margin-top:8px;width:100%;font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;padding:9px 12px;border-radius:10px;border:1.5px solid ${C.accent};background:#fff;color:${C.accent};cursor:pointer;">🖨️ Imprimir rótulos del cliente (uno por bolsa)</button>
         <div class="msg" style="margin-top:6px;font-size:0.78rem;color:${conf ? "#B3261E" : C.inkSoft};font-weight:${conf ? 700 : 400};">${conf ? conf : conPan ? (sug ? `Croissant / pastel: <b>${sug}</b> ${sug === 1 ? "bandeja" : "bandejas"} + las de los panes` : "Lleva panes: pon las bandejas que usaste") : `Deberían ser <b>${sug}</b> ${sug === 1 ? "bandeja" : "bandejas"} (${EMP_X_BANDEJA} por bandeja)`}</div>`;
+      box.querySelector(".prc").onclick = ()=>{
+        const n = Number(box.querySelector(".es").value) || 0, msg = box.querySelector(".msg");
+        if(n < 1){ msg.style.color = "#B3261E"; msg.style.fontWeight = "700"; msg.textContent = "Escribe primero cuántas bolsas: sale un rótulo por bolsa."; return; }
+        imprimirNombreCliente(p, iso, n);
+      };
       box.querySelector(".val").onclick = ()=>{
         const b = box.querySelector(".eb").value, s = box.querySelector(".es").value;
         const msg = box.querySelector(".msg");
