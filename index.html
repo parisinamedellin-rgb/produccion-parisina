@@ -15,6 +15,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -3198,6 +3199,40 @@ function logRotulos(iso){
   });
   return out;
 }
+// ---- Sello de seguridad genérico (Alban 13 oct): mismo tamaño que el rótulo, en blanco y negro (impresora térmica) ----
+let SELLO_N = 10;
+function selloHTML(w, h, iso){
+  const escudo = `<svg viewBox="0 0 48 56" style="height:${Math.min(h * 0.62, w * 0.24)}mm;flex:none;"><path d="M24 2 L44 9 V26 C44 40 35 49 24 54 C13 49 4 40 4 26 V9 Z" fill="#000"/><path d="M24 7 L39 12.5 V26 C39 37 32 44.5 24 48.6 C16 44.5 9 37 9 26 V12.5 Z" fill="#fff"/><path d="M15.5 27.5 L21.5 33.5 L33 21" fill="none" stroke="#000" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  return `<div class="rot sello" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:2mm;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;">
+    <div style="width:100%;height:100%;box-sizing:border-box;border:0.9mm solid #000;border-radius:2.2mm;padding:1mm;">
+      <div style="width:100%;height:100%;box-sizing:border-box;border:0.35mm dashed #000;border-radius:1.4mm;display:flex;align-items:center;justify-content:center;gap:4mm;padding:0 4mm;
+        background:repeating-linear-gradient(135deg,#fff 0 1.6mm,#f1f1f1 1.6mm 2mm);">
+        ${escudo}
+        <div style="text-align:center;line-height:1.08;">
+          <div style="font-size:${Math.min(h * 0.075, w * 0.045)}mm;letter-spacing:.6mm;font-weight:700;">★ ★ ★</div>
+          <div style="font-size:${Math.min(h * 0.17, w * 0.085)}mm;font-weight:900;letter-spacing:.3mm;">SELLO DE</div>
+          <div style="font-size:${Math.min(h * 0.17, w * 0.085)}mm;font-weight:900;letter-spacing:.3mm;">SEGURIDAD</div>
+          <div style="margin:1.2mm auto 0;border-top:0.35mm solid #000;width:80%;"></div>
+          <div style="font-size:${Math.min(h * 0.075, w * 0.042)}mm;font-weight:700;margin-top:1mm;letter-spacing:.2mm;">PRODUCTO SELLADO</div>
+          <div style="font-size:${Math.min(h * 0.062, w * 0.036)}mm;margin-top:.6mm;">No consumir si el sello está roto</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+function selloImprimir(n, iso){
+  const {w, h} = logTam();
+  let area = document.getElementById("print-area");
+  if(!area){ area = document.createElement("div"); area.id = "print-area"; document.body.appendChild(area); }
+  let st = document.getElementById("print-style");
+  if(!st){ st = document.createElement("style"); st.id = "print-style"; document.head.appendChild(st); }
+  st.textContent = `#print-area{position:fixed;left:-10000px;top:0;}
+    @media print{ @page{size:${w}mm ${h}mm;margin:0;} html,body{margin:0!important;padding:0!important;background:#fff!important;}
+      body > *:not(#print-area){display:none!important;} #print-area{position:static;left:0;}
+      #print-area .rot{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;} }`;
+  area.innerHTML = Array.from({length: n}, ()=>selloHTML(w, h, iso)).join("");
+  setTimeout(()=>window.print(), 50);
+}
 function rotuloHTML(r, iso, w, h){
   const pr = logProd(r.cod) || [r.name, 0, "", "", ""];
   const [nom, dias, cons, ingr, alerg] = pr;
@@ -3240,8 +3275,27 @@ function renderRotulos(main, col){
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Rótulos</h2>
-    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">Un rótulo por producto y por caja. Toca el nombre de un cliente ✏️ para decir cuántas unidades lleva cada rótulo (ej. 15 → 10 + 5). Los congelados de Panadería (*C*) no se rotulan aquí: ya vienen rotulados. Los de Comida de sal sí.</div>`;
+`;
   main.appendChild(head);
+  // Alban 13 oct: sello de seguridad genérico (sin logo de Parisina), del mismo tamaño que los rótulos
+  {
+    const sb = document.createElement("div");
+    sb.setAttribute("style", `margin-top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:12px 14px;`);
+    const esc = Math.min(1, 300 / (w * 3.78));
+    sb.innerHTML = `<div style="width:${w * 3.78 * esc}px;height:${h * 3.78 * esc}px;overflow:hidden;flex:none;border:1px dashed ${C.line};background:#fff;">
+        <div style="transform:scale(${esc});transform-origin:0 0;">${selloHTML(w, h, iso)}</div></div>
+      <div style="flex:1;min-width:180px;">
+        <div style="font-weight:700;font-size:0.98rem;">🔒 Sello de seguridad</div>
+        <div style="font-size:0.78rem;color:${C.inkSoft};margin:2px 0 8px;">Genérico, sin logo — para los clientes que no quieren la marca.</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="number" inputmode="numeric" min="1" class="sn" value="${SELLO_N}" style="width:4.5em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;">
+          <button type="button" class="sp" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;">🖨️ Imprimir sellos</button>
+        </div>
+      </div>`;
+    sb.querySelector(".sn").onchange = e=>{ SELLO_N = Math.max(1, Number(e.target.value) || 1); };
+    sb.querySelector(".sp").onclick = ()=>{ SELLO_N = Math.max(1, Number(sb.querySelector(".sn").value) || 1); selloImprimir(SELLO_N, iso); };
+    main.appendChild(sb);
+  }
   const top = document.createElement("div");
   top.setAttribute("style", `margin-top:14px;background:${col.a};color:#fff;border-radius:16px;padding:16px;`);
   top.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">🏷️ Para este día necesitas ${lista.length} ${lista.length === 1 ? "rótulo" : "rótulos"}</div>
@@ -4407,6 +4461,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
 
 
 
