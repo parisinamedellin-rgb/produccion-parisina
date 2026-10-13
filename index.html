@@ -13,6 +13,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -1207,7 +1208,8 @@ function marcar(k, v){
 function conPendientes(items, desdeServidor){
   Object.keys(PENDING).forEach(k=>{
     const p = PENDING[k];
-    if(desdeServidor && p.guardado && !!items[k] === p.v){ delete PENDING[k]; return; }
+    // Arreglo 13 oct: solo se suelta cuando el servidor lo confirma Y ya pasaron 12 s (otro celular pudo estar guardando encima)
+    if(desdeServidor && p.guardado && !!items[k] === p.v && Date.now() - (p.tg || 0) > 12000){ delete PENDING[k]; return; }
     if(p.v) items[k] = true; else delete items[k];
   });
   return items;
@@ -1223,8 +1225,8 @@ async function verificarDia(iso){
     Object.keys(PENDING).forEach(k=>{
       const p = PENDING[k];
       if(dateOfKey(k) !== iso || !p.guardado) return;
-      if(!!items[k] === p.v){ delete PENDING[k]; return; }
-      if((p.intentos || 0) >= 3){ delete PENDING[k]; return; }
+      if(!!items[k] === p.v){ if(Date.now() - (p.tg || 0) > 8000) delete PENDING[k]; return; }
+      if((p.intentos || 0) >= 6){ delete PENDING[k]; return; }
       p.intentos = (p.intentos || 0) + 1; p.guardado = false; falta = true;
     });
     if(falta){ dirtyDates.add(iso); flushDb(); }
@@ -1272,8 +1274,10 @@ async function flushDb(){
       mios.forEach(([k])=>{ if(PENDING[k].v) items[k] = true; else delete items[k]; });
       await ref.set({items});
       // confirmados: se sueltan (salvo que se hayan vuelto a tocar mientras se guardaba)
-      mios.forEach(([k, n])=>{ if(PENDING[k] && PENDING[k].n === n) PENDING[k].guardado = true; });
+      mios.forEach(([k, n])=>{ if(PENDING[k] && PENDING[k].n === n){ PENDING[k].guardado = true; PENDING[k].tg = Date.now(); } });
+      // se verifica dos veces: si otro celular guardó encima (leyó antes de este guardado), se vuelve a poner
       setTimeout(()=>verificarDia(iso), 1500 + Math.random()*1000);
+      setTimeout(()=>verificarDia(iso), 9000 + Math.random()*2000);
       // lo que otros celulares chulearon ese día aparece de una vez
       const antes = Object.keys(COMPLETED).filter(k=>dateOfKey(k) === iso).sort().join("|");
       Object.keys(COMPLETED).forEach(k=>{ if(dateOfKey(k) === iso) delete COMPLETED[k]; });
@@ -3170,9 +3174,27 @@ function logTam(){
   try{ const t = JSON.parse(localStorage.getItem("rotulo_mm") || "{}"); if(t.w > 20) w = t.w; if(t.h > 20) h = t.h; }catch(e){}
   return {w, h};
 }
-function logRotulos(iso){
+// Alban 13 oct: cuántas unidades lleva cada rótulo se puede ajustar por cliente y producto
+// (ej. 15 alfajores → 2 rótulos: 10 y 5). Se guarda en este equipo (el que imprime): localStorage "rot_aj".
+let ROT_AJ = {};
+try{ ROT_AJ = JSON.parse(localStorage.getItem("rot_aj") || "{}") || {}; }catch(e){ ROT_AJ = {}; }
+const ROT_ABIERTO = {};   // "n|cod" -> editor abierto
+function rotKey(iso, n, cod){ return iso + "|" + n + "|" + cod; }
+function rotGuardarAj(){ try{ const hoy = hoyISO(); Object.keys(ROT_AJ).forEach(k=>{ if(k.split("|")[0] < hoy) delete ROT_AJ[k]; }); localStorage.setItem("rot_aj", JSON.stringify(ROT_AJ)); }catch(e){} }
+function logRotulosBase(iso){
   const out = [];
   logPedidos(iso).forEach(p=>logEmpaque(p, iso).rotulos.forEach(r=>out.push(r)));
+  return out;
+}
+function logRotulos(iso){
+  const out = [], hecho = new Set();
+  logRotulosBase(iso).forEach(r=>{
+    const k = rotKey(iso, r.n, r.cod), aj = ROT_AJ[k];
+    if(!aj || !aj.length){ out.push(r); return; }
+    if(hecho.has(k)) return;
+    hecho.add(k);
+    aj.forEach(q=>{ if(Number(q) > 0) out.push(Object.assign({}, r, {q: Number(q), aj: true})); });
+  });
   return out;
 }
 function rotuloHTML(r, iso, w, h){
@@ -3217,7 +3239,7 @@ function renderRotulos(main, col){
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Rótulos</h2>
-    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">Un rótulo por producto y por caja. Los congelados de Panadería (*C*) no se rotulan aquí: ya vienen rotulados. Los de Comida de sal sí.</div>`;
+    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">Un rótulo por producto y por caja. Toca el nombre de un cliente ✏️ para decir cuántas unidades lleva cada rótulo (ej. 15 → 10 + 5). Los congelados de Panadería (*C*) no se rotulan aquí: ya vienen rotulados. Los de Comida de sal sí.</div>`;
   main.appendChild(head);
   const top = document.createElement("div");
   top.setAttribute("style", `margin-top:14px;background:${col.a};color:#fff;border-radius:16px;padding:16px;`);
@@ -3241,10 +3263,56 @@ function renderRotulos(main, col){
     row.setAttribute("style", `display:flex;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid ${C.line};`);
     row.innerHTML = `<span style="min-width:44px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.05rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:5px 6px;">${g.l.length}</span>
       <span style="flex:1;min-width:0;"><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.85rem;color:${col.a};background:${C.bg};border:1px solid ${C.line};border-radius:6px;padding:1px 6px;margin-right:6px;">${logEsc(cod)}</span><span style="font-size:0.95rem;">${logEsc(g.name)}</span>
-        <span style="display:block;font-size:0.72rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;">${g.l.map(r=>logEsc(String(r.cli).slice(0,22)) + " (" + fmtN(r.q) + ")").join(" · ")}</span></span>
-      <button type="button" style="font-size:0.8rem;font-weight:600;color:${col.a};background:none;border:1px solid ${col.a};border-radius:8px;padding:7px 10px;cursor:pointer;font-family:'Work Sans',sans-serif;">🖨️</button>`;
-    row.querySelector("button").onclick = ()=>logImprimir(g.l, iso);
+        <span class="clis" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;"></span></span>
+      <button type="button" class="pp" style="font-size:0.8rem;font-weight:600;color:${col.a};background:none;border:1px solid ${col.a};border-radius:8px;padding:7px 10px;cursor:pointer;font-family:'Work Sans',sans-serif;">🖨️</button>`;
+    row.querySelector(".pp").onclick = ()=>logImprimir(g.l, iso);
     card.appendChild(row);
+    // un botón por cliente: "Cliente (10 + 5) ✏️" → editor de cuánto lleva cada rótulo
+    const porCli = {};
+    g.l.forEach(r=>{ (porCli[r.n] || (porCli[r.n] = {cli: r.cli, n: r.n, l: []})).l.push(r); });
+    const base = {};
+    logRotulosBase(iso).filter(r=>r.cod === cod).forEach(r=>{ (base[r.n] || (base[r.n] = [])).push(r.q); });
+    const clisEl = row.querySelector(".clis");
+    Object.values(porCli).forEach(pc=>{
+      const k = rotKey(iso, pc.n, cod), ajus = !!ROT_AJ[k], ak = pc.n + "|" + cod;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("style", `font-family:'IBM Plex Mono',monospace;font-size:0.72rem;border:1px solid ${ajus ? col.a : C.line};background:${ROT_ABIERTO[ak] ? col.a : ajus ? C.bg : "#fff"};color:${ROT_ABIERTO[ak] ? "#fff" : C.ink};border-radius:100px;padding:3px 9px;cursor:pointer;`);
+      b.textContent = `${String(pc.cli).slice(0,22)} (${pc.l.map(r=>fmtN(r.q)).join(" + ")}) ✏️`;
+      b.onclick = ()=>{ ROT_ABIERTO[ak] = !ROT_ABIERTO[ak]; render(); };
+      clisEl.appendChild(b);
+      if(!ROT_ABIERTO[ak]) return;
+      // editor
+      const total = (base[pc.n] || []).reduce((t,q)=>t + Number(q || 0), 0);
+      let qs = (ROT_AJ[k] || base[pc.n] || [total]).map(Number);
+      const ed = document.createElement("div");
+      ed.setAttribute("style", `padding:12px 16px 14px;background:${C.bg};border-top:1px dashed ${C.line};`);
+      const pintar = ()=>{
+        const suma = qs.reduce((t,q)=>t + (Number(q) || 0), 0), ok = Math.abs(suma - total) < 1e-9;
+        ed.innerHTML = `<div style="font-size:0.85rem;font-weight:700;">✏️ ${logEsc(pc.cli)} <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;color:${C.inkSoft};font-size:0.75rem;">· #${logEsc(pc.n)} · ${logEsc(g.name)} · pedido: ${fmtN(total)}</span></div>
+          <div style="font-size:0.78rem;color:${C.inkSoft};margin:4px 0 8px;">¿Cuántas unidades lleva cada rótulo (cada caja)?</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end;">${qs.map((q,i)=>`<label style="display:flex;flex-direction:column;gap:2px;font-size:0.68rem;color:${C.inkSoft};font-weight:600;">Rótulo ${i+1}
+              <input type="number" inputmode="numeric" min="0" data-i="${i}" value="${q}" style="width:4.5em;font-size:1.05rem;font-family:'IBM Plex Mono',monospace;padding:7px;border:1.5px solid ${C.line};border-radius:8px;"></label>`).join("")}
+            <button type="button" class="mas" style="font-size:0.85rem;font-weight:700;border:1.5px solid ${col.a};background:#fff;color:${col.a};border-radius:8px;padding:8px 11px;cursor:pointer;">+ rótulo</button>
+            ${qs.length > 1 ? `<button type="button" class="menos" style="font-size:0.85rem;font-weight:700;border:1.5px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:8px;padding:8px 11px;cursor:pointer;">− rótulo</button>` : ""}
+          </div>
+          <div style="margin-top:8px;font-size:0.82rem;font-weight:700;color:${ok ? "#2E6B3A" : "#B3261E"};">${ok ? `✓ Suma ${fmtN(suma)} = pedido` : `⚠️ Suma ${fmtN(suma)}, el pedido dice ${fmtN(total)}`}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+            <button type="button" class="ok" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;">✓ Guardar</button>
+            <button type="button" class="imp" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px solid ${col.a};background:#fff;color:${col.a};border-radius:10px;padding:10px 14px;cursor:pointer;">🖨️ Imprimir solo este cliente</button>
+            ${ROT_AJ[k] ? `<button type="button" class="rst" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Volver a lo normal</button>` : ""}
+          </div>`;
+        ed.querySelectorAll("input[data-i]").forEach(inp=>{ inp.oninput = ()=>{ qs[Number(inp.dataset.i)] = Number(inp.value) || 0; }; inp.onchange = ()=>pintar(); });
+        ed.querySelector(".mas").onclick = ()=>{ const suma = qs.reduce((t,q)=>t + q, 0); qs.push(Math.max(0, total - suma)); pintar(); };
+        const me = ed.querySelector(".menos"); if(me) me.onclick = ()=>{ qs.pop(); pintar(); };
+        const guardar = ()=>{ qs = qs.map(q=>Number(q) || 0).filter(q=>q > 0); if(!qs.length) qs = [total]; ROT_AJ[k] = qs; rotGuardarAj(); };
+        ed.querySelector(".ok").onclick = ()=>{ guardar(); ROT_ABIERTO[ak] = false; render(); };
+        ed.querySelector(".imp").onclick = ()=>{ guardar(); const r0 = pc.l[0]; logImprimir(qs.map(q=>Object.assign({}, r0, {q})), iso); render(); };
+        const rs = ed.querySelector(".rst"); if(rs) rs.onclick = ()=>{ delete ROT_AJ[k]; rotGuardarAj(); ROT_ABIERTO[ak] = false; render(); };
+      };
+      pintar();
+      card.appendChild(ed);
+    });
   });
   main.appendChild(card);
   const prev = document.createElement("div");
@@ -3300,6 +3368,21 @@ function bootEmp(){
     if(JSON.stringify(EMP) !== antes) empRepintar();
   }, err=>console.warn("No se pudo leer empaque:", err));
 }
+async function empVerificar(iso, lote){
+  if(!DB || !lote.length) return;
+  try{
+    const sn = await DB.doc("estado/EMP-" + iso).get();
+    const srv = empVacio((sn.exists && sn.data()) || {});
+    const esperado = empVacio(srv);
+    lote.forEach(p=>p.fn(esperado));
+    if(JSON.stringify(esperado) === JSON.stringify(srv)) return;   // está todo
+    // se perdió algo: se vuelve a poner (antes de lo que se haya tocado después)
+    const pend = EMP_PEND[iso] || (EMP_PEND[iso] = []);
+    lote.slice().reverse().forEach(p=>{ if(!pend.includes(p)) pend.unshift(p); });
+    EMP_SRV[iso] = srv; empVista(iso); empRepintar();
+    empGuardar(iso, ()=>{});
+  }catch(e){ setTimeout(()=>empVerificar(iso, lote), 5000); }
+}
 function empGuardar(iso, cambiar){
   (EMP_PEND[iso] || (EMP_PEND[iso] = [])).push({fn: cambiar});
   empVista(iso); render();
@@ -3316,6 +3399,9 @@ function empGuardar(iso, cambiar){
         await ref.set(srv);
         EMP_SRV[iso] = srv;
         EMP_PEND[iso] = (EMP_PEND[iso] || []).filter(p=>!lote.includes(p));
+        // Arreglo 13 oct: si otro celular guardó encima justo al mismo tiempo, se pierde lo de este → se verifica 2 veces
+        setTimeout(()=>empVerificar(iso, lote), 1800 + Math.random()*800);
+        setTimeout(()=>empVerificar(iso, lote), 9000 + Math.random()*2000);
         const antes = JSON.stringify(EMP[iso]);
         empVista(iso);
         if(JSON.stringify(EMP[iso]) !== antes) empRepintar();
@@ -3618,7 +3704,7 @@ function renderTablero(main, col){
           ${p.h ? `<span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;background:${info.c};color:#fff;border-radius:6px;padding:2px 7px;">${p.h}</span>` : ""}
           <span style="flex:1;font-weight:700;font-size:0.9rem;line-height:1.25;">${logEsc(p.cli)}</span>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};white-space:nowrap;">#${logEsc(p.n)}${p.rec ? " · 🏠" : a ? " · 🛵" + a : ""}</span>
-        </div>` + its.map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:0.88rem;">
+        </div>` + bulLinea(f) + its.map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:0.88rem;">
           ${conCasilla ? `<button type="button" data-e="${i.ix}" style="width:24px;height:24px;flex:none;border-radius:6px;border:1.5px solid ${info.c};background:#fff;cursor:pointer;padding:0;"></button>` : `<span style="width:8px;height:8px;border-radius:50%;background:${info.c};flex:none;margin:0 8px;"></span>`}
           <span style="font-family:'IBM Plex Mono',monospace;font-weight:700;min-width:2.2em;text-align:right;">${fmtN(i.q)}</span>
           <span style="flex:1;">${logEsc(i.nm)}${i.cong ? " 🧊" : ""}</span>
@@ -3642,9 +3728,11 @@ function renderTablero(main, col){
     const r = document.createElement("div");
     r.setAttribute("style", `display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid ${C.line};`);
     r.innerHTML = `${p.h ? `<span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;background:${EST_INFO.LISTO.c};color:#fff;border-radius:6px;padding:2px 7px;">${p.h}</span>` : ""}
-      <span style="flex:1;font-weight:700;font-size:0.9rem;">${logEsc(p.cli)}<span style="display:block;font-weight:400;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)} · ${p.rec ? "🏠 Recoge" : a ? "🛵 Mensajero " + a : "sin mensajero"}${f.bul && f.bul.b !== "" ? ` · 🧊 ${f.bul.b} band. ${f.bul.s} bols.` : ""}</span></span>
+      <span style="flex:1;font-weight:700;font-size:0.9rem;">${logEsc(p.cli)}<span style="display:block;font-weight:400;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)} · ${p.rec ? "🏠 Recoge" : a ? "🛵 Mensajero " + a : "sin mensajero"}</span></span>
       <button type="button" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:8px 12px;border-radius:8px;border:none;background:${EST_INFO.ENV.c};color:#fff;cursor:pointer;">🛵 Enviar</button>`;
     r.querySelector("button").onclick = ()=>empGuardar(iso, d=>{ d.env[p.n] = true; });
+    const bl = bulLinea(f);
+    if(bl){ r.style.flexWrap = "wrap"; const x = document.createElement("div"); x.setAttribute("style", "flex-basis:100%;"); x.innerHTML = bl; r.appendChild(x); }
     L.appendChild(r);
   });
   if(env.length){
@@ -3656,6 +3744,17 @@ function renderTablero(main, col){
   cols.appendChild(L);
   // Alban 9 oct: izquierda Listos para enviar · derecha Por empacar (se quitó "Esperando producción")
   cols.appendChild(columna(`📦 Por empacar · ${nEmp}`, EST_INFO.EMP, porEmp, i=>!i.emp && i.prod !== "falta", true, "Nada por empacar: lo hecho ya está empacado."));
+}
+// Alban 13 oct: lo que Panadería registró al empacar (bandejas y bolsas) sale en el pedido de Logística
+function bulLinea(f){
+  const cong = f.its.filter(i=>i.cong);
+  if(!cong.length) return "";
+  const b = f.bul || {}, ok = cong.every(i=>i.emp);
+  if(ok && (b.b !== undefined && b.b !== "" || b.s !== undefined && b.s !== "")){
+    const nb = Number(b.b) || 0, ns = Number(b.s) || 0;
+    return `<div style="margin:2px 0 6px;font-size:0.85rem;font-weight:700;color:#1F4E79;background:#E6EFF8;border-radius:8px;padding:6px 10px;">🧊 Panadería empacó: <span style="font-size:1rem;">${fmtN(nb)}</span> ${nb === 1 ? "bandeja" : "bandejas"} · <span style="font-size:1rem;">${fmtN(ns)}</span> ${ns === 1 ? "bolsa" : "bolsas"}</div>`;
+  }
+  return `<div style="margin:2px 0 6px;font-size:0.8rem;font-weight:600;color:#9A5B00;background:#FFF3DC;border-radius:8px;padding:6px 10px;">🧊 Panadería aún no ha empacado los congelados de este pedido</div>`;
 }
 // mensajero asignado (1 / 2) según Entregas
 function asignacion(iso, n){
@@ -4297,6 +4396,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
 
 
 
