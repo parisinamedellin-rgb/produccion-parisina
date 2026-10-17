@@ -2259,8 +2259,10 @@ async function batRegistrar(def){
   render();
 }
 // Conteo manual (desde Stock): guarda lo que hay de verdad y lo que el sistema esperaba
+let BAT_MSG = "";   // Alban 17 oct: confirmar que el conteo sí se guardó
 async function batGuardarConteos(){
   if(!DB) return;
+  let ok = 0, mal = 0;
   for(const n of BATIDO_TIPOS){
     if(BAT_DRAFT[n] === undefined || String(BAT_DRAFT[n]).trim() === "") continue;
     const q = numAj(BAT_DRAFT[n]);
@@ -2268,10 +2270,12 @@ async function batGuardarConteos(){
     const st = batEstado(n);
     try{
       await batPush(n, {tipo: "conteo", cantidad: q, sistema: st.lotes.length ? st.stock : null});
-      delete BAT_DRAFT[n];
-    }catch(err){ console.warn("No se pudo guardar el conteo:", err); }
+      delete BAT_DRAFT[n]; ok++;
+    }catch(err){ mal++; console.warn("No se pudo guardar el conteo:", err); }
   }
+  BAT_MSG = mal ? `⚠️ No se pudieron guardar ${mal}. Revisa el internet y vuelve a intentar.` : ok ? `✓ Conteo guardado (${ok}). El stock ahora es lo que contaste.` : "Escribe al menos una cantidad.";
   render();
+  setTimeout(()=>{ BAT_MSG = ""; }, 8000);
 }
 async function batDeshacer(n){
   if(!DB) return;
@@ -2374,6 +2378,7 @@ function batidoStockEl(col){
         <div style="font-size:0.95rem;font-weight:600;">${n}</div>
         <div style="font-size:0.74rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${sub.join("<br>")}</div>
         ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)}</div>` : ""}
+        ${st.conteo && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
       </div>
       <div style="text-align:right;min-width:74px;">
         <div style="font-size:0.66rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};line-height:1.2;">stock<br>fin del día</div>
@@ -2390,8 +2395,8 @@ function batidoStockEl(col){
   const foot = document.createElement("div");
   foot.setAttribute("style", "padding:14px 16px;");
   foot.innerHTML = `<button type="button" ${DB ? "" : "disabled"} style="width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:13px;border-radius:12px;border:none;background:${col.a};color:#fff;cursor:${DB ? "pointer" : "not-allowed"};opacity:${DB ? 1 : .45};">💾 Guardar conteo</button>
-    <div style="font-size:0.76rem;color:${C.inkSoft};margin-top:8px;text-align:center;">Solo se guardan las casillas que llenes. El conteo es al final del día.</div>`;
-  foot.querySelector("button").onclick = ()=>batGuardarConteos();
+    <div class="msg" style="font-size:0.76rem;color:${C.inkSoft};margin-top:8px;text-align:center;">${BAT_MSG || "Solo se guardan las casillas que llenes. El conteo es al final del día."}</div>`;
+  foot.querySelector("button").onclick = ()=>{ const m = foot.querySelector(".msg"); m.textContent = "Guardando…"; batGuardarConteos(); };
   card.appendChild(foot);
   wrap.appendChild(card);
   if(navFam === "ALL" && DB) wrap.appendChild(batAlertasEl());   // las alertas son para Alban ("Ver todo")
