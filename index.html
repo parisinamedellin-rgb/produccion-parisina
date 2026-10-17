@@ -23,6 +23,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -2937,6 +2938,7 @@ function renderPrioridades(main){
     wrap.appendChild(card);
   }
   if(activeCat === "Panaderia"){ const ep = empacarPanEl(activeDate); if(ep) wrap.appendChild(ep); }   // Alban 9 oct: después de Sin hora
+  if(activeCat === "Panaderia"){ const rm = rotCongSigEl(activeDate); if(rm) wrap.appendChild(rm); }   // Alban 17 oct: rótulos de congelados del día siguiente
   main.appendChild(wrap);
   return deUnaVez;
 }
@@ -3769,6 +3771,39 @@ function empacarPanEl(iso){
     cuerpo.appendChild(box);
   });
   return card;
+}
+// ---- Alban 17 oct: 🏷️ rótulos de los congelados del DÍA SIGUIENTE, sin nombre del cliente ----
+// Se suman todos los pedidos por producto y sale un rótulo por cada 10 (EMP_X_BANDEJA): 50 pastel jamón y queso = 5 rótulos.
+// El rótulo con el nombre del cliente se imprime el día de la entrega (en Empacar panadería).
+function rotCongSig(iso){
+  const sig = sigDia(iso);
+  if(!sig) return {sig: null, lista: [], tot: []};
+  const t = {};
+  logPedidos(sig).forEach(p=>pedFlujo(sig, p).its.forEach(i=>{
+    if(!i.cong) return;
+    const q = Number(i.q) || 0; if(q <= 0) return;
+    const k = String(i.c);
+    (t[k] || (t[k] = {cod: i.c, name: String(i.nm).trim(), q: 0})).q += q;
+  }));
+  const tot = Object.values(t).sort((a,b)=>a.name.localeCompare(b.name, "es"));
+  const lista = [];
+  tot.forEach(x=>{ let r = x.q; while(r > 0){ const q = Math.min(EMP_X_BANDEJA, r); lista.push({cod: x.cod, name: x.name, q}); r -= q; } });
+  return {sig, lista, tot};
+}
+function rotCongSigEl(iso){
+  const {sig, lista, tot} = rotCongSig(iso);
+  if(!sig || !lista.length) return null;
+  const {dow, dm} = fmtDay(sig);
+  const box = document.createElement("div");
+  box.setAttribute("style", `border-top:1px solid ${C.line};padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;`);
+  box.innerHTML = `<span style="font-size:1.2rem;">🏷️</span>
+    <span style="flex:1;min-width:180px;"><span style="font-weight:700;font-size:0.98rem;">Rótulos congelados de ${logEsc(String(dow).toLowerCase())} ${logEsc(dm)}</span>
+      <span style="display:block;font-size:0.78rem;color:${C.inkSoft};margin-top:2px;">Sin nombre del cliente · 1 rótulo por cada ${EMP_X_BANDEJA} · <a href="#" class="ver" style="color:${C.accent};">ver detalle</a></span>
+      <span class="det" style="display:none;font-size:0.8rem;color:${C.inkSoft};margin-top:4px;">${tot.map(x=>fmtN(x.q) + " " + logEsc(x.name) + " → " + Math.ceil(x.q / EMP_X_BANDEJA)).join(" · ")}</span></span>
+    <button type="button" class="pr" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:none;background:${C.accent};color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;">🖨️ Imprimir ${fmtN(lista.length)} ${lista.length === 1 ? "rótulo" : "rótulos"}</button>`;
+  box.querySelector(".ver").onclick = e=>{ e.preventDefault(); const d = box.querySelector(".det"); d.style.display = d.style.display === "none" ? "block" : "none"; };
+  box.querySelector(".pr").onclick = ()=>logImprimir(lista, sig);
+  return box;
 }
 // ---- Alban 9 oct: empaques y productos comprados (Hit, Hatsu) los prepara Logística EL DÍA ANTERIOR ----
 const COMPRA_RE = /^\s*empaque|\bhit\b|hatsu/i;
@@ -4859,6 +4894,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
 
 
 
