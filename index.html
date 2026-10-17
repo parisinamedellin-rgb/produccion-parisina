@@ -1181,7 +1181,7 @@ const FAMS = [
   {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS"], nota:"Stock · Fórmulas"},   // Alban 5 oct: sin Producción ni De una vez
   {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["TABLERO","PEDIDOS","ENTREGAS","CAJAS","ROTULOS"], nota:"Tablero · Pedidos · Entregas · Cajas · Rótulos"},   // Alban 6 oct
   {key:"Marzzana", label:"La Marzzana", emoji:"🍕", subs:["Marzzana"], modos:["FORMULAS"], nota:"Fórmulas"},
-  {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","CLIENTE","SELLO"], nota:"Planta · Consumidor final · Cliente · Sello"}   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
+  {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","REFRIG","CLIENTE","CAJAESP","SELLO"], nota:"Planta · Consumidor final · Refrigerio · Cliente · Cajas especiales · Sello"}   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
 ];
 const FAM_ALL = {key:"ALL", label:"Todo", emoji:"📋", subs:null};
 let navFam = "ALL";      // categoría elegida en la primera página
@@ -1522,7 +1522,7 @@ function renderCats(){
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🚚 Entregas"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🚚 Entregas"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Refrigerio"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
     const on = key === modo;
     const btn = document.createElement("button");
     btn.textContent = label;
@@ -4187,7 +4187,7 @@ function renderPedidos(main, col){
 // Lote: CÓDIGO-AAMMDD-CANTIDAD (ej. 100-261013-20)
 // Productos: catálogo del Excel (ROT_CAT) + fórmulas de la página + productos que crea el operador (db estado/ROTPROD)
 // ============================================================
-const ROTM = ["PLANTA","CONSUMIDOR","CLIENTE","SELLO"];   // Alban 13 oct: + Cliente
+const ROTM = ["PLANTA","CONSUMIDOR","REFRIG","CLIENTE","CAJAESP","SELLO"];   // Alban 17 oct: + Cajas especiales   // Alban 13 oct: + Cliente
 let ROT_PROPIOS = [];   // [{cod, nom, dias, por, ts}]
 let ROT_OPS = [];       // Alban 13 oct: responsables = solo operadores (lista compartida en db estado/ROTOPS)
 let ROT_OPS_ED = false;
@@ -4298,6 +4298,197 @@ function rotImprimirHTMLs(htmls){
   area.querySelectorAll(".rot").forEach(rotFit);
   setTimeout(()=>window.print(), 50);
 }
+// ---- Alban 17 oct: impresión con tamaño propio (etiquetas pequeñas) ----
+function rotImprimirTam(htmls, w, h){
+  let area = document.getElementById("print-area");
+  if(!area){ area = document.createElement("div"); area.id = "print-area"; document.body.appendChild(area); }
+  let st = document.getElementById("print-style");
+  if(!st){ st = document.createElement("style"); st.id = "print-style"; document.head.appendChild(st); }
+  st.textContent = `#print-area{position:fixed;left:-10000px;top:0;}
+    @media print{ @page{size:${w}mm ${h}mm;margin:0;} html,body{margin:0!important;padding:0!important;background:#fff!important;}
+      body > *:not(#print-area){display:none!important;} #print-area{position:static;left:0;}
+      #print-area .rot{page-break-after:always;break-after:page;} }`;
+  area.innerHTML = htmls.join("");
+  area.querySelectorAll(".rot").forEach(rotFit);
+  setTimeout(()=>window.print(), 50);
+}
+function rotTamPeq(k, def){ try{ const t = JSON.parse(localStorage.getItem(k) || "{}"); if(t.w > 5 && t.h > 5) return t; }catch(e){} return def; }
+function rotCambiarTam(k, t){
+  const a = prompt("Largo de la etiqueta en mm:", String(t.w)); if(a === null) return;
+  const b = prompt("Ancho de la etiqueta en mm:", String(t.h)); if(b === null) return;
+  const w = parseFloat(String(a).replace(",", ".")), h = parseFloat(String(b).replace(",", "."));
+  if(w > 5 && h > 5){ try{ localStorage.setItem(k, JSON.stringify({w, h})); }catch(e){} render(); }
+}
+// Consumidor final › CONSUMO INMEDIATO + fecha (62 × 12 mm, como la tira del Excel)
+function consumoInmHTML(iso, w, h){
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:1.5mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:11pt;">
+    <div style="line-height:1.05;"><b>CONSUMO INMEDIATO</b> &nbsp;·&nbsp; ${ddmmyy(iso)}</div>
+  </div>`;
+}
+let CI_FECHA = "", CI_N = 1;
+function consumoInmEl(col){
+  if(!CI_FECHA) CI_FECHA = hoyISO();
+  const t = rotTamPeq("ci_mm2", {w: 62, h: 12});
+  const box = document.createElement("div");
+  box.setAttribute("style", `margin-top:12px;background:${C.paper};border:1.5px solid ${col.a};border-radius:14px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;`);
+  box.innerHTML = `<div style="flex:1 1 100%;font-weight:700;">Etiqueta CONSUMO INMEDIATO <span style="font-weight:400;font-size:0.78rem;color:${C.inkSoft};">· ${t.w} × ${t.h} mm <button type="button" class="tm" style="font-size:0.78rem;background:none;border:none;color:${col.a};text-decoration:underline;cursor:pointer;padding:0;">cambiar</button></span></div>
+    <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;">Fecha de elaboración<input type="date" class="f" value="${CI_FECHA}" style="font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;"></label>
+    <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;">Cuántas<input type="number" inputmode="numeric" min="1" class="n" value="${CI_N}" style="width:5em;font-family:'IBM Plex Mono',monospace;font-size:1rem;padding:8px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;"></label>
+    <button type="button" class="pr" style="flex:1;min-width:140px;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Imprimir</button>`;
+  box.querySelector(".tm").onclick = ()=>rotCambiarTam("ci_mm2", t);
+  box.querySelector(".f").onchange = e=>{ CI_FECHA = e.target.value || hoyISO(); };
+  box.querySelector(".n").oninput = e=>{ CI_N = Math.max(1, Math.round(Number(e.target.value) || 1)); };
+  box.querySelector(".pr").onclick = ()=>rotImprimirTam(Array.from({length: CI_N}, ()=>consumoInmHTML(CI_FECHA, t.w, t.h)), t.w, t.h);
+  return box;
+}
+// ---- Rotular › Refrigerio (Alban 17 oct): varios productos en UN rótulo (como el Excel) ----
+// Arriba una sola vez: Elaboración · Vence · Lote. Debajo cada producto: nombre, conservación, ingredientes, alérgenos.
+// Largo: 1 producto 33 mm, 2 → 53 mm, 3 → 75 mm (≈ 12 + 21 por producto); ancho 62 mm.
+const RF = {prods: [], fecha: "", vd: null, n: 1, q: ""};
+function refrigLargo(n){ return Math.round(12 + 21 * Math.max(1, n)); }
+function refrigHTML(d, w, h){
+  const prods = d.prods.map(c=>`<div style="margin-top:1.2mm;">
+      <div style="font-size:1.45em;font-weight:900;text-transform:uppercase;line-height:1.05;">${logEsc(c.nom)}</div>
+      ${c.cons ? `<div style="margin-top:.4mm;">${logEsc(c.cons)}</div>` : ""}
+      ${c.ingr ? `<div style="font-style:italic;margin-top:.3mm;">${logEsc(c.ingr)}</div>` : ""}
+      ${c.alerg ? `<div style="margin-top:.3mm;">${logEsc(c.alerg)}</div>` : ""}
+    </div>`).join("");
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:1.5mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;text-align:center;line-height:1.15;font-size:8pt;">
+    <div style="font-size:1.2em;text-align:right;">Elaboración&nbsp; ${ddmmyy(d.fecha)}&nbsp;&nbsp; Vence:&nbsp; ${ddmmyy(d.vence)}</div>
+    <div style="font-size:1.2em;text-align:right;">Lote:&nbsp; ${logEsc(d.lote)}</div>
+    ${prods}
+  </div>`;
+}
+function renderRefrig(main, col){
+  const hoy = hoyISO();
+  if(!RF.fecha) RF.fecha = hoy;
+  const catalogo = rotCatalogo("CONSUMIDOR");
+  const minDias = RF.prods.length ? Math.min(...RF.prods.map(c=>(c.dias === "" || c.dias == null) ? 0 : Number(c.dias) || 0)) : 0;
+  const vd = RF.vd != null ? RF.vd : minDias;
+  const w = 62, h = refrigLargo(RF.prods.length);
+  const datos = ()=>({prods: RF.prods, fecha: RF.fecha, vence: masDias(RF.fecha, vd),
+    lote: `${LOTE_PLANTA}  ${aammdd(RF.fecha)}  ${RF.prods.map(c=>c.cod).join(" ")}  ${RF.n}`});
+  const inp = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;box-sizing:border-box;width:100%;`;
+  const lab = `display:flex;flex-direction:column;gap:4px;font-size:0.75rem;color:${C.inkSoft};font-weight:700;`;
+  const head = document.createElement("div");
+  head.setAttribute("style", "margin-top:16px;");
+  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Refrigerio</h2>
+    <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Varios productos en un solo rótulo: la fecha, el vencimiento y el lote salen una vez arriba. Vence = el producto que dura menos. Tamaño ${w} × ${h} mm (crece con cada producto).</div>`;
+  main.appendChild(head);
+  // buscador
+  const bus = document.createElement("div");
+  bus.setAttribute("style", "margin-top:12px;position:relative;");
+  bus.innerHTML = `<div style="display:flex;align-items:center;gap:10px;background:#fff;border:2px solid ${col.a};border-radius:14px;padding:4px 6px 4px 14px;">
+      <span>🔎</span><input type="text" class="q" autocomplete="off" placeholder="Agregar producto (código o nombre)…" value="${logEsc(RF.q)}" style="flex:1;min-width:0;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 0;background:transparent;color:#222;"></div>
+    <div class="lst" style="display:none;position:absolute;left:0;right:0;z-index:20;margin-top:4px;background:#fff;border:1px solid ${C.line};border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:340px;overflow-y:auto;"></div>`;
+  main.appendChild(bus);
+  const q = bus.querySelector(".q"), lst = bus.querySelector(".lst");
+  const sugerir = ()=>{
+    RF.q = q.value;
+    const t = pedNorm(q.value);
+    if(!t){ lst.style.display = "none"; return; }
+    const pals = t.split(" ");
+    const m = catalogo.filter(c=>!RF.prods.some(x=>x.cod === c.cod) && pals.every(w2=>pedNorm(c.cod + " " + c.nom).includes(w2))).sort((a,b)=>a.nom.localeCompare(b.nom, "es")).slice(0, 14);
+    lst.innerHTML = m.length ? m.map((c,i)=>`<button type="button" data-i="${i}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;border-top:1px solid ${C.line};background:#fff;padding:10px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:#222;">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${col.a};min-width:3.5em;">${logEsc(c.cod)}</span><span style="flex:1;">${logEsc(c.nom)}</span>
+        <span style="font-size:0.7rem;color:${C.inkSoft};">${!c.ingr ? "⚠️ sin ingredientes" : ""}</span></button>`).join("")
+      : `<div style="padding:10px 14px;font-size:0.88rem;color:${C.inkSoft};">No existe "${logEsc(q.value)}".</div>`;
+    lst.style.display = "";
+    lst.querySelectorAll("button[data-i]").forEach(b=>{ b.onmousedown = e=>e.preventDefault(); b.onclick = ()=>{ RF.prods.push(m[Number(b.dataset.i)]); RF.q = ""; RF.vd = null; render(); setTimeout(()=>{ const x = document.querySelector("#main .q"); if(x) x.focus(); }, 0); }; });
+  };
+  q.oninput = sugerir; q.onfocus = sugerir;
+  q.onblur = ()=>setTimeout(()=>{ lst.style.display = "none"; }, 200);
+  if(!RF.prods.length){ const v = document.createElement("div"); v.setAttribute("style", `font-size:0.9rem;color:${C.inkSoft};font-style:italic;padding:14px 4px;`); v.textContent = "Agrega los productos que van en la caja del refrigerio."; main.appendChild(v); return; }
+  // productos elegidos
+  const lp = document.createElement("div");
+  lp.setAttribute("style", `margin-top:12px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;overflow:hidden;`);
+  lp.innerHTML = RF.prods.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;${i ? "border-top:1px solid " + C.line + ";" : ""}">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${col.a};min-width:3.5em;">${logEsc(c.cod)}</span>
+      <span style="flex:1;font-weight:600;">${logEsc(c.nom)}${!c.ingr ? ` <span style="font-size:0.72rem;color:#B3261E;">⚠️ sin ingredientes</span>` : ""}</span>
+      ${i ? `<button type="button" data-u="${i}" title="Subir" style="border:none;background:${C.bg};border-radius:8px;padding:5px 8px;cursor:pointer;">↑</button>` : ""}
+      <button type="button" data-x="${i}" style="border:none;background:${C.bg};color:#B3261E;border-radius:8px;padding:5px 9px;cursor:pointer;">✕</button></div>`).join("");
+  lp.querySelectorAll("button[data-x]").forEach(b=>{ b.onclick = ()=>{ RF.prods.splice(Number(b.dataset.x), 1); RF.vd = null; render(); }; });
+  lp.querySelectorAll("button[data-u]").forEach(b=>{ b.onclick = ()=>{ const i = Number(b.dataset.u); [RF.prods[i-1], RF.prods[i]] = [RF.prods[i], RF.prods[i-1]]; render(); }; });
+  main.appendChild(lp);
+  // datos + imprimir
+  const fm = document.createElement("div");
+  fm.setAttribute("style", `margin-top:12px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:14px;display:grid;gap:10px;`);
+  fm.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <label style="${lab}">Fecha de elaboración<input type="date" class="f1" value="${RF.fecha}" style="${inp}"></label>
+      <label style="${lab}">Vence en (días)<input type="number" inputmode="numeric" min="0" class="f2" value="${vd}" style="${inp}"><span class="f2v" style="font-weight:500;">Vence: ${ddmmyy(masDias(RF.fecha, vd))}</span></label>
+    </div>
+    <label style="${lab}">Rótulos a imprimir (uno por caja)<input type="number" inputmode="numeric" min="1" class="cp" value="${RF.n}" style="${inp}"></label>
+    <button type="button" class="pr" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:12px;padding:13px;cursor:pointer;">🖨️ Imprimir</button>
+    <div style="display:flex;gap:10px;"><button type="button" class="lim" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;border:1px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:10px;padding:8px 12px;cursor:pointer;">Empezar otro refrigerio</button></div>
+    <div style="font-size:0.75rem;color:${C.inkSoft};">Vista previa:</div><div class="pv" style="overflow:hidden;"></div>`;
+  main.appendChild(fm);
+  const prev = ()=>{
+    const pv = fm.querySelector(".pv"), esc = Math.min(1.6, (pv.clientWidth || 320) / (w * 3.78));
+    pv.style.height = (h * 3.78 * esc) + "px";
+    pv.innerHTML = `<div style="transform:scale(${esc});transform-origin:0 0;width:${w}mm;border:1px dashed ${C.line};">${refrigHTML(datos(), w, h)}</div>`;
+    const r = pv.querySelector(".rot"); if(r) rotFit(r);
+  };
+  fm.querySelector(".f1").onchange = e=>{ RF.fecha = e.target.value || hoy; render(); };
+  fm.querySelector(".f2").oninput = e=>{ RF.vd = Math.max(0, Math.round(Number(e.target.value) || 0)); fm.querySelector(".f2v").textContent = "Vence: " + ddmmyy(masDias(RF.fecha, RF.vd)); };
+  fm.querySelector(".f2").onchange = ()=>render();
+  fm.querySelector(".cp").oninput = e=>{ RF.n = Math.max(1, Math.round(Number(e.target.value) || 1)); prev(); };
+  fm.querySelector(".lim").onclick = ()=>{ RF.prods = []; RF.vd = null; RF.n = 1; RF.q = ""; render(); };
+  fm.querySelector(".pr").onclick = ()=>{ const d = datos(); rotImprimirTam(Array.from({length: RF.n}, ()=>refrigHTML(d, w, h)), w, h); };
+  setTimeout(prev, 0);
+}
+// ---- Rotular › Cajas especiales (Alban 17 oct): nombre completo de quien RECIBE, etiqueta de 12 mm ----
+const CAJA_RE = /caja\s+especial/i;
+let CE_FECHA = "";
+const CE_NOM = {};   // pedido -> nombre corregido a mano
+function cajasEspDia(iso){
+  return logPedidos(iso).map(p=>{
+    const q = (p.todo || p.items || []).filter(([c, nm])=>CAJA_RE.test(String(nm))).reduce((s, x)=>s + (Number(x[2]) || 0), 0);
+    return q > 0 ? {p, q, nom: (CE_NOM[p.n] != null ? CE_NOM[p.n] : (String(p.para || "").trim() || String(p.cli || "").trim()))} : null;
+  }).filter(Boolean).sort((a,b)=>(a.p.h || "99") < (b.p.h || "99") ? -1 : (a.p.h || "99") > (b.p.h || "99") ? 1 : 0);
+}
+function cajaNomHTML(nom, w, h){
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:0.5mm 2mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11pt;">
+    <div style="font-weight:700;line-height:1.05;">${logEsc(nom)}</div>
+  </div>`;
+}
+function renderCajasEsp(main, col){
+  if(!CE_FECHA) CE_FECHA = hoyISO();
+  const t = rotTamPeq("ce_mm", {w: 62, h: 12});
+  const lista = cajasEspDia(CE_FECHA);
+  const head = document.createElement("div");
+  head.setAttribute("style", "margin-top:16px;");
+  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Cajas especiales</h2>
+    <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Nombre completo de la persona que <b>recibe</b> (si la comanda no lo trae, sale el de quien envía). Etiqueta de ${t.w} × ${t.h} mm <button type="button" class="tm" style="font-size:0.8rem;background:none;border:none;color:${col.a};text-decoration:underline;cursor:pointer;padding:0;">cambiar</button></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.85rem;font-weight:700;color:${C.inkSoft};">Día de entrega
+      <input type="date" class="fd" value="${CE_FECHA}" style="font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;"></label>`;
+  main.appendChild(head);
+  head.querySelector(".tm").onclick = ()=>rotCambiarTam("ce_mm", t);
+  head.querySelector(".fd").onchange = e=>{ CE_FECHA = e.target.value || hoyISO(); render(); };
+  const tot = lista.reduce((s, x)=>s + x.q, 0);
+  const top = document.createElement("div");
+  top.setAttribute("style", `margin-top:14px;background:${col.a};color:#fff;border-radius:16px;padding:14px 16px;`);
+  top.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;">${lista.length ? `${fmtN(tot)} ${tot === 1 ? "caja especial" : "cajas especiales"} este día` : "No hay cajas especiales este día"}</div>
+    ${lista.length ? `<button type="button" class="pa" style="margin-top:10px;width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:12px;border-radius:12px;border:none;background:#fff;color:${col.a};cursor:pointer;">🖨️ Imprimir todos (${fmtN(tot)})</button>` : ""}`;
+  main.appendChild(top);
+  if(!lista.length) return;
+  const todos = ()=>{ const hs = []; cajasEspDia(CE_FECHA).forEach(x=>{ for(let i = 0; i < x.q; i++) hs.push(cajaNomHTML(x.nom, t.w, t.h)); }); return hs; };
+  top.querySelector(".pa").onclick = ()=>rotImprimirTam(todos(), t.w, t.h);
+  const card = document.createElement("div");
+  card.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-top:14px;overflow:hidden;`);
+  lista.forEach(x=>{
+    const row = document.createElement("div");
+    row.setAttribute("style", `display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid ${C.line};`);
+    const envia = String(x.p.cli || "").trim(), mismo = pedNorm(envia) === pedNorm(x.nom);
+    row.innerHTML = `<span style="min-width:40px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:5px 6px;">${fmtN(x.q)}</span>
+      <span style="flex:1;min-width:180px;"><input type="text" class="nm" value="${logEsc(x.nom)}" style="width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:7px 9px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;">
+        <span style="display:block;font-size:0.74rem;color:${C.inkSoft};margin-top:3px;">#${logEsc(x.p.n)}${x.p.h ? " · " + x.p.h : ""}${!mismo && envia ? " · envía: " + logEsc(envia) : ""}</span></span>
+      <button type="button" class="pp" style="font-size:0.85rem;font-weight:700;color:${col.a};background:#fff;border:1.5px solid ${col.a};border-radius:8px;padding:8px 11px;cursor:pointer;font-family:'Work Sans',sans-serif;">🖨️ ${fmtN(x.q)}</button>`;
+    row.querySelector(".nm").oninput = e=>{ CE_NOM[x.p.n] = e.target.value; };
+    row.querySelector(".pp").onclick = ()=>{ const nom = row.querySelector(".nm").value.trim() || x.nom; rotImprimirTam(Array.from({length: x.q}, ()=>cajaNomHTML(nom, t.w, t.h)), t.w, t.h); };
+    card.appendChild(row);
+  });
+  main.appendChild(card);
+}
 let RT_CLI_FECHA = "";
 function renderRotularCliente(main, col){
   if(!RT_CLI_FECHA) RT_CLI_FECHA = hoyISO();
@@ -4318,6 +4509,8 @@ function renderRotular(){
   const main = document.getElementById("main");
   main.innerHTML = "";
   if(activeCat === "CLIENTE"){ renderRotularCliente(main, PALETTE.Rotular || PALETTE.ALL); return; }
+  if(activeCat === "REFRIG"){ renderRefrig(main, PALETTE.Rotular || PALETTE.ALL); return; }   // Alban 17 oct
+  if(activeCat === "CAJAESP"){ renderCajasEsp(main, PALETTE.Rotular || PALETTE.ALL); return; }   // Alban 17 oct
   if(activeCat === "SELLO"){ const {w, h} = logTam(); const sb = selloBloqueEl(w, h, hoyISO(), PALETTE.Rotular || PALETTE.ALL); sb.style.marginTop = "16px"; main.appendChild(sb); return; }
   const col = PALETTE.Rotular || PALETTE.ALL, modo = activeCat, st = RT[modo], hoy = hoyISO();
   if(!st.fecha) st.fecha = hoy;
@@ -4341,6 +4534,7 @@ function renderRotular(){
         <span>🔎</span><input type="text" class="q" autocomplete="off" placeholder="Buscar producto por código o nombre…" value="${logEsc(st.q)}" style="flex:1;min-width:0;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 0;background:transparent;color:#222;"></div>
       <div class="lst" style="display:none;position:absolute;left:0;right:0;z-index:20;margin-top:4px;background:#fff;border:1px solid ${C.line};border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);max-height:340px;overflow-y:auto;"></div>`;
   main.appendChild(bus);
+  if(modo === "CONSUMIDOR") main.appendChild(consumoInmEl(col));   // Alban 17 oct: etiqueta pequeña CONSUMO INMEDIATO
   if(st.sel){ bus.querySelector(".cb").onclick = ()=>{ st.sel = null; st.vence = ""; render(); }; }
   else {
     const q = bus.querySelector(".q"), lst = bus.querySelector(".lst");
