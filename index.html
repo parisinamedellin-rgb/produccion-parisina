@@ -4231,6 +4231,49 @@ async function rotCambiarPropios(fn){
 // de Planta para que nadie los vuelva a crear. También se pueden editar después ("Productos propios de planta").
 function rotEnExcel(cod){ return (typeof ROT_CAT !== "undefined" ? ROT_CAT : []).some(c=>String(c[0]).trim().toUpperCase() === String(cod).trim().toUpperCase()); }
 const ROT_ED = {};          // cod -> editor abierto
+// Alban 17 oct: solo él (Admin: correo + contraseña del panel Admin) revisa, aprueba, edita y borra productos de planta.
+let ROT_ADMIN = false;
+try{ ROT_ADMIN = sessionStorage.getItem("rot_admin") === "1"; }catch(e){}
+let ROT_LOGIN = false, ROT_LOGIN_ERR = "";
+function rotEsAdmin(){ return ROT_ADMIN || (typeof ADM !== "undefined" && !!ADM); }
+async function rotVerificarAdmin(email, pw){
+  const te = new TextEncoder(), cs = crypto.subtle;
+  const km = await cs.importKey("raw", te.encode(email.trim().toLowerCase() + "\n" + pw), "PBKDF2", false, ["deriveKey"]);
+  const k = await cs.deriveKey({name:"PBKDF2", salt:b64u8(ADMIN_KEY.salt), iterations:ADMIN_KEY.it, hash:"SHA-256"}, km, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  await cs.decrypt({name:"AES-GCM", iv:b64u8(ADMIN_KEY.iv)}, k, b64u8(ADMIN_KEY.priv));   // si la clave no es, falla
+  return true;
+}
+function rotAdminBarEl(col){
+  const box = document.createElement("div");
+  box.setAttribute("style", "margin-top:14px;");
+  if(rotEsAdmin()){
+    box.innerHTML = `<div style="display:flex;justify-content:flex-end;"><button type="button" class="out" style="font-size:0.78rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">🔒 Salir de Admin</button></div>`;
+    box.querySelector(".out").onclick = ()=>{ ROT_ADMIN = false; try{ sessionStorage.removeItem("rot_admin"); }catch(e){} render(); };
+    return box;
+  }
+  const n = ROT_PROPIOS.filter(p=>!p.rev).length;
+  if(!ROT_LOGIN){
+    box.innerHTML = `<button type="button" class="in" style="width:100%;font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px dashed ${col.a};background:${C.paper};color:${col.a};border-radius:12px;padding:10px;cursor:pointer;">🔒 Admin: revisar productos de planta${n ? " (" + n + " por revisar)" : ""}</button>`;
+    box.querySelector(".in").onclick = ()=>{ ROT_LOGIN = true; ROT_LOGIN_ERR = ""; render(); };
+    return box;
+  }
+  const inp = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;box-sizing:border-box;width:100%;`;
+  box.innerHTML = `<form style="background:${C.paper};border:1.5px solid ${col.a};border-radius:12px;padding:12px;display:grid;gap:8px;">
+      <div style="font-weight:700;">🔒 Entrar como Admin</div>
+      <input class="e" type="email" autocomplete="username" placeholder="Correo" style="${inp}">
+      <input class="p" type="password" autocomplete="current-password" placeholder="Contraseña" style="${inp}">
+      <div class="er" style="font-size:0.82rem;font-weight:700;color:#B3261E;">${logEsc(ROT_LOGIN_ERR)}</div>
+      <div style="display:flex;gap:8px;"><button type="submit" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:10px;cursor:pointer;">Entrar</button>
+      <button type="button" class="no" style="font-family:'Work Sans',sans-serif;border:1px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:10px;padding:10px 14px;cursor:pointer;">Cancelar</button></div></form>`;
+  box.querySelector(".no").onclick = ()=>{ ROT_LOGIN = false; render(); };
+  box.querySelector("form").onsubmit = async e=>{
+    e.preventDefault();
+    try{ await rotVerificarAdmin(box.querySelector(".e").value, box.querySelector(".p").value); ROT_ADMIN = true; ROT_LOGIN = false; try{ sessionStorage.setItem("rot_admin", "1"); }catch(x){} }
+    catch(x){ ROT_LOGIN_ERR = "Correo o contraseña incorrectos."; }
+    render();
+  };
+  return box;
+}
 let ROT_PROP_VER = false;   // lista de aprobados desplegada
 function rotEditorEl(p, col, aprobar){
   const inp = `font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;box-sizing:border-box;width:100%;`;
@@ -4255,7 +4298,7 @@ function rotEditorEl(p, col, aprobar){
     if(cod !== String(p.cod).toUpperCase() && (rotEnExcel(cod) || ROT_PROPIOS.some(x=>String(x.cod).toUpperCase() === cod) || FORMULA_DEFS.some(d=>String(d.code || "").toUpperCase() === cod))){ er.textContent = "⚠️ Ese código ya lo tiene otro producto."; return; }
     if(rotEnExcel(cod) && cod === String(p.cod).toUpperCase()){ er.textContent = "⚠️ El código " + cod + " ya es de un producto del Excel: cámbialo."; return; }
     const viejo = p.cod;
-    await rotCambiarPropios(l=>l.map(x=>x.cod === viejo ? Object.assign({}, x, {nom, cod, dias: dv === "" ? "" : Number(dv), cons, ok: aprobar ? true : x.ok, okTs: aprobar ? Date.now() : x.okTs}) : x));
+    await rotCambiarPropios(l=>l.map(x=>x.cod === viejo ? Object.assign({}, x, {nom, cod, dias: dv === "" ? "" : Number(dv), cons, ok: true, rev: aprobar ? true : x.rev, okTs: aprobar ? Date.now() : x.okTs}) : x));
     delete ROT_ED[viejo];
     render();
   };
@@ -4275,7 +4318,8 @@ function rotPropioFila(p, col, pend){
   return row;
 }
 function rotPorVerificarEl(col){
-  const pend = ROT_PROPIOS.filter(p=>!p.ok);
+  if(!rotEsAdmin()) return null;
+  const pend = ROT_PROPIOS.filter(p=>!p.rev);
   if(!pend.length) return null;
   const box = document.createElement("div");
   box.setAttribute("style", `margin-top:12px;background:#FFF8E1;border:1.5px solid #E0A800;border-radius:14px;padding:12px 14px;`);
@@ -4285,11 +4329,12 @@ function rotPorVerificarEl(col){
   return box;
 }
 function rotAprobadosEl(col){
-  const ap = ROT_PROPIOS.filter(p=>p.ok);
+  if(!rotEsAdmin()) return null;
+  const ap = ROT_PROPIOS.filter(p=>p.rev);
   if(!ap.length) return null;
   const box = document.createElement("div");
   box.setAttribute("style", `margin-top:12px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:10px 14px;`);
-  box.innerHTML = `<button type="button" class="tg" style="display:flex;width:100%;align-items:center;gap:8px;border:none;background:none;padding:2px 0;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;color:${C.ink};text-align:left;"><span style="flex:1;">Productos propios de planta (${ap.length})</span><span style="color:${col.a};">${ROT_PROP_VER ? "▲" : "▼"}</span></button>`;
+  box.innerHTML = `<button type="button" class="tg" style="display:flex;width:100%;align-items:center;gap:8px;border:none;background:none;padding:2px 0;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;color:${C.ink};text-align:left;"><span style="flex:1;">Productos propios de planta revisados (${ap.length})</span><span style="color:${col.a};">${ROT_PROP_VER ? "▲" : "▼"}</span></button>`;
   box.querySelector(".tg").onclick = ()=>{ ROT_PROP_VER = !ROT_PROP_VER; render(); };
   if(ROT_PROP_VER) ap.slice().sort((a,b)=>a.nom.localeCompare(b.nom, "es")).forEach(p=>box.appendChild(rotPropioFila(p, col, false)));
   return box;
@@ -4304,7 +4349,7 @@ function rotCatalogo(modo){
     .map(c=>({cod:c[0], nom:c[1], dias:c[2], cons:c[3], ingr:c[4], alerg:c[5], fuente:"Excel"}));
   if(modo === "CONSUMIDOR") return cat;
   const forms = FORMULA_DEFS.filter(d=>d.code && d.id).map(d=>({cod:d.code, nom:d.id, dias:null, fuente:"Fórmula"}));
-  const propios = ROT_PROPIOS.map(p=>({cod:p.cod, nom:p.nom, dias:(p.dias === "" || p.dias == null) ? null : Number(p.dias), cons: p.cons || "", fuente: p.ok ? "Planta" : "🕓 por verificar"}));
+  const propios = ROT_PROPIOS.map(p=>({cod:p.cod, nom:p.nom, dias:(p.dias === "" || p.dias == null) ? null : Number(p.dias), cons: p.cons || "", fuente: p.rev ? "Planta" : "🕓 por verificar"}));
   return [...cat, ...forms, ...propios];
 }
 function aammdd(iso){ const [y,m,d] = iso.split("-"); return y.slice(2) + m + d; }
@@ -4652,7 +4697,7 @@ function renderRotular(){
     };
     main.appendChild(nv);
   }
-  if(modo === "PLANTA" && !st.sel && !st.nuevo){ const pv = rotPorVerificarEl(col); if(pv) main.appendChild(pv); const ax = rotAprobadosEl(col); if(ax) main.appendChild(ax); }
+  if(modo === "PLANTA" && !st.sel && !st.nuevo){ const pv = rotPorVerificarEl(col); if(pv) main.appendChild(pv); const ax = rotAprobadosEl(col); if(ax) main.appendChild(ax); main.appendChild(rotAdminBarEl(col)); }
   if(!st.sel) return;
   // ---- datos del rótulo ----
   const c = st.sel;
