@@ -2226,7 +2226,8 @@ function batEntradas(n){
 function batEstado(n){
   const hoy = hoyISO();
   const ent = batEntradas(n);
-  let ic = -1; ent.forEach((e,i)=>{ if(e.tipo === "conteo") ic = i; });
+  let ic = -1, ia = -1; ent.forEach((e,i)=>{ if(e.tipo === "conteo"){ ic = i; if(e.admin) ia = i; } });
+  if(ia >= 0 && ic > ia && String(ent[ia].fecha) >= String(ent[ic].fecha)) ic = ia;   // Alban 17 oct: el ajuste Admin manda sobre el conteo del operador del mismo día
   const conteo = ic >= 0 ? ent[ic] : null;
   const despues = ent.slice(ic + 1).filter(e=>e.tipo !== "conteo");
   const hecho = despues.reduce((t,l)=>t + (+l.cantidad || 0), 0);
@@ -2259,6 +2260,68 @@ async function batRegistrar(def){
   render();
 }
 // Conteo manual (desde Stock): guarda lo que hay de verdad y lo que el sistema esperaba
+// ---- Batido › Stock: ajuste Admin (Alban 17 oct) ----
+// Con la clave de Admin, Alban escribe el stock real de cada torta al cierre de un día. Se guarda como conteo con admin:true
+// y manda sobre el conteo del operador de ese día. Los pedidos de los días siguientes se descuentan como siempre.
+let BAT_ADM_FECHA = "", BAT_ADM_MSG = "";
+const BAT_ADM = {};
+function batAdminEl(col){
+  const box = document.createElement("div");
+  box.setAttribute("style", "margin-top:14px;");
+  if(!rotEsAdmin()){
+    if(!ROT_LOGIN){
+      box.innerHTML = `<button type="button" style="width:100%;font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px dashed ${col.a};background:${C.paper};color:${col.a};border-radius:12px;padding:10px;cursor:pointer;">🔒 Admin: ajustar el stock</button>`;
+      box.querySelector("button").onclick = ()=>{ ROT_LOGIN = true; ROT_LOGIN_ERR = ""; render(); };
+      return box;
+    }
+    return rotAdminBarEl(col);
+  }
+  if(!BAT_ADM_FECHA) BAT_ADM_FECHA = hoyISO();
+  const inp = `width:76px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;text-align:center;padding:8px 4px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;`;
+  box.innerHTML = `<div style="background:${C.paper};border:2px solid ${col.a};border-radius:14px;overflow:hidden;">
+      <div style="padding:12px 16px;background:${col.s};">
+        <div style="font-weight:700;">🔒 Ajuste Admin del stock</div>
+        <div style="font-size:0.8rem;color:${C.inkSoft};margin-top:3px;">Escribe cuántas tortas hay de verdad al cierre del día. Manda sobre el conteo del operador de ese día.</div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:0.85rem;font-weight:700;color:${C.inkSoft};">Cierre del día
+          <input type="date" class="fd" value="${BAT_ADM_FECHA}" max="${hoyISO()}" style="font-family:'Work Sans',sans-serif;font-size:1rem;padding:7px 9px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;"></label>
+      </div>
+      <div class="ls"></div>
+      <div style="padding:12px 16px;">
+        <button type="button" class="ok" style="width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:12px;padding:12px;cursor:pointer;">💾 Guardar ajuste Admin</button>
+        <div class="msg" style="font-size:0.8rem;color:${C.inkSoft};margin-top:8px;text-align:center;">${logEsc(BAT_ADM_MSG || "Solo se guardan las casillas que cambies.")}</div>
+      </div></div>`;
+  const ls = box.querySelector(".ls");
+  BATIDO_TIPOS.forEach(n=>{
+    const st = batEstado(n), act = st.lotes.length ? st.stock : 0;
+    const row = document.createElement("div");
+    row.setAttribute("style", `display:flex;align-items:center;gap:10px;padding:8px 16px;border-top:1px solid ${C.line};`);
+    row.innerHTML = `<span style="flex:1;font-size:0.92rem;font-weight:600;">${n}</span>
+      <span style="font-size:0.72rem;color:${C.inkSoft};">ahora ${fmtN(act)}</span>
+      <input type="number" inputmode="numeric" min="0" placeholder="${fmtN(act)}" value="${BAT_ADM[n] !== undefined ? BAT_ADM[n] : ""}" style="${inp}">`;
+    row.querySelector("input").oninput = e=>{ BAT_ADM[n] = e.target.value; };
+    ls.appendChild(row);
+  });
+  box.querySelector(".fd").onchange = e=>{ BAT_ADM_FECHA = e.target.value || hoyISO(); };
+  box.querySelector(".ok").onclick = async ()=>{
+    const m = box.querySelector(".msg"); m.textContent = "Guardando…";
+    let ok = 0, mal = 0;
+    const f = BAT_ADM_FECHA || hoyISO();
+    // ts = cierre de ese día (o ahora, si es hoy) para que quede en orden
+    const ts = f === hoyISO() ? new Date().toISOString() : new Date(f + "T23:59:00-05:00").toISOString();
+    for(const n of BATIDO_TIPOS){
+      if(BAT_ADM[n] === undefined || String(BAT_ADM[n]).trim() === "") continue;
+      const q = numAj(BAT_ADM[n]); if(q === null || q < 0) continue;
+      const st = batEstado(n);
+      try{ await batPush(n, {tipo: "conteo", admin: true, cantidad: q, sistema: st.lotes.length ? st.stock : null, fecha: f, ts}); delete BAT_ADM[n]; ok++; }
+      catch(err){ mal++; console.warn("No se pudo guardar el ajuste:", err); }
+    }
+    BAT_ADM_MSG = mal ? `⚠️ No se pudieron guardar ${mal}. Revisa el internet.` : ok ? `✓ Ajuste guardado (${ok}).` : "No cambiaste ninguna casilla.";
+    render();
+    setTimeout(()=>{ BAT_ADM_MSG = ""; }, 8000);
+  };
+  box.appendChild(rotAdminBarEl(col));
+  return box;
+}
 let BAT_MSG = "";   // Alban 17 oct: confirmar que el conteo sí se guardó
 async function batGuardarConteos(){
   if(!DB) return;
@@ -2378,7 +2441,7 @@ function batidoStockEl(col){
         <div style="font-size:0.95rem;font-weight:600;">${n}</div>
         <div style="font-size:0.74rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${sub.join("<br>")}</div>
         ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)}</div>` : ""}
-        ${st.conteo && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
+        ${st.conteo && st.conteo.admin ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">🔒 Ajuste Admin: ${fmtN(+st.conteo.cantidad)} al cierre del ${ddmmyy(st.conteo.fecha)}</div>` : ""}${st.conteo && !st.conteo.admin && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
       </div>
       <div style="text-align:right;min-width:74px;">
         <div style="font-size:0.66rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};line-height:1.2;">stock<br>fin del día</div>
@@ -2399,6 +2462,7 @@ function batidoStockEl(col){
   foot.querySelector("button").onclick = ()=>{ const m = foot.querySelector(".msg"); m.textContent = "Guardando…"; batGuardarConteos(); };
   card.appendChild(foot);
   wrap.appendChild(card);
+  if(DB) wrap.appendChild(batAdminEl(col));   // Alban 17 oct: ajuste de stock por el Admin
   if(navFam === "ALL" && DB) wrap.appendChild(batAlertasEl());   // las alertas son para Alban ("Ver todo")
   return wrap;
 }
