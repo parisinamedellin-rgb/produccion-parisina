@@ -1488,7 +1488,7 @@ const catBtnStyle = (active, key) => { const col = (PALETTE[key] || PALETTE.ALL)
 
 // Alban 9 oct: solo Panadería puede ver el día anterior ("Ayer")
 function diaAnterior(){ return Object.keys(DATA).filter(d=>d < TODAY_ISO).sort().pop() || null; }
-function conAyer(){ return false; }   // Alban 9 oct: quitar "Ayer" (no sirve)
+function conAyer(){ return activeCat === "Panaderia"; }   // Alban 17 oct: en Panadería vuelve el día hábil anterior (formato de lista, no el de HOY)
 function renderDays(){
   const el = document.getElementById("days");
   el.innerHTML = "";
@@ -4510,7 +4510,7 @@ function render(){
   const nMain0 = main.children ? main.children.length : 0;
   // Alban 10 oct: en Panadería, HOY va con "Orden de realización"; los días siguientes, como antes:
   // lista por Nevera / Congelador / Panes…, todo agrupado y en orden alfabético.
-  const PANA_FUT = ["Panaderia","Comida de sal","Reposteria","Tortas","Topping"].includes(activeCat) && activeDate > hoyISO();   // Alban 10 oct: igual en Comida de sal y Repostería
+  const PANA_FUT = ["Panaderia","Comida de sal","Reposteria","Tortas","Topping"].includes(activeCat) && (activeDate > hoyISO() || (activeCat === "Panaderia" && activeDate < hoyISO()));   // Alban 17 oct: el día anterior de Panadería va como los demás días   // Alban 10 oct: igual en Comida de sal y Repostería
   const deUnaVezEl = PANA_FUT ? null : renderPrioridades(main);
   // ¿se pintó el cuadro "Orden de realización"? (si no, los bloques de fórmula salen abiertos, p. ej. Topping)
   const hayOrden = activeCat !== "ALL" && !!(main.children && main.children.length > nMain0);
