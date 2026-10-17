@@ -4226,19 +4226,72 @@ async function rotCambiarPropios(fn){
     ROT_PROPIOS = it;
   }catch(e){ console.warn("No se pudo guardar el producto:", e); }
 }
+// Alban 17 oct: los productos creados en Planta son PROPIOS de la planta (rellenos, bases de stock…): NO van al Excel.
+// Alban los revisa (nombre, código, días de vida, cómo se guarda), los corrige y los aprueba; aprobados quedan fijos en el buscador
+// de Planta para que nadie los vuelva a crear. También se pueden editar después ("Productos propios de planta").
+function rotEnExcel(cod){ return (typeof ROT_CAT !== "undefined" ? ROT_CAT : []).some(c=>String(c[0]).trim().toUpperCase() === String(cod).trim().toUpperCase()); }
+const ROT_ED = {};          // cod -> editor abierto
+let ROT_PROP_VER = false;   // lista de aprobados desplegada
+function rotEditorEl(p, col, aprobar){
+  const inp = `font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;box-sizing:border-box;width:100%;`;
+  const lab = `display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;`;
+  const ed = document.createElement("div");
+  ed.setAttribute("style", `margin:4px 0 10px;background:#fff;border:1.5px solid ${col.a};border-radius:10px;padding:10px;display:grid;gap:8px;`);
+  ed.innerHTML = `<label style="${lab}">Nombre<input class="e-n" style="${inp}" value="${logEsc(p.nom)}"></label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <label style="${lab}">Código (lote)<input class="e-c" style="${inp}" value="${logEsc(p.cod)}"></label>
+      <label style="${lab}">Días de vida<input class="e-d" type="number" inputmode="numeric" min="0" style="${inp}" value="${p.dias === "" || p.dias == null ? "" : logEsc(p.dias)}"></label>
+    </div>
+    <label style="${lab}">Cómo se guarda (conservación)<input class="e-k" style="${inp}" value="${logEsc(p.cons || "")}" placeholder="Ej. Refrigeración entre 0 ºC y 4 ºC"></label>
+    <div class="e-er" style="font-size:0.82rem;font-weight:700;color:#B3261E;"></div>
+    <button type="button" class="e-ok" style="font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:8px;padding:10px;cursor:pointer;">${aprobar ? "✓ Guardar y aprobar" : "✓ Guardar cambios"}</button>`;
+  ed.querySelector(".e-ok").onclick = async ()=>{
+    const nom = ed.querySelector(".e-n").value.trim().replace(/\s+/g, " ");
+    const cod = ed.querySelector(".e-c").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+    const dv = ed.querySelector(".e-d").value, cons = ed.querySelector(".e-k").value.trim();
+    const er = ed.querySelector(".e-er");
+    if(!nom){ er.textContent = "⚠️ Escribe el nombre."; return; }
+    if(!cod){ er.textContent = "⚠️ Pon un código."; return; }
+    if(cod !== String(p.cod).toUpperCase() && (rotEnExcel(cod) || ROT_PROPIOS.some(x=>String(x.cod).toUpperCase() === cod) || FORMULA_DEFS.some(d=>String(d.code || "").toUpperCase() === cod))){ er.textContent = "⚠️ Ese código ya lo tiene otro producto."; return; }
+    if(rotEnExcel(cod) && cod === String(p.cod).toUpperCase()){ er.textContent = "⚠️ El código " + cod + " ya es de un producto del Excel: cámbialo."; return; }
+    const viejo = p.cod;
+    await rotCambiarPropios(l=>l.map(x=>x.cod === viejo ? Object.assign({}, x, {nom, cod, dias: dv === "" ? "" : Number(dv), cons, ok: aprobar ? true : x.ok, okTs: aprobar ? Date.now() : x.okTs}) : x));
+    delete ROT_ED[viejo];
+    render();
+  };
+  return ed;
+}
+function rotPropioFila(p, col, pend){
+  const row = document.createElement("div");
+  row.setAttribute("style", `border-top:1px solid ${pend ? "#F0DCA0" : C.line};padding:8px 0;`);
+  row.innerHTML = `<div style="display:flex;align-items:center;gap:8px;">
+      <div style="flex:1;font-size:0.9rem;line-height:1.4;"><b>${logEsc(p.nom)}</b> <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${col.a};">${logEsc(p.cod)}</span><br>
+        <span style="font-size:0.78rem;color:${C.inkSoft};">${p.dias === "" || p.dias == null ? "sin días de vida" : p.dias + " días"}${p.cons ? " · " + logEsc(p.cons) : ""} · creado por <b>${logEsc(p.por || "—")}</b>${p.ts ? " · " + new Date(p.ts).toLocaleString("es-CO",{timeZone:"America/Bogota",day:"2-digit",month:"2-digit"}) : ""}</span></div>
+      <button type="button" class="ed" style="border:none;background:${pend ? col.a : C.bg};color:${pend ? "#fff" : col.a};border-radius:8px;padding:7px 10px;font-weight:700;cursor:pointer;">${ROT_ED[p.cod] ? "Cerrar" : pend ? "Revisar y aprobar" : "✏️ Editar"}</button>
+      <button type="button" class="bo" style="border:none;background:#fff;color:#B3261E;border:1px solid #E6B8B4;border-radius:8px;padding:7px 9px;cursor:pointer;" title="Borrar">✕</button></div>`;
+  row.querySelector(".ed").onclick = ()=>{ ROT_ED[p.cod] = !ROT_ED[p.cod]; render(); };
+  row.querySelector(".bo").onclick = async ()=>{ if(!confirm("¿Borrar " + p.nom + "?")) return; const k = p.cod; await rotCambiarPropios(l=>l.filter(x=>x.cod !== k)); if(RT.PLANTA.sel && RT.PLANTA.sel.cod === k) RT.PLANTA.sel = null; render(); };
+  if(ROT_ED[p.cod]) row.appendChild(rotEditorEl(p, col, pend));
+  return row;
+}
 function rotPorVerificarEl(col){
   const pend = ROT_PROPIOS.filter(p=>!p.ok);
   if(!pend.length) return null;
   const box = document.createElement("div");
   box.setAttribute("style", `margin-top:12px;background:#FFF8E1;border:1.5px solid #E0A800;border-radius:14px;padding:12px 14px;`);
-  box.innerHTML = `<div style="font-weight:700;margin-bottom:6px;">🕓 Productos nuevos por verificar (${pend.length})</div>`
-    + pend.map(p=>`<div style="display:flex;align-items:center;gap:8px;border-top:1px solid #F0DCA0;padding:8px 0;">
-        <div style="flex:1;font-size:0.9rem;line-height:1.4;"><b>${logEsc(p.nom)}</b> <span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${col.a};">${logEsc(p.cod)}</span><br>
-        <span style="font-size:0.78rem;color:${C.inkSoft};">${p.dias === "" || p.dias == null ? "sin días de vida" : p.dias + " días"} · creado por <b>${logEsc(p.por || "—")}</b>${p.ts ? " · " + new Date(p.ts).toLocaleString("es-CO",{timeZone:"America/Bogota",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}) : ""}</span></div>
-        <button type="button" data-ap="${logEsc(p.cod)}" style="border:none;background:${col.a};color:#fff;border-radius:8px;padding:7px 10px;font-weight:700;cursor:pointer;">✓ Aprobar</button>
-        <button type="button" data-bo="${logEsc(p.cod)}" style="border:none;background:#fff;color:#B3261E;border:1px solid #E6B8B4;border-radius:8px;padding:7px 9px;cursor:pointer;">✕</button></div>`).join("");
-  box.querySelectorAll("button[data-ap]").forEach(b=>{ b.onclick = async ()=>{ const k = b.dataset.ap; await rotCambiarPropios(l=>l.map(x=>x.cod === k ? Object.assign({}, x, {ok:true}) : x)); render(); }; });
-  box.querySelectorAll("button[data-bo]").forEach(b=>{ b.onclick = async ()=>{ const k = b.dataset.bo; await rotCambiarPropios(l=>l.filter(x=>x.cod !== k)); if(RT.PLANTA.sel && RT.PLANTA.sel.cod === k) RT.PLANTA.sel = null; render(); }; });
+  box.innerHTML = `<div style="font-weight:700;margin-bottom:2px;">🕓 Productos nuevos por verificar (${pend.length})</div>
+    <div style="font-size:0.78rem;color:${C.inkSoft};margin-bottom:4px;">Revisa nombre, código, días de vida y cómo se guarda; corrige y aprueba. Aprobado queda fijo en Planta para que no lo vuelvan a crear.</div>`;
+  pend.forEach(p=>box.appendChild(rotPropioFila(p, col, true)));
+  return box;
+}
+function rotAprobadosEl(col){
+  const ap = ROT_PROPIOS.filter(p=>p.ok);
+  if(!ap.length) return null;
+  const box = document.createElement("div");
+  box.setAttribute("style", `margin-top:12px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:10px 14px;`);
+  box.innerHTML = `<button type="button" class="tg" style="display:flex;width:100%;align-items:center;gap:8px;border:none;background:none;padding:2px 0;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;color:${C.ink};text-align:left;"><span style="flex:1;">Productos propios de planta (${ap.length})</span><span style="color:${col.a};">${ROT_PROP_VER ? "▲" : "▼"}</span></button>`;
+  box.querySelector(".tg").onclick = ()=>{ ROT_PROP_VER = !ROT_PROP_VER; render(); };
+  if(ROT_PROP_VER) ap.slice().sort((a,b)=>a.nom.localeCompare(b.nom, "es")).forEach(p=>box.appendChild(rotPropioFila(p, col, false)));
   return box;
 }
 async function rotGuardarOps(lista){
@@ -4251,7 +4304,7 @@ function rotCatalogo(modo){
     .map(c=>({cod:c[0], nom:c[1], dias:c[2], cons:c[3], ingr:c[4], alerg:c[5], fuente:"Excel"}));
   if(modo === "CONSUMIDOR") return cat;
   const forms = FORMULA_DEFS.filter(d=>d.code && d.id).map(d=>({cod:d.code, nom:d.id, dias:null, fuente:"Fórmula"}));
-  const propios = ROT_PROPIOS.map(p=>({cod:p.cod, nom:p.nom, dias:(p.dias === "" || p.dias == null) ? null : Number(p.dias), fuente: p.ok ? "Creado" : "🕓 por verificar"}));
+  const propios = ROT_PROPIOS.map(p=>({cod:p.cod, nom:p.nom, dias:(p.dias === "" || p.dias == null) ? null : Number(p.dias), cons: p.cons || "", fuente: p.ok ? "Planta" : "🕓 por verificar"}));
   return [...cat, ...forms, ...propios];
 }
 function aammdd(iso){ const [y,m,d] = iso.split("-"); return y.slice(2) + m + d; }
@@ -4272,6 +4325,7 @@ function rotPlantaHTML(d, w, h){
     <div style="font-size:2.2em;font-weight:900;line-height:1.05;text-transform:uppercase;margin-bottom:1.5mm;">${logEsc(d.nom)}</div>
     <div style="font-size:1.35em;">${d.tipo}: <b>${ddmmyy(d.fecha)}</b> &nbsp;·&nbsp; Vence: <b>${d.vence ? ddmmyy(d.vence) : "—"}</b></div>
     <div style="font-size:1.5em;margin-top:1mm;">Lote: <b style="font-family:'Courier New',monospace;letter-spacing:.3mm;">${logEsc(d.lote)}</b></div>
+    ${d.cons ? `<div style="font-size:1.1em;margin-top:1mm;">${logEsc(d.cons)}</div>` : ""}
     <div style="font-size:1.25em;margin-top:1mm;">Responsable: <b>${logEsc(d.resp)}</b></div>
   </div>`;
 }
@@ -4598,7 +4652,7 @@ function renderRotular(){
     };
     main.appendChild(nv);
   }
-  if(modo === "PLANTA" && !st.sel && !st.nuevo){ const pv = rotPorVerificarEl(col); if(pv) main.appendChild(pv); }
+  if(modo === "PLANTA" && !st.sel && !st.nuevo){ const pv = rotPorVerificarEl(col); if(pv) main.appendChild(pv); const ax = rotAprobadosEl(col); if(ax) main.appendChild(ax); }
   if(!st.sel) return;
   // ---- datos del rótulo ----
   const c = st.sel;
