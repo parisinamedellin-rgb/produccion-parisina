@@ -25,6 +25,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -2074,9 +2075,9 @@ function ajusteFormEl(def, info, iso, label){
   const ajWrap = document.createElement("div");
   ajWrap.setAttribute("style", `padding:12px 16px;border-top:1px solid ${C.line};font-family:'Work Sans',sans-serif;`);
   ajWrap.innerHTML = `
-    <button type="button" class="aj-toggle" style="width:100%;font-size:0.86rem;font-weight:700;color:#8A5A00;background:#FFF4D6;border:1.5px solid #C4791E;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">✏️ ¿No te rindió, sobró o tienes una idea? Avísale a Alban</button>
+    <button type="button" class="aj-toggle" style="width:100%;font-size:0.86rem;font-weight:700;color:#8A5A00;background:#FFF4D6;border:1.5px solid #C4791E;border-radius:10px;padding:10px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;">✏️ ¿No te rindió, sobró o tienes una idea? Propón un ajuste</button>
     <div class="aj-form" style="display:none;margin-top:10px;color:${C.ink};">
-      <div style="font-size:0.75rem;color:${C.inkSoft};margin-bottom:8px;">La fórmula no cambia sola: Alban recibe tu mensaje y decide. Llena solo lo que aplique.</div>
+      <div style="font-size:0.75rem;color:${C.inkSoft};margin-bottom:8px;">La fórmula no cambia sola: tu propuesta queda pendiente de aprobación. Llena solo lo que aplique.</div>
       <label style="display:block;font-size:0.8rem;font-weight:600;margin-bottom:3px;">¿Para cuánto te rindió? <span style="font-weight:400;color:${C.inkSoft};">(la fórmula dice ${fmtN(info.total)} ${info.unit})</span></label>
       <input type="text" inputmode="decimal" class="aj-rinde" placeholder="${fmtN(info.total)}" style="${inp}width:130px;"> <span style="font-size:0.8rem;color:${C.inkSoft};">${info.unit}</span>
       <label style="display:block;font-size:0.8rem;font-weight:600;margin:10px 0 3px;">¿Cuánto sobró o faltó?</label>
@@ -2090,7 +2091,7 @@ function ajusteFormEl(def, info, iso, label){
       <textarea class="aj-idea" rows="2" placeholder="Puedes dictarlo con el micrófono del teclado" style="${inp}width:100%;resize:vertical;"></textarea>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
         <input type="text" class="aj-name" placeholder="Tu nombre" style="${inp}flex:1;min-width:140px;">
-        <button type="button" class="aj-send" style="font-size:0.8rem;font-weight:700;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;">Enviar a Alban</button>
+        <button type="button" class="aj-send" style="font-size:0.8rem;font-weight:700;background:${C.accent};color:#fff;border:none;border-radius:8px;padding:9px 16px;cursor:pointer;">Enviar propuesta</button>
       </div>
       <div class="aj-status" style="font-size:0.75rem;color:${C.inkSoft};margin-top:4px;"></div>
     </div>`;
@@ -2106,9 +2107,9 @@ function ajusteFormEl(def, info, iso, label){
       sobro: ajWrap.querySelector('.aj-sobro').value,
       usados, idea: ajWrap.querySelector('.aj-idea').value });
     if(!txt){ statusEl.textContent = "Llena al menos un campo antes de enviar."; return; }
-    if(!nombre){ statusEl.textContent = "Escribe tu nombre para que Alban sepa quién propone."; return; }
+    if(!nombre){ statusEl.textContent = "Escribe tu nombre para saber quién propone."; return; }
     submitFormulaComment("AJUSTE - " + (label || def.id), txt, nombre);
-    statusEl.textContent = "Enviado ✓ — la fórmula sigue igual hasta que Alban la apruebe.";
+    statusEl.textContent = "Enviado ✓ — la fórmula sigue igual hasta que se apruebe.";
     ajWrap.querySelectorAll('input,textarea').forEach(el=>{ el.value = ""; });
   };
   return ajWrap;
@@ -2344,7 +2345,7 @@ async function batGuardarConteos(){
       delete BAT_DRAFT[n]; ok++;
     }catch(err){ mal++; console.warn("No se pudo guardar el conteo:", err); }
   }
-  BAT_MSG = mal ? `⚠️ No se pudieron guardar ${mal}. Revisa el internet y vuelve a intentar.` : ok ? `✓ Conteo enviado (${ok}). Alban lo revisa y ajusta el stock.` : "Escribe al menos una cantidad.";
+  BAT_MSG = mal ? `⚠️ No se pudieron guardar ${mal}. Revisa el internet y vuelve a intentar.` : ok ? `✓ Conteo enviado (${ok}). Pendiente de aprobación.` : "Escribe al menos una cantidad.";
   render();
   setTimeout(()=>{ BAT_MSG = ""; }, 8000);
 }
@@ -2449,7 +2450,7 @@ function batidoStockEl(col){
         <div style="font-size:0.95rem;font-weight:600;">${n}</div>
         <div style="font-size:0.74rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${sub.join("<br>")}</div>
         ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)}</div>` : ""}
-        ${st.conteo && st.conteo.admin ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">🔒 Ajuste Admin: ${fmtN(+st.conteo.cantidad)} al cierre del ${ddmmyy(st.conteo.fecha)}</div>` : ""}${st.pendiente ? `<div style="font-size:0.76rem;color:#8A5A00;font-weight:700;margin-top:3px;">🕓 Conteo enviado: ${fmtN(+st.pendiente.cantidad)} · espera revisión de Alban</div>` : ""}${st.conteo && !st.conteo.admin && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
+        ${st.conteo && st.conteo.admin ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">🔒 Ajuste Admin: ${fmtN(+st.conteo.cantidad)} al cierre del ${ddmmyy(st.conteo.fecha)}</div>` : ""}${st.pendiente ? `<div style="font-size:0.76rem;color:#8A5A00;font-weight:700;margin-top:3px;">🕓 Conteo enviado: ${fmtN(+st.pendiente.cantidad)} · pendiente de aprobación</div>` : ""}${st.conteo && !st.conteo.admin && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
       </div>
       <div style="text-align:right;min-width:74px;">
         <div style="font-size:0.66rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};line-height:1.2;">stock<br>fin del día</div>
@@ -2466,7 +2467,7 @@ function batidoStockEl(col){
   const foot = document.createElement("div");
   foot.setAttribute("style", "padding:14px 16px;");
   foot.innerHTML = `<button type="button" ${DB ? "" : "disabled"} style="width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:13px;border-radius:12px;border:none;background:${col.a};color:#fff;cursor:${DB ? "pointer" : "not-allowed"};opacity:${DB ? 1 : .45};">💾 Guardar conteo</button>
-    <div class="msg" style="font-size:0.76rem;color:${C.inkSoft};margin-top:8px;text-align:center;">${BAT_MSG || "Solo se guardan las casillas que llenes. El conteo es al final del día y lo revisa Alban."}</div>`;
+    <div class="msg" style="font-size:0.76rem;color:${C.inkSoft};margin-top:8px;text-align:center;">${BAT_MSG || "Solo se guardan las casillas que llenes. El conteo es al final del día."}</div>`;
   foot.querySelector("button").onclick = ()=>{ const m = foot.querySelector(".msg"); m.textContent = "Guardando…"; batGuardarConteos(); };
   card.appendChild(foot);
   wrap.appendChild(card);
@@ -4748,7 +4749,7 @@ function renderRotular(){
         <label style="${lab}">Días de vida (opcional)<input class="nd" type="number" inputmode="numeric" min="0" style="${inp}"></label>
       </div>
       <label style="${lab}">Creado por (tu nombre)<select class="nb" style="${inp}"><option value="">— Elegir operador —</option>${ROT_OPS.map(n=>`<option${n === RT_RESP ? " selected" : ""}>${logEsc(n)}</option>`).join("")}</select></label>
-      <div style="font-size:0.78rem;color:${C.inkSoft};">Se avisa a Alban por correo para que lo verifique. Mientras tanto se puede usar.</div>
+      <div style="font-size:0.78rem;color:${C.inkSoft};">Queda pendiente de aprobación. Mientras tanto se puede usar.</div>
       <div class="er" style="font-size:0.85rem;font-weight:700;color:#B3261E;"></div>
       <div style="display:flex;gap:8px;"><button type="button" class="ok" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px;cursor:pointer;">✓ Crear y usar</button>
         <button type="button" class="no" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;border:1px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:10px;padding:11px 14px;cursor:pointer;">Cancelar</button></div>`;
@@ -5051,7 +5052,7 @@ function render(){
           const nombre = nameEl.value.trim();
           if(!text){ statusEl.textContent = "Escribe un comentario antes de enviar."; return; }
           submitFormulaComment(sk, text, nombre);
-          statusEl.textContent = "Enviado ✓ — Alban lo va a revisar.";
+          statusEl.textContent = "Enviado ✓ — pendiente de aprobación.";
           textEl.value = "";
           nameEl.value = "";
         };
@@ -5264,6 +5265,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 render();
 bootDb();
 </script>
+
 
 
 
