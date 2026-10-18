@@ -2345,7 +2345,7 @@ async function batGuardarConteos(){
       delete BAT_DRAFT[n]; ok++;
     }catch(err){ mal++; console.warn("No se pudo guardar el conteo:", err); }
   }
-  BAT_MSG = mal ? `⚠️ No se pudieron guardar ${mal}. Revisa el internet y vuelve a intentar.` : ok ? `✓ Conteo enviado (${ok}). Pendiente de aprobación.` : "Escribe al menos una cantidad.";
+  BAT_MSG = mal ? `⚠️ No se pudieron guardar ${mal}. Revisa el internet y vuelve a intentar.` : ok ? `✓ Pendiente de aprobación (${ok}).` : "Escribe al menos una cantidad.";
   render();
   setTimeout(()=>{ BAT_MSG = ""; }, 8000);
 }
@@ -2450,7 +2450,7 @@ function batidoStockEl(col){
         <div style="font-size:0.95rem;font-weight:600;">${n}</div>
         <div style="font-size:0.74rem;color:${C.inkSoft};font-family:'IBM Plex Mono',monospace;margin-top:2px;">${sub.join("<br>")}</div>
         ${st.hechoHoy ? `<div style="font-size:0.76rem;color:${col.a};font-weight:600;margin-top:2px;">hecho hoy: ${fmtN(st.hechoHoy)}</div>` : ""}
-        ${st.conteo && st.conteo.admin ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">🔒 Ajuste Admin: ${fmtN(+st.conteo.cantidad)} al cierre del ${ddmmyy(st.conteo.fecha)}</div>` : ""}${st.pendiente ? `<div style="font-size:0.76rem;color:#8A5A00;font-weight:700;margin-top:3px;">🕓 Conteo enviado: ${fmtN(+st.pendiente.cantidad)} · pendiente de aprobación</div>` : ""}${st.conteo && !st.conteo.admin && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
+        ${st.conteo && st.conteo.admin ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">🔒 Ajuste Admin: ${fmtN(+st.conteo.cantidad)} al cierre del ${ddmmyy(st.conteo.fecha)}</div>` : ""}${st.pendiente ? `<div style="font-size:0.76rem;color:#8A5A00;font-weight:700;margin-top:3px;">Pendiente de aprobación: ${fmtN(+st.pendiente.cantidad)}</div>` : ""}${st.conteo && !st.conteo.admin && st.conteo.fecha === hoyI ? `<div style="font-size:0.76rem;color:${C.ink};font-weight:700;margin-top:3px;">✓ Conteo guardado hoy: ${fmtN(+st.conteo.cantidad)}${st.conteo.ts ? " · " + new Date(st.conteo.ts).toLocaleTimeString("es-CO",{timeZone:"America/Bogota",hour:"numeric",minute:"2-digit"}) : ""}${st.conteo.sistema != null && +st.conteo.sistema !== +st.conteo.cantidad ? ` <span style="font-weight:500;color:${C.inkSoft};">(el sistema decía ${fmtN(+st.conteo.sistema)})</span>` : ""}</div>` : ""}
       </div>
       <div style="text-align:right;min-width:74px;">
         <div style="font-size:0.66rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};line-height:1.2;">stock<br>fin del día</div>
