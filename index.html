@@ -28,7 +28,6 @@
 
 
 
-
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -5267,36 +5266,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 
 render();
 bootDb();
-// ---- Alban 19 oct: la tablet se queda abierta y muestra datos viejos (ej. desaparecieron 13 brownies hasta refrescar).
-// En la web (GitHub): cada 3 min y al volver a la pestaña, se mira si hay una versión nueva publicada
-// ("Datos actualizados") o si cambió el día; si sí, la página se recarga sola (sin interrumpir si alguien está escribiendo).
-(function autoActualizar(){
-  if(!/github\.io$/.test(location.hostname)) return;
-  const sel = ()=>{ const b = document.querySelector("#stamp-excel b"); return b ? b.textContent.trim() : ""; };
-  const actual = sel(), diaCarga = hoyISO();
-  let pendiente = false;
-  const escribiendo = ()=>{ const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox"; };
-  const recargar = ()=>{
-    if(escribiendo()){ pendiente = true; return; }
-    try{ sessionStorage.setItem("auto_recarga", String(Date.now())); }catch(e){}
-    location.reload();
-  };
-  async function revisar(){
-    if(document.hidden) return;
-    if(hoyISO() !== diaCarga){ recargar(); return; }
-    try{
-      const r = await fetch(location.pathname + "?v=" + Date.now(), {cache: "no-store", credentials: "omit"});
-      const t = await r.text();
-      const m = t.match(/id="stamp-excel"[^>]*>[^<]*<b[^>]*>([^<]*)</);
-      if(m && actual && m[1].trim() !== actual) recargar();
-    }catch(e){}
-  }
-  setInterval(revisar, 180000);
-  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) revisar(); });
-  document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
-})();
 </script>
-
 
 
 
