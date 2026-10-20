@@ -33,6 +33,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -4531,16 +4532,18 @@ function consumoInmEl(col){
 const RF = {prods: [], fecha: "", vd: null, n: 1, q: ""};
 function refrigLargo(n){ return Math.round(12 + 21 * Math.max(1, n)); }
 function refrigHTML(d, w, h){
-  const prods = d.prods.map(c=>`<div style="margin-top:1.2mm;">
-      <div style="font-size:1.45em;font-weight:900;text-transform:uppercase;line-height:1.05;">${logEsc(c.nom)}</div>
-      ${c.cons ? `<div style="margin-top:.4mm;">${logEsc(c.cons)}</div>` : ""}
-      ${c.ingr ? `<div style="font-style:italic;margin-top:.3mm;">${logEsc(c.ingr)}</div>` : ""}
-      ${c.alerg ? `<div style="margin-top:.3mm;">${logEsc(c.alerg)}</div>` : ""}
+  // Alban 20 oct: mismo tamaño del rótulo normal (logTam); los productos van uno al lado del otro, en columnas
+  const n = Math.max(1, d.prods.length);
+  const prods = d.prods.map((c,i)=>`<div style="flex:1 1 0;min-width:0;padding:0 1.2mm;${i ? "border-left:0.25mm solid #000;" : ""}display:flex;flex-direction:column;justify-content:flex-start;">
+      <div style="font-size:1.35em;font-weight:900;text-transform:uppercase;line-height:1.05;">${logEsc(c.nom)}</div>
+      ${c.cons ? `<div style="margin-top:.5mm;">${logEsc(c.cons)}</div>` : ""}
+      ${c.ingr ? `<div style="font-style:italic;margin-top:.4mm;">${logEsc(c.ingr)}</div>` : ""}
+      ${c.alerg ? `<div style="margin-top:.4mm;">${logEsc(c.alerg)}</div>` : ""}
     </div>`).join("");
-  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:1.5mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;text-align:center;line-height:1.15;font-size:8pt;">
-    <div style="font-size:1.2em;text-align:right;">Elaboración&nbsp; ${ddmmyy(d.fecha)}&nbsp;&nbsp; Vence:&nbsp; ${ddmmyy(d.vence)}</div>
-    <div style="font-size:1.2em;text-align:right;">Lote:&nbsp; ${logEsc(d.lote)}</div>
-    ${prods}
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:2mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;line-height:1.15;font-size:8pt;">
+    <div style="font-size:1.15em;display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:3mm;border-bottom:0.25mm solid #000;padding-bottom:.8mm;margin-bottom:1mm;">
+      <span style="white-space:nowrap;">Elaboración: <b>${ddmmyy(d.fecha)}</b> &nbsp; Vence: <b>${ddmmyy(d.vence)}</b></span><span style="white-space:nowrap;">Lote: ${logEsc(d.lote)}</span></div>
+    <div style="display:flex;align-items:stretch;">${prods}</div>
   </div>`;
 }
 function renderRefrig(main, col){
@@ -4549,7 +4552,7 @@ function renderRefrig(main, col){
   const catalogo = rotCatalogo("CONSUMIDOR");
   const minDias = RF.prods.length ? Math.min(...RF.prods.map(c=>(c.dias === "" || c.dias == null) ? 0 : Number(c.dias) || 0)) : 0;
   const vd = RF.vd != null ? RF.vd : minDias;
-  const w = 62, h = refrigLargo(RF.prods.length);
+  const {w, h} = logTam();   // Alban 20 oct: mismo tamaño del rótulo normal
   const datos = ()=>({prods: RF.prods, fecha: RF.fecha, vence: masDias(RF.fecha, vd),
     lote: `${LOTE_PLANTA}  ${aammdd(RF.fecha)}  ${RF.prods.map(c=>c.cod).join(" ")}  ${RF.n}`});
   const inp = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;box-sizing:border-box;width:100%;`;
@@ -4557,7 +4560,7 @@ function renderRefrig(main, col){
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Refrigerio</h2>
-    <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Varios productos en un solo rótulo: la fecha, el vencimiento y el lote salen una vez arriba. Vence = el producto que dura menos. Tamaño ${w} × ${h} mm (crece con cada producto).</div>`;
+    <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Varios productos en un solo rótulo: la fecha, el vencimiento y el lote salen una vez arriba. Vence = el producto que dura menos. Mismo tamaño del rótulo normal (${w} × ${h} mm): los productos van uno al lado del otro.</div>`;
   main.appendChild(head);
   // buscador
   const bus = document.createElement("div");
@@ -5300,6 +5303,7 @@ bootDb();
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
 </script>
+
 
 
 
