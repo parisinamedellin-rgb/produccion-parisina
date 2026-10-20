@@ -4317,6 +4317,20 @@ async function rotCambiarPropios(fn){
 // de Planta para que nadie los vuelva a crear. También se pueden editar después ("Productos propios de planta").
 function rotEnExcel(cod){ return (typeof ROT_CAT !== "undefined" ? ROT_CAT : []).some(c=>String(c[0]).trim().toUpperCase() === String(cod).trim().toUpperCase()); }
 const ROT_ED = {};          // cod -> editor abierto
+function fmtTemp(v){ return String(v).trim().replace(".", ","); }
+function rotConsTexto(cv){
+  if(cv.t === "R") return `Conservar en refrigeración entre ${fmtTemp(cv.a)} ºC y ${fmtTemp(cv.b)} ºC`;
+  if(cv.t === "C") return `Conservar en congelación, mínimo ${fmtTemp(cv.a)} ºC`;
+  if(cv.t === "I") return "Consumo inmediato";
+  return "";
+}
+function rotConsLeer(p){
+  const t = String(p.cons || ""), n = (t.match(/-?\d+(?:[.,]\d+)?/g) || []).map(x=>x.replace(",", "."));
+  if(/inmediato/i.test(t)) return {t:"I", a:"", b:""};
+  if(/congel/i.test(t)) return {t:"C", a: n[0] != null ? n[0] : "-18", b:""};
+  if(/refrig/i.test(t)) return {t:"R", a: n[0] != null ? n[0] : "0", b: n[1] != null ? n[1] : "4"};
+  return {t:"", a:"", b:""};
+}
 // Alban 17 oct: solo él (Admin: correo + contraseña del panel Admin) revisa, aprueba, edita y borra productos de planta.
 let ROT_ADMIN = false;
 try{ ROT_ADMIN = sessionStorage.getItem("rot_admin") === "1"; }catch(e){}
@@ -4371,13 +4385,30 @@ function rotEditorEl(p, col, aprobar){
       <label style="${lab}">Código (lote)<input class="e-c" style="${inp}" value="${logEsc(p.cod)}"></label>
       <label style="${lab}">Días de vida<input class="e-d" type="number" inputmode="numeric" min="0" style="${inp}" value="${p.dias === "" || p.dias == null ? "" : logEsc(p.dias)}"></label>
     </div>
-    <label style="${lab}">Cómo se guarda (conservación)<input class="e-k" style="${inp}" value="${logEsc(p.cons || "")}" placeholder="Ej. Refrigeración entre 0 ºC y 4 ºC"></label>
+    <div style="${lab}">Cómo se guarda (conservación)
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">${[["R","Refrigeración"],["C","Congelación"],["I","Consumo inmediato"]].map(([k,t])=>`<button type="button" class="e-t" data-k="${k}" style="flex:1;min-width:110px;font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;padding:8px;border-radius:8px;cursor:pointer;border:1.5px solid ${col.a};background:#fff;color:${col.a};">${t}</button>`).join("")}</div>
+      <div class="e-temp" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-weight:600;color:${C.ink};"></div>
+      <div class="e-prev" style="font-weight:500;color:${C.inkSoft};"></div>
+    </div>
     <div class="e-er" style="font-size:0.82rem;font-weight:700;color:#B3261E;"></div>
     <button type="button" class="e-ok" style="font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:8px;padding:10px;cursor:pointer;">${aprobar ? "✓ Guardar y aprobar" : "✓ Guardar cambios"}</button>`;
+  // Alban 20 oct: conservación = Refrigeración (entre X y Y ºC) · Congelación (mínimo X ºC) · Consumo inmediato
+  const cv = rotConsLeer(p);
+  const tmp = ed.querySelector(".e-temp"), pvw = ed.querySelector(".e-prev");
+  const ninp = v=>`<input type="number" inputmode="decimal" step="0.5" value="${v}" style="width:5em;font-family:'IBM Plex Mono',monospace;font-size:1rem;padding:6px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;">`;
+  const pintarC = ()=>{
+    ed.querySelectorAll(".e-t").forEach(b=>{ const on = b.dataset.k === cv.t; b.style.background = on ? col.a : "#fff"; b.style.color = on ? "#fff" : col.a; });
+    tmp.innerHTML = cv.t === "R" ? `entre ${ninp(cv.a)} ºC y ${ninp(cv.b)} ºC` : cv.t === "C" ? `mínimo ${ninp(cv.a)} ºC` : "";
+    const ins = tmp.querySelectorAll("input");
+    ins.forEach((x,i)=>{ x.oninput = ()=>{ if(i === 0) cv.a = x.value; else cv.b = x.value; pvw.textContent = "En el rótulo: " + rotConsTexto(cv); }; });
+    pvw.textContent = cv.t ? "En el rótulo: " + rotConsTexto(cv) : "Elige una opción.";
+  };
+  ed.querySelectorAll(".e-t").forEach(b=>{ b.onclick = ()=>{ cv.t = b.dataset.k; if(cv.t === "R" && cv.a === "" ) { cv.a = "0"; cv.b = "4"; } if(cv.t === "C"){ if(cv.a === "" || Number(cv.a) >= 0) cv.a = "-18"; } if(cv.t === "R" && Number(cv.a) < 0){ cv.a = "0"; cv.b = "4"; } pintarC(); }; });
+  pintarC();
   ed.querySelector(".e-ok").onclick = async ()=>{
     const nom = ed.querySelector(".e-n").value.trim().replace(/\s+/g, " ");
     const cod = ed.querySelector(".e-c").value.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-    const dv = ed.querySelector(".e-d").value, cons = ed.querySelector(".e-k").value.trim();
+    const dv = ed.querySelector(".e-d").value, cons = cv.t ? rotConsTexto(cv) : (p.cons || "");
     const er = ed.querySelector(".e-er");
     if(!nom){ er.textContent = "⚠️ Escribe el nombre."; return; }
     if(!cod){ er.textContent = "⚠️ Pon un código."; return; }
