@@ -1,8 +1,7 @@
-name: Publicar web desde OneDrive
+name: Publicar web desde Google Drive
 
 # Parisina · Producción
-# Todos los días a las 3:44 a.m. (Medellín) toma index.html compartido en OneDrive
-# (carpeta "WEB PRODUCCION") y lo sube al repo SOLO si OneDrive cambió desde la última
+# Toma index.html compartido en Google Drive (carpeta "WEB PRODUCCION"; antes OneDrive) y lo sube al repo SOLO si OneDrive cambió desde la última
 # vez que el robot lo subió (huella en .github/ultimo-onedrive.sha256).
 # También se puede correr a mano: Actions → este workflow → "Run workflow".
 
@@ -20,35 +19,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Descargar index.html de OneDrive
+      - name: Descargar index.html de Google Drive
         run: |
+          # Alban 21 oct 2026: fin de la transición, OneDrive queda por fuera. El robot lee el index.html
+          # de Google Drive (Mi unidad › La Parisina SAS › Github › WEB PRODUCCION, compartido "cualquiera con el vínculo").
           set +e
-          LINK='https://1drv.ms/u/c/6ab1f215578ef6c1/IQD6YaM6iPODQrEaZ-X9008gAdnWTiYQ6pzi37vDFmKfjHg?e=fRhrxS'
-          CID='6ab1f215578ef6c1'
-          TOKEN='IQD6YaM6iPODQrEaZ-X9008gAdnWTiYQ6pzi37vDFmKfjHg'
-          ENC=$(printf '%s' "$LINK" | base64 -w0 | tr '+/' '-_' | tr -d '=')
+          ID='1QZQ32wMs-aXT0f44xeaFiI7pgvP1rIxJ'
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
           ok=0
           intentar () {
             echo "== Método $1: $2"
-            curl -sSL --retry 2 -A "$UA" -o /tmp/nuevo.html -w 'HTTP %{http_code} bytes %{size_download} final %{url_effective}\n' "$2"
+            curl -sSL --retry 2 -A "$UA" -o /tmp/nuevo.html -w 'HTTP %{http_code} bytes %{size_download}\n' "$2"
             if grep -q 'const DATA = ' /tmp/nuevo.html 2>/dev/null && grep -q 'Datos actualizados' /tmp/nuevo.html; then
               echo "   -> OK con método $1"; ok=1; return 0
             fi
             echo "   -> no sirvió (inicio: $(head -c 120 /tmp/nuevo.html 2>/dev/null | tr '\n' ' '))"
             rm -f /tmp/nuevo.html; return 1
           }
-          intentar 1 "https://my.microsoftpersonalcontent.com/personal/$CID/_layouts/15/download.aspx?share=$TOKEN" || \
-          intentar 2 "${LINK}&download=1" || \
-          intentar 3 "https://api.onedrive.com/v1.0/shares/u!$ENC/root/content" || \
-          intentar 4 "https://onedrive.live.com/download?resid=$CID&share=$TOKEN"
-          if [ "$ok" != 1 ]; then
-            FINAL=$(curl -sSL -A "$UA" -o /dev/null -w '%{url_effective}' "$LINK")
-            echo "URL final del link: $FINAL"
-            intentar 5 "$(echo "$FINAL" | sed 's#onedrive\.aspx#download.aspx#')"
-          fi
+          intentar 1 "https://drive.usercontent.google.com/download?id=$ID&export=download&confirm=t" || \
+          intentar 2 "https://drive.google.com/uc?export=download&id=$ID&confirm=t"
           set -e
-          [ "$ok" = 1 ] || { echo "::error::No se pudo descargar index.html de OneDrive"; exit 1; }
+          [ "$ok" = 1 ] || { echo "::error::No se pudo descargar index.html de Google Drive"; exit 1; }
           grep -o 'Datos actualizados: <b[^>]*>[^<]*' /tmp/nuevo.html | sed 's/.*>/Descargado: /'
 
       - name: Subir al repo si cambió
@@ -61,7 +52,7 @@ jobs:
           NUEVO=$(sha256sum /tmp/nuevo.html | cut -d' ' -f1)
           ULTIMO=$(cat .github/ultimo-onedrive.sha256 2>/dev/null)
           if [ "${{ github.event_name }}" = "schedule" ] && [ "$NUEVO" = "$ULTIMO" ]; then
-            echo "::warning::OneDrive no cambió desde la última publicación del robot (la tarea de las 3:22 no corrió). NO se publica: la web se queda como está."
+            echo "::warning::Google Drive no cambió desde la última publicación del robot (la tarea de las 2:44 no corrió). NO se publica: la web se queda como está."
             exit 0
           fi
           echo "$NUEVO" > .github/ultimo-onedrive.sha256
