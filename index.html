@@ -1928,18 +1928,18 @@ function admPanel(){
 // ============================================================
 const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
 const USR_DEF = [
-  {id:"u1", nom:"Alban", cod:"", acc:["ALL"]},
-  {id:"u2", nom:"Deisy", cod:"", acc:["ALL"]},
-  {id:"u3", nom:"Ronald", cod:"", acc:["Panaderia","Rotular"]},
-  {id:"u4", nom:"Adolfo", cod:"", acc:["Comida de sal","Marzzana","Rotular"]},
-  {id:"u5", nom:"Sergio", cod:"", acc:["Comida de sal","Marzzana","Rotular"]},
-  {id:"u6", nom:"Jesica", cod:"", acc:["Reposteria","Rotular"]},
-  {id:"u7", nom:"María", cod:"", acc:["Reposteria","Rotular"]},
-  {id:"u8", nom:"Andreina", cod:"", acc:["Batido","Rotular"]},
-  {id:"u9", nom:"Juan Pablo", cod:"", acc:["Logistica","Rotular"]},
-  {id:"u10", nom:"Wilson", cod:"", acc:["Marzzana","Rotular"]},
-  {id:"u11", nom:"Isabella", cod:"", acc:["ALL"]},   // oficina (22 oct)
-  {id:"u12", nom:"Andrea", cod:"", acc:["ALL"]}
+  {id:"u1", nom:"Alban", puesto:"Gerente", msg:true, cod:"", acc:["ALL"]},
+  {id:"u2", nom:"Deisy", puesto:"Panadería", cod:"", acc:["ALL"]},
+  {id:"u3", nom:"Ronald", puesto:"Panadería", cod:"", acc:["Panaderia","Rotular"]},
+  {id:"u4", nom:"Adolfo", puesto:"Comida de sal", cod:"", acc:["Comida de sal","Marzzana","Rotular"]},
+  {id:"u5", nom:"Sergio", puesto:"Comida de sal", cod:"", acc:["Comida de sal","Marzzana","Rotular"]},
+  {id:"u6", nom:"Jesica", puesto:"Repostería", cod:"", acc:["Reposteria","Rotular"]},
+  {id:"u7", nom:"María", puesto:"Repostería", cod:"", acc:["Reposteria","Rotular"]},
+  {id:"u8", nom:"Andreina", puesto:"Batido", cod:"", acc:["Batido","Rotular"]},
+  {id:"u9", nom:"Juan Pablo", puesto:"Logística", cod:"", acc:["Logistica","Rotular"]},
+  {id:"u10", nom:"Wilson", puesto:"La Marzzana", cod:"", acc:["Marzzana","Rotular"]},
+  {id:"u11", nom:"Isabella", puesto:"Oficina", msg:true, cod:"", acc:["ALL"]},   // oficina (22 oct)
+  {id:"u12", nom:"Andrea", puesto:"Oficina", msg:true, cod:"", acc:["ALL"]}
 ];
 let USUARIOS = null;
 try{ const c = JSON.parse(localStorage.getItem("usuarios_cache") || "null"); if(c && Array.isArray(c.lista)) USUARIOS = c.lista; }catch(e){}
@@ -2003,7 +2003,7 @@ function usrAdminEl(){
   const inp = `font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:${C.ink};box-sizing:border-box;`;
   wrap.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">👥 Personas y accesos</div>
     <div style="font-size:0.8rem;color:${C.inkSoft};margin-top:4px;line-height:1.5;">📝 <b>Nota:</b> el código de cada persona es el <b>mismo que usa en Time Station</b>. Se escribe una sola vez en cada tablet o celular. 🎂 Es la fecha de nacimiento (día + mes, ej. 2210 = 22 de octubre): ese día, al entrar, le sale su celebración de cumpleaños.
-      Mientras nadie tenga código, la página no pide código.</div>
+      Mientras nadie tenga código, la página no pide código.<br>📣 <b>Recibe mensajes</b>: la persona sale en Mensajes › Personas y le llegan alertas a su equipo (cuando entra con su código).</div>
     <div class="ul"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
       <button type="button" class="ua" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;color:${C.ink};border-radius:10px;padding:10px 14px;cursor:pointer;">➕ Agregar persona</button>
@@ -2016,12 +2016,16 @@ function usrAdminEl(){
     r.setAttribute("style", `border-top:1px solid ${C.line};margin-top:12px;padding-top:12px;display:grid;gap:8px;`);
     r.innerHTML = `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input class="un" value="${escH(u.nom)}" placeholder="Nombre" style="${inp}flex:1 1 140px;min-width:0;font-weight:700;">
+        <input class="up" value="${escH(u.puesto || "")}" placeholder="Puesto (ej. Oficina)" style="${inp}flex:1 1 120px;min-width:0;">
         <input class="uk" value="${escH(u.cod || "")}" placeholder="Código Time Station" inputmode="numeric" style="${inp}flex:0 1 150px;min-width:0;font-family:'IBM Plex Mono',monospace;">
         <button type="button" class="ux" title="Quitar" style="border:none;background:${C.bg};color:#B3261E;border-radius:8px;padding:8px 11px;cursor:pointer;">✕</button></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">${USR_AREAS.map(([k, l])=>{ const on = (u.acc || []).includes(k);
-        return `<button type="button" data-a="${escH(k)}" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:6px 10px;border-radius:100px;cursor:pointer;border:1.5px solid ${(PALETTE[k] || PALETTE.ALL).a};background:${on ? (PALETTE[k] || PALETTE.ALL).a : "#fff"};color:${on ? "#fff" : (PALETTE[k] || PALETTE.ALL).a};">${on ? "✓ " : ""}${l}</button>`; }).join("")}</div>`;
+        return `<button type="button" data-a="${escH(k)}" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:6px 10px;border-radius:100px;cursor:pointer;border:1.5px solid ${(PALETTE[k] || PALETTE.ALL).a};background:${on ? (PALETTE[k] || PALETTE.ALL).a : "#fff"};color:${on ? "#fff" : (PALETTE[k] || PALETTE.ALL).a};">${on ? "✓ " : ""}${l}</button>`; }).join("")}
+        <button type="button" class="um2" title="Le pueden mandar mensajes directos (Mensajes › Personas)" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:6px 10px;border-radius:100px;cursor:pointer;border:1.5px dashed #B23A2E;background:${u.msg ? "#B23A2E" : "#fff"};color:${u.msg ? "#fff" : "#B23A2E"};">${u.msg ? "✓ " : ""}📣 Recibe mensajes</button></div>`;
     r.querySelector(".un").oninput = e=>{ u.nom = e.target.value; };
     r.querySelector(".uk").oninput = e=>{ u.cod = e.target.value.trim(); };
+    r.querySelector(".up").oninput = e=>{ u.puesto = e.target.value; };
+    r.querySelector(".um2").onclick = ()=>{ u.msg = !u.msg; USR_MSG = ""; renderAdmin(); };
     r.querySelector(".ux").onclick = ()=>{ if(!confirmar(`¿Quitar a ${u.nom || "esta persona"}?`)) return; USR_ED.splice(i, 1); USR_MSG = ""; renderAdmin(); };
     r.querySelectorAll("button[data-a]").forEach(b=>{ b.onclick = ()=>{ const a = b.dataset.a, acc = u.acc || (u.acc = []);
       if(acc.includes(a)) u.acc = acc.filter(x=>x !== a); else acc.push(a); USR_MSG = ""; renderAdmin(); }; });
@@ -2030,7 +2034,7 @@ function usrAdminEl(){
   wrap.querySelector(".ua").onclick = ()=>{ USR_ED.push({id: "u" + Date.now(), nom: "", cod: "", acc: ["Rotular"]}); USR_MSG = ""; renderAdmin(); };
   wrap.querySelector(".ug").onclick = async ()=>{
     const m = wrap.querySelector(".um");
-    const l = USR_ED.map(u=>({id: u.id, nom: String(u.nom || "").trim().replace(/\s+/g, " "), cod: usrCod(u), acc: (u.acc || []).filter(a=>USR_AREAS.some(x=>x[0] === a))}));
+    const l = USR_ED.map(u=>({id: u.id, nom: String(u.nom || "").trim().replace(/\s+/g, " "), puesto: String(u.puesto || "").trim(), msg: !!u.msg, cod: usrCod(u), acc: (u.acc || []).filter(a=>USR_AREAS.some(x=>x[0] === a))}));
     if(l.some(u=>!u.nom)){ m.style.color = "#B23A2E"; m.textContent = "⚠️ Falta el nombre de una persona."; return; }
     const cods = l.map(u=>u.cod).filter(Boolean);
     if(new Set(cods).size !== cods.length){ m.style.color = "#B23A2E"; m.textContent = "⚠️ Hay dos personas con el mismo código."; return; }
@@ -5692,18 +5696,22 @@ function saludoAlEntrar(fam, forzar){
 // ---- 📣 Mensajes ----
 const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷 Comida de sal","SAL"], ["Reposteria","🍰 Repostería","REP"], ["Batido","🥣 Batido","BAT"], ["Logistica","🚚 Logística / Rótulos","LOG"]];
 // Alban 22 oct: también a personas de la oficina (no una categoría) y se puede responder
-const MSG_PERS = [["P:Isabella","👩‍💼 Isabella","PISA"], ["P:Andrea","👩‍💼 Andrea","PAND"], ["P:Alban","👨‍💼 Alban","PALB"]];
-const MSG_DEST = [...MSG_AREAS, ...MSG_PERS];
-const msgSlug = a => (MSG_DEST.find(x => x[0] === a) || [])[2];
-const msgLabel = a => (MSG_DEST.find(x => x[0] === a) || [a, a])[1];
+// Las personas que reciben mensajes directos salen de Admin › Personas (casilla "📣 Mensajes"), con su nombre y puesto.
+function msgPers(){ const L = typeof usrLista === "function" ? usrLista() : [];
+  const sinCampo = !L.some(u => "msg" in u);   // lista guardada antes del 22 oct: oficina por nombre
+  return L.filter(u => String(u.nom || "").trim() && (sinCampo ? ["alban","isabella","andrea"].includes(pedNorm(u.nom)) : u.msg))
+  .map(u => ["U:" + u.id, "👤 " + u.nom + (u.puesto ? " · " + u.puesto : ""), "U" + String(u.id).replace(/[^A-Za-z0-9]/g, "")]); }
+function msgDest(){ return [...MSG_AREAS, ...msgPers()]; }
+const msgSlug = a => (msgDest().find(x => x[0] === a) || [])[2];
+const msgLabel = a => (msgDest().find(x => x[0] === a) || [a, a])[1];
 function miPersona(){   // persona de la oficina que usa este equipo: por su código, o elegida en Mensajes
   const yo = typeof usrYo === "function" ? usrYo() : null;
-  if(yo){ const p = MSG_PERS.find(x => pedNorm(x[0].slice(2)) === pedNorm(yo.nom)); if(p) return p[0]; }
-  const g = lsGet("mi_persona"); return MSG_PERS.some(x => x[0] === g) ? g : null;
+  if(yo && yo.msg) return "U:" + yo.id;
+  const g = lsGet("mi_persona"); return msgPers().some(x => x[0] === g) ? g : null;
 }
 function misDestinos(){ return [miPersona(), miArea()].filter(Boolean); }
 function msgYoKey(){ return miPersona() || miArea() || ""; }
-function msgYoNombre(){ const yo = typeof usrYo === "function" ? usrYo() : null; const k = msgYoKey(); return yo ? yo.nom + (k && !k.startsWith("P:") ? " · " + msgLabel(k).replace(/^\S+\s/, "") : "") : (k ? msgLabel(k).replace(/^\S+\s/, "") : ""); }
+function msgYoNombre(){ const yo = typeof usrYo === "function" ? usrYo() : null; const k = msgYoKey(); return yo ? yo.nom + (k && !k.startsWith("U:") ? " · " + msgLabel(k).replace(/^\S+\s/, "") : "") : (k ? msgLabel(k).replace(/^\S+\s/, "") : ""); }
 function miArea(){ const a = lsGet("mi_area"); return a === "Rotular" ? "Logistica" : (msgSlug(a) ? a : null); }
 let MSG = {lista: []};
 const MSG_V = {};
@@ -5800,7 +5808,7 @@ async function msgEnviar(txt, para, de, deK, re){
 async function msgPintarEstado(){
   const box = document.getElementById("msg-estado");
   if(!box || !DB) return;
-  await Promise.all(MSG_DEST.map(a => msgLeerVistos(a[0]).catch(() => {})));
+  await Promise.all(msgDest().map(a => msgLeerVistos(a[0]).catch(() => {})));
   const recientes = MSG.lista.filter(m => Date.now() - m.ts < 36*3600e3).slice().reverse();
   if(!recientes.length){ box.innerHTML = `<div style="color:${C.inkSoft};font-style:italic;font-size:0.88rem;">Sin mensajes recientes.</div>`; return; }
   const mios = new Set(misDestinos());
@@ -5831,15 +5839,15 @@ function renderMensajes(){
       ${MSG_AREAS.map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${(PALETTE[a[0]] || PALETTE.ALL).a};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
       <button type="button" class="m-todas" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Todas</button>
     </div>
-    <div style="font-size:0.75rem;font-weight:600;color:${C.inkSoft};margin-top:10px;">🏢 Oficina</div>
+    <div style="font-size:0.75rem;font-weight:600;color:${C.inkSoft};margin-top:10px;">👤 Personas</div>
     <div class="m-para m-pers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
-      ${MSG_PERS.map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${C.gold};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
+      ${msgPers().map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${C.gold};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
     </div>
     <div style="font-size:0.8rem;font-weight:600;color:${C.inkSoft};margin-top:14px;text-transform:uppercase;letter-spacing:.05em;">¿Quién envía?</div>
-    <select class="m-dek" style="${inp}margin-top:6px;"><option value="">— Elige —</option>${MSG_DEST.map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select>
+    <select class="m-dek" style="${inp}margin-top:6px;"><option value="">— Elige —</option>${msgDest().map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select>
     <input type="text" class="m-de" placeholder="Tu nombre (opcional)" style="${inp}margin-top:8px;">
     <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.82rem;color:${C.inkSoft};">Este equipo es de (para recibir mensajes de oficina):
-      <select class="m-yo" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;padding:6px 8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;"><option value="">Nadie de la oficina</option>${MSG_PERS.map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select></label>
+      <select class="m-yo" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;padding:6px 8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;"><option value="">Nadie de la oficina</option>${msgPers().map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select></label>
     <button type="button" class="m-env" style="margin-top:12px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#B23A2E;color:#fff;border:none;border-radius:14px;padding:14px;cursor:pointer;">📣 Enviar</button>
     <div class="m-ok" style="font-size:0.88rem;margin-top:8px;min-height:1.2em;"></div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Enviados (últimas 36 h)</div>
