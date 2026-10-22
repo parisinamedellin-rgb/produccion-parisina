@@ -1194,7 +1194,7 @@ const FAMS = [
   {key:"Comida de sal", label:"Comida de sal", emoji:"🐷", subs:["Comida de sal"]},
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Topping","Tortas"], nota:"Dulcería · Topping & Cremas · Tortas"},   // Alban 10 oct
   {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS"], nota:"Stock · Fórmulas"},   // Alban 5 oct: sin Producción ni De una vez
-  {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ENTREGAS","ROTULOS","CLIENTE","REFRIG","CAJAESP"], nota:"Pedidos · Ruta · Rótulos · Cliente · Refrigerio · Cajas especiales"}   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
+  {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ENTREGAS","ROTULOS","CLIENTE","REFRIG","CAJAESP"], nota:"Pedidos · Ruta · Rótulos del día · Cliente · Rótulo · Cajas especiales"}   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
   {key:"Marzzana", label:"La Marzzana", emoji:"🍕", subs:["Marzzana"], modos:["FORMULAS"], nota:"Fórmulas"},
   {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","SELLO"], nota:"Planta · Consumidor final · Sello"}   /* Alban 22 oct: Cliente, Refrigerio y Cajas especiales pasan a Logística */   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
 ];
@@ -1540,7 +1540,7 @@ function renderCats(){
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Refrigerio"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos del día"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
     const on = key === modo;
     const btn = document.createElement("button");
     btn.textContent = label;
@@ -3550,6 +3550,31 @@ function rotClienteUI(el, iso, col){
       const c = CLIS.find(x=>"C:" + x[0] === String(ROT_SEL));
       if(c) sel = {cli: c[1], cod: c[0], n: "", para: "", sinComanda: true};
     }
+    // Alban 22 oct: la búsqueda también encuentra cualquier producto del catálogo
+    if(!sel && ROT_SEL != null && String(ROT_SEL).startsWith("P:")){
+      const c = rotCatalogo("CONSUMIDOR").find(x=>"P:" + x.cod === String(ROT_SEL));
+      if(c){
+        el.innerHTML = `<div style="background:#fff;color:${C.ink};border-radius:12px;padding:12px 14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="flex:1;font-weight:700;font-size:0.98rem;">🧾 ${logEsc(c.nom)} <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:0.75rem;color:${C.inkSoft};">cód. ${logEsc(c.cod)}</span></span>
+            <button type="button" class="x" style="font-size:0.8rem;font-weight:700;border:none;background:${C.bg};color:${col.a};border-radius:8px;padding:6px 10px;cursor:pointer;">✕ Cambiar</button>
+          </div>
+          ${c.ingr ? "" : `<div style="font-size:0.78rem;font-weight:700;color:#B3261E;margin-top:4px;">⚠️ Sin ingredientes en el catálogo</div>`}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:flex-end;">
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;">Cantidad (lote)<input type="number" inputmode="numeric" min="1" class="pq" value="1" style="width:5em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:9px 6px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:${C.ink};"></label>
+            <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;">Rótulos<input type="number" inputmode="numeric" min="1" class="pn" value="1" style="width:4em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:9px 6px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:${C.ink};"></label>
+            <button type="button" class="pp" style="flex:1;min-width:140px;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Imprimir rótulo</button>
+          </div>
+        </div>`;
+        el.querySelector(".x").onclick = ()=>{ ROT_SEL = null; ROT_QCLI = ""; pintar(); const q = el.querySelector("input"); if(q) q.focus(); };
+        el.querySelector(".pp").onclick = ()=>{
+          const q = Math.max(1, Math.round(Number(el.querySelector(".pq").value) || 1)), n = Math.max(1, Math.round(Number(el.querySelector(".pn").value) || 1));
+          const r = {cod: c.cod, name: c.nom, q, pr: [c.nom, Number(c.dias) || 0, c.cons || "", c.ingr || "", c.alerg || ""]};
+          logImprimir(Array.from({length: n}, ()=>r), iso);
+        };
+        return;
+      }
+    }
     if(sel){
       const mios = sel.sinComanda ? [] : todos.filter(r=>String(r.n) === String(sel.n)).map(r=>Object.assign({}, r, {conCli: true}));
       el.innerHTML = `<div style="background:#fff;color:${C.ink};border-radius:12px;padding:12px 14px;">
@@ -3572,7 +3597,7 @@ function rotClienteUI(el, iso, col){
     el.innerHTML = `<div style="font-size:0.9rem;font-weight:700;margin-bottom:6px;">🏷️ Imprimir el rótulo de un cliente</div>
       <div style="display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:3px 6px 3px 12px;">
         <span>🔎</span>
-        <input type="text" class="q" autocomplete="off" placeholder="Buscar cliente o # de comanda…" value="${logEsc(ROT_QCLI)}" style="flex:1;min-width:0;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 0;background:transparent;color:${C.ink};">
+        <input type="text" class="q" autocomplete="off" placeholder="Buscar cliente, # de comanda o producto…" value="${logEsc(ROT_QCLI)}" style="flex:1;min-width:0;border:none;outline:none;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 0;background:transparent;color:${C.ink};">
       </div>
       <div class="lst" style="display:none;position:absolute;left:0;right:0;z-index:20;margin-top:4px;background:#fff;border:1px solid ${C.line};border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden;max-height:320px;overflow-y:auto;"></div>`;
     const q = el.querySelector(".q"), lst = el.querySelector(".lst");
@@ -3585,10 +3610,13 @@ function rotClienteUI(el, iso, col){
       // Alban 14 oct: también todos los clientes de la hoja "Por mayor", aunque no tengan comanda ese día
       const conCom = new Set(m.map(p=>String(p.cod)));
       const mc = CLIS.filter(c=>!conCom.has(String(c[0])) && pals.every(w=>pedNorm(c[0] + " " + c[1]).includes(w))).slice(0, 15);
-      if(!m.length && !mc.length){ lst.innerHTML = `<div style="padding:10px 14px;font-size:0.88rem;color:${C.inkSoft};">Ningún cliente con ese nombre.</div>`; lst.style.display = ""; return; }
+      const mp = rotCatalogo("CONSUMIDOR").filter(c=>pals.every(w=>pedNorm(c.cod + " " + c.nom).includes(w))).slice(0, 10);   // 22 oct: productos
+      if(!m.length && !mc.length && !mp.length){ lst.innerHTML = `<div style="padding:10px 14px;font-size:0.88rem;color:${C.inkSoft};">Ningún cliente ni producto con ese nombre.</div>`; lst.style.display = ""; return; }
       lst.innerHTML = m.map((p,i)=>`<button type="button" data-i="${i}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;${i ? "border-top:1px solid " + C.line + ";" : ""}background:#fff;padding:11px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span>👤</span><span style="flex:1;">${logEsc(p.cli)}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)}${p.h ? " · " + p.h : ""}</span></button>`).join("")
         + mc.map((c,i)=>`<button type="button" data-c="${logEsc(c[0])}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;${i || m.length ? "border-top:1px solid " + C.line + ";" : ""}background:#fff;padding:11px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span>🏢</span><span style="flex:1;">${logEsc(c[1])}</span><span style="font-size:0.72rem;color:${C.inkSoft};">sin comanda</span></button>`).join("");
+      lst.innerHTML += mp.map((c,i)=>`<button type="button" data-p="${logEsc(c.cod)}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;${i || m.length || mc.length ? "border-top:1px solid " + C.line + ";" : ""}background:#fff;padding:11px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span>🧾</span><span style="flex:1;">${logEsc(c.nom)}</span><span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">${logEsc(c.cod)}</span></button>`).join("");
       lst.style.display = "";
+      lst.querySelectorAll("button[data-p]").forEach(b=>{ b.onmousedown = e=>e.preventDefault(); b.onclick = ()=>{ ROT_SEL = "P:" + b.dataset.p; pintar(); }; });
       lst.querySelectorAll("button[data-i]").forEach(b=>{ b.onmousedown = e=>e.preventDefault(); b.onclick = ()=>{ ROT_SEL = m[Number(b.dataset.i)].n; pintar(); }; });
       lst.querySelectorAll("button[data-c]").forEach(b=>{ b.onmousedown = e=>e.preventDefault(); b.onclick = ()=>{ ROT_SEL = "C:" + b.dataset.c; pintar(); }; });
     };
@@ -3599,7 +3627,7 @@ function rotClienteUI(el, iso, col){
   pintar();
 }
 function rotuloHTML(r, iso, w, h){
-  const pr = logProd(r.cod) || [r.name, 0, "", "", ""];
+  const pr = r.pr || logProd(r.cod) || [r.name, 0, "", "", ""];   // r.pr: producto elegido del catálogo (22 oct)
   const [nom, dias, cons, ingr, alerg] = pr;
   const lote = `${LOTE_PLANTA}&nbsp;&nbsp;${ddmmyy(iso).replace(/-/g,"")}&nbsp;&nbsp;${logEsc(r.cod)}&nbsp;&nbsp;${fmtN(r.q)}`;
   return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:2.5mm 3mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;line-height:1.18;font-size:7pt;">
@@ -3640,11 +3668,12 @@ function renderRotulos(main, col){
   lista.forEach(r=>{ (porProd[r.cod] = porProd[r.cod] || {name: (logProd(r.cod) || [r.name])[0], l: []}).l.push(r); });
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
-  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Rótulos</h2>
+  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Rótulos del día</h2>
 `;
   main.appendChild(head);
   // Alban 13 oct: sello de seguridad genérico (sin logo de Parisina), del mismo tamaño que los rótulos
   main.appendChild(selloBloqueEl(w, h, iso, col));
+  main.appendChild(consumoInmEl(col));   // Alban 22 oct: debajo del sello, la etiqueta CONSUMO INMEDIATO
   const top = document.createElement("div");
   top.setAttribute("style", `margin-top:14px;background:${col.a};color:#fff;border-radius:16px;padding:16px;`);
   top.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">🏷️ Para este día necesitas ${lista.length} ${lista.length === 1 ? "rótulo" : "rótulos"}</div>
@@ -4748,7 +4777,7 @@ function renderRefrig(main, col){
   const lab = `display:flex;flex-direction:column;gap:4px;font-size:0.75rem;color:${C.inkSoft};font-weight:700;`;
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
-  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Refrigerio</h2>
+  head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Rótulo</h2>
     <div style="font-size:0.84rem;color:${C.inkSoft};line-height:1.5;">Varios productos en un solo rótulo: la fecha, el vencimiento y el lote salen una vez arriba. Vence = el producto que dura menos. Mismo tamaño del rótulo normal (${w} × ${h} mm): los productos van uno al lado del otro.</div>`;
   main.appendChild(head);
   // buscador
