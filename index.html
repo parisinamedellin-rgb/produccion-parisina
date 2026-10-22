@@ -1297,6 +1297,7 @@ async function bootDb(){
     bootEmp();
     bootRotProd();
     bootUsuarios();
+    if(activeCat === "MSG") msgRepintar();   // 22 oct: en el iframe de pedidos-equipo, Mensajes se pintó antes de tener la base
   }catch(err){ console.warn("Sin base de datos:", err); }
 }
 
@@ -1964,8 +1965,10 @@ function bootUsuarios(){
     if(JSON.stringify(l) === JSON.stringify(USUARIOS)) return;
     USUARIOS = l; try{ localStorage.setItem("usuarios_cache", JSON.stringify({lista: l})); }catch(e){}
     if(activeCat !== "ADMIN" && activeCat !== "MSG") render();
+    else if(activeCat === "MSG") msgRepintar();
   }, ()=>{});
 }
+function msgRepintar(){ const t = document.querySelector(".m-txt"); if(t && t.value.trim()) return; if(typeof renderMensajes === "function") renderMensajes(); }
 async function usrGuardar(l){
   if(!DB) throw new Error("sin base de datos");
   await DB.doc("estado/USUARIOS").set({lista: l});
@@ -5705,8 +5708,8 @@ const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷
 // Alban 22 oct: también a personas de la oficina (no una categoría) y se puede responder
 // Las personas que reciben mensajes directos salen de Admin › Personas (casilla "📣 Mensajes"), con su nombre y puesto.
 function msgPers(){ const L = typeof usrLista === "function" ? usrLista() : [];
-  const sinCampo = !L.some(u => "msg" in u);   // lista guardada antes del 22 oct: oficina por nombre
-  return L.filter(u => String(u.nom || "").trim() && (sinCampo ? ["alban","isabella","andrea"].includes(pedNorm(u.nom)) : u.msg))
+  const alguno = L.some(u => u.msg);   // si nadie tiene "📣 Recibe mensajes" marcado: los de puesto Oficina / Gerente (o Alban, Isabella, Andrea)
+  return L.filter(u => String(u.nom || "").trim() && (alguno ? u.msg : (/oficina|gerente|admin/i.test(String(u.puesto || "")) || ["alban","isabella","andrea"].includes(pedNorm(u.nom)))))
   .map(u => ["U:" + u.id, "👤 " + u.nom + (u.puesto ? " · " + u.puesto : ""), "U" + String(u.id).replace(/[^A-Za-z0-9]/g, "")]); }
 function msgDest(){ return [...MSG_AREAS, ...msgPers()]; }
 const msgSlug = a => (msgDest().find(x => x[0] === a) || [])[2];
