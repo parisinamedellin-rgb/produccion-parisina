@@ -4741,7 +4741,7 @@ function rotCambiarTam(k, t){
 // Consumidor final › CONSUMO INMEDIATO + fecha (62 × 12 mm, como la tira del Excel)
 function consumoInmHTML(iso, w, h){
   return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:1.5mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;font-size:11pt;">
-    <div style="line-height:1.05;"><b>CONSUMO INMEDIATO</b> &nbsp;·&nbsp; ${ddmmyy(iso)}</div>
+    <div style="line-height:1.05;font-size:14pt;">Consumo inmediato</div>
   </div>`;
 }
 let CI_FECHA = "", CI_N = 1;
@@ -4750,13 +4750,11 @@ function consumoInmEl(col){
   const t = rotTamPeq("ci_mm2", {w: 62, h: 12});
   const box = document.createElement("div");
   box.setAttribute("style", `margin-top:12px;background:${C.paper};border:1.5px solid ${col.a};border-radius:14px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;`);
-  box.innerHTML = `<div style="flex:1 1 100%;font-weight:700;">Etiqueta CONSUMO INMEDIATO <span style="font-weight:400;font-size:0.78rem;color:${C.inkSoft};">· ${t.w} × ${t.h} mm <button type="button" class="tm" style="font-size:0.78rem;background:none;border:none;color:${col.a};text-decoration:underline;cursor:pointer;padding:0;">cambiar</button></span></div>
-    <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;">Fecha de elaboración<input type="date" class="f" value="${CI_FECHA}" style="font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;"></label>
+  box.innerHTML = `<div style="flex:1 1 100%;font-weight:700;">Etiqueta "Consumo inmediato" <span style="font-weight:400;font-size:0.78rem;color:${C.inkSoft};">· ${t.w} × ${t.h} mm <button type="button" class="tm" style="font-size:0.78rem;background:none;border:none;color:${col.a};text-decoration:underline;cursor:pointer;padding:0;">cambiar</button></span></div>
     <label style="display:flex;flex-direction:column;gap:3px;font-size:0.72rem;color:${C.inkSoft};font-weight:700;">Cuántas<input type="number" inputmode="numeric" min="1" class="n" value="${CI_N}" style="width:5em;font-family:'IBM Plex Mono',monospace;font-size:1rem;padding:8px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:#222;color-scheme:light;"></label>
     <button type="button" class="pr" style="flex:1;min-width:140px;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Imprimir</button>`;
   box.querySelector(".tm").onclick = ()=>rotCambiarTam("ci_mm2", t);
-  box.querySelector(".f").onchange = e=>{ CI_FECHA = e.target.value || hoyISO(); };
-  box.querySelector(".n").oninput = e=>{ CI_N = Math.max(1, Math.round(Number(e.target.value) || 1)); };
+  box.querySelector(".n").oninput = e=>{ CI_N = Math.min(30, Math.max(1, Math.round(Number(e.target.value) || 1))); e.target.value = CI_N; };   // Alban 22 oct: no imprimir más de 30 (como en el Excel)
   box.querySelector(".pr").onclick = ()=>rotImprimirTam(Array.from({length: CI_N}, ()=>consumoInmHTML(CI_FECHA, t.w, t.h)), t.w, t.h);
   return box;
 }
