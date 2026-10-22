@@ -86,7 +86,8 @@ const PALETTE = {
   "ALL":{a:"#B8901E", s:"#FBF3DA"},
   "Logistica":{a:"#8C5A2B", s:"#F4EADF"},   // Logística (6 oct): café
   "Marzzana":{a:"#B23A2E", s:"#F8E6E3"},
-  "Rotular":{a:"#2F5D62", s:"#E3EFEF"}   // Rotular (13 oct): verde azulado   // La Marzzana (9 oct): rojo tomate
+  "Rotular":{a:"#2F5D62", s:"#E3EFEF"},
+  "Oficina":{a:"#B8901E", s:"#FBF3DA"}   // Oficina (22 oct): dorado   // Rotular (13 oct): verde azulado   // La Marzzana (9 oct): rojo tomate
 };
 function setAccent(key){ const p = PALETTE[key] || PALETTE.ALL; C.accent = p.a; C.accentSoft = p.s; }
 // Toda la página se tiñe del color del área elegida (fondo suave + acentos)
@@ -5702,7 +5703,7 @@ function saludoAlEntrar(fam, forzar){
 }
 
 // ---- 📣 Mensajes ----
-const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷 Comida de sal","SAL"], ["Reposteria","🍰 Repostería","REP"], ["Batido","🥣 Batido","BAT"], ["Logistica","🚚 Logística / Rótulos","LOG"]];
+const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷 Comida de sal","SAL"], ["Reposteria","🍰 Repostería","REP"], ["Batido","🥣 Batido","BAT"], ["Logistica","🚚 Logística / Rótulos","LOG"], ["Oficina","🏢 Oficina","OFI"]];   // Alban 22 oct: + Oficina
 // Alban 22 oct: también a personas de la oficina (no una categoría) y se puede responder
 // Las personas que reciben mensajes directos salen de Admin › Personas (casilla "📣 Mensajes"), con su nombre y puesto.
 function msgPers(){ const L = typeof usrLista === "function" ? usrLista() : [];
@@ -5720,7 +5721,7 @@ function miPersona(){   // persona de la oficina que usa este equipo: por su có
 function misDestinos(){ return [miPersona(), miArea()].filter(Boolean); }
 function msgYoKey(){ return miPersona() || miArea() || ""; }
 function msgYoNombre(){ const yo = typeof usrYo === "function" ? usrYo() : null; const k = msgYoKey(); return yo ? yo.nom + (k && !k.startsWith("U:") ? " · " + msgLabel(k).replace(/^\S+\s/, "") : "") : (k ? msgLabel(k).replace(/^\S+\s/, "") : ""); }
-function miArea(){ const a = lsGet("mi_area"); return a === "Rotular" ? "Logistica" : (msgSlug(a) ? a : null); }
+function miArea(){ if(MSG_EMBED) return "Oficina"; const a = lsGet("mi_area"); return a === "Rotular" ? "Logistica" : (msgSlug(a) ? a : null); }   // 22 oct: dentro de pedidos-equipo (embed) = Oficina
 let MSG = {lista: []};
 const MSG_V = {};
 let MSG_CAPA = null, MSG_PIT = null, MSG_IDS = "";
@@ -5881,7 +5882,7 @@ function renderMensajes(){
   yoSel.value = miPersona() || "";
   // Alban 22 oct: si entró con su código ya se sabe quién envía → no se muestra "¿Quién envía?" ni "Este equipo es de"
   // Alban 22 oct: si ya se sabe quién es (entró con código, o el equipo tiene persona elegida) → esa persona envía y no se pregunta
-  const yoK = miPersona() || ((typeof usrYo === "function" && usrYo()) ? msgYoKey() : "");
+  const yoK = miPersona() || ((typeof usrYo === "function" && usrYo()) ? msgYoKey() : "") || (MSG_EMBED ? "Oficina" : "");
   if(yoK){
     dek.value = yoK; de.value = (typeof usrYo === "function" && usrYo()) ? usrYo().nom : "";
     [dek, de].forEach(x => { x.style.display = "none"; });
@@ -5893,7 +5894,7 @@ function renderMensajes(){
   if(MSG_EMBED) w.querySelector(".m-vol").style.display = "none";
   w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
-  w.querySelector(".m-ofi").onclick = () => w.querySelectorAll(".m-pers input").forEach(c => c.checked = true);
+  w.querySelector(".m-ofi").onclick = () => { w.querySelectorAll(".m-pers input").forEach(c => c.checked = true); const o = w.querySelector('.m-para input[value="Oficina"]'); if(o) o.checked = true; };
   avisosUI(w.querySelector(".m-avisos"));
   w.querySelector(".m-env").onclick = async ev => {
     const t = txt.value.trim(), para = [...w.querySelectorAll(".m-para input:checked")].map(c => c.value);
