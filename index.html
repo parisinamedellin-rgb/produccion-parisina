@@ -5752,7 +5752,7 @@ function msgMostrar(pend, area){
   const lista = pend.map(m => `<div style="text-align:left;background:#FFF4D6;border:1.5px solid #C4791E;border-radius:14px;padding:14px 16px;margin-top:12px;">
       <div style="font-size:1.25rem;font-weight:700;line-height:1.4;white-space:pre-wrap;">${escH(m.txt)}</div>
       <div style="font-size:0.8rem;color:#6B6255;margin-top:6px;">${msgHora(m.ts)} · <b>De:</b> ${escH(m.de || "—")} → <b>Para:</b> ${escH((m.para || []).map(msgLabel).join(", "))}</div>
-      ${m.deK ? `<div class="mr-box" data-id="${escH(m.id)}" style="margin-top:10px;"><button type="button" class="mr" data-id="${escH(m.id)}" style="font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;background:#fff;color:#8A5A00;border:1.5px solid #C4791E;border-radius:10px;padding:9px 14px;cursor:pointer;">💬 Responder</button></div>` : ""}</div>`).join("");
+      ${m.deK ? `<div class="mr-box" data-id="${escH(m.id)}" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">${["👍 OK","✅ Listo","🙏 Gracias","⏳ Dame un momento"].map(r => `<button type="button" class="mrq" data-id="${escH(m.id)}" data-r="${escH(r)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#fff;color:#8A5A00;border:1.5px solid #C4791E;border-radius:12px;padding:11px 14px;cursor:pointer;">${escH(r)}</button>`).join("")}<button type="button" class="mr" data-id="${escH(m.id)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#FFF4D6;color:#8A5A00;border:1.5px dashed #C4791E;border-radius:12px;padding:11px 14px;cursor:pointer;">✏️ Escribir</button></div>` : ""}</div>`).join("");
   MSG_CAPA = capaModal(`<div style="font-size:3rem;line-height:1;">📣</div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin-top:8px;color:#B23A2E;">¡Ojo! Mensaje para ${escH(msgLabel(area))}</div>
     ${lista}
@@ -5764,6 +5764,15 @@ function msgMostrar(pend, area){
     await DB.doc("estado/MSGV-" + msgSlug(area)).set({vistos: v});
     MSG_V[area] = v;
   };
+  // Alban 22 oct: respuestas rápidas con un toque (los operadores escriben con el dedo)
+  MSG_CAPA.querySelectorAll(".mrq").forEach(btn => btn.onclick = async () => {
+    const m = pend.find(x => x.id === btn.dataset.id), box = btn.parentNode;
+    [...box.children].forEach(x => x.disabled = true); btn.textContent = "Enviando…";
+    try{
+      await msgEnviar("↩️ " + btn.dataset.r, [m.deK], (typeof usrYo === "function" && usrYo() ? usrYo().nom : msgLabel(area).replace(/^\S+\s/, "")), area, m.id);
+      await marcarVistos(); msgCerrarCapa();
+    }catch(e){ [...box.children].forEach(x => x.disabled = false); btn.textContent = btn.dataset.r + " (reintentar)"; }
+  });
   MSG_CAPA.querySelectorAll(".mr").forEach(btn => btn.onclick = () => {
     const m = pend.find(x => x.id === btn.dataset.id), box = btn.parentNode;
     box.innerHTML = `<textarea class="mrt" rows="2" placeholder="Escribe tu respuesta para ${escH(m.de || "")}…" style="width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px;border:1.5px solid #C4791E;border-radius:10px;"></textarea>
