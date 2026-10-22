@@ -1772,8 +1772,8 @@ function renderAdmin(){
     const x = document.createElement("div"); x.style.marginTop = "18px"; x.textContent = "Todavía no hay ventas cargadas en esta versión de la página."; main.appendChild(x); return;
   }
   if(!ADM){ main.appendChild(admLogin()); return; }
+  if(ADM_ST.per === "personas"){ main.appendChild(admPerChips()); main.appendChild(usrAdminEl()); return; }   // Alban 22 oct: pestaña 👥 Personas al lado de Año
   main.appendChild(admPanel());
-  main.appendChild(usrAdminEl());   // Alban 22 oct: personas, códigos y accesos (debajo de las ventas)
 }
 function admLogin(){
   const box = document.createElement("form");
@@ -1791,6 +1791,18 @@ function admLogin(){
     catch(err){ ADM = null; msg.style.color = "#B23A2E"; msg.textContent = "Correo o contraseña incorrectos."; }
   };
   return box;
+}
+// Alban 22 oct: Día · Semana · Mes · Año · 👥 Personas
+const ADM_PERS = [["dia","Día"],["semana","Semana"],["mes","Mes"],["ano","Año"],["personas","👥 Personas"]];
+const admChip = (k, t, cur, cls) => `<button type="button" class="${cls}" data-k="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:7px 14px;border-radius:100px;cursor:pointer;border:1.5px solid ${C.ink};background:${cur ? C.ink : C.paper};color:${cur ? C.bg : C.ink};">${t}</button>`;
+function admIrPer(k){ if(k === "personas"){ ADM_ST.per = "personas"; renderAdmin(); window.scrollTo(0,0); return; }
+  ADM_ST.per = k; ADM_ST.evo = k; ADM_ST.ref = hoyISO(); renderAdmin(); }
+function admPerChips(){
+  const d = document.createElement("div");
+  d.setAttribute("style", "margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;");
+  d.innerHTML = ADM_PERS.map(([k,t])=>admChip(k, t, ADM_ST.per === k, "adm-per")).join("");
+  d.querySelectorAll(".adm-per").forEach(el => el.onclick = ()=>admIrPer(el.dataset.k));
+  return d;
 }
 function admPanel(){
   const D = ADM, wrap = document.createElement("div");
@@ -1817,13 +1829,13 @@ function admPanel(){
     R0 = admSumar(a0, b0);
     compTxt = (enCurso ? "Hasta hoy · comparado con los mismos días de: " : "Comparado con: ") + admTitulo(ADM_ST.per, a0, b0);
   }
-  const chip = (k, t, cur, cls) => `<button type="button" class="${cls}" data-k="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:7px 14px;border-radius:100px;cursor:pointer;border:1.5px solid ${C.ink};background:${cur ? C.ink : C.paper};color:${cur ? C.bg : C.ink};">${t}</button>`;
+  const chip = admChip;
   const card = `background:${C.paper};border:1.5px solid ${C.line};border-radius:16px;padding:16px 18px;margin-top:14px;`;
   const th = `text-align:right;font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;padding:6px 6px;`;
   const td = `text-align:right;padding:7px 4px;border-top:1px solid ${C.line};font-family:'Work Sans',sans-serif;font-variant-numeric:tabular-nums;font-size:0.82rem;white-space:nowrap;`;
   // 1) Período
   let h = `<div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap;">
-      ${[["dia","Día"],["semana","Semana"],["mes","Mes"],["ano","Año"]].map(([k,t])=>chip(k,t,ADM_ST.per===k,"adm-per")).join("")}
+      ${ADM_PERS.map(([k,t])=>chip(k,t,ADM_ST.per===k,"adm-per")).join("")}
     </div>
     <div style="margin-top:12px;display:flex;align-items:center;gap:10px;">
       <button type="button" class="adm-prev" style="-webkit-appearance:none;appearance:none;width:38px;height:38px;border-radius:10px;border:1.5px solid ${C.line};background:${C.paper};font-family:Arial,sans-serif;font-size:1.1rem;cursor:pointer;color:${C.ink};">◀</button>
@@ -1897,7 +1909,7 @@ function admPanel(){
     </table></div></div>
     <div style="font-size:0.72rem;color:${C.inkSoft};margin-top:10px;">Datos desde el 1 de septiembre de 2026 · actualizados ${D.gen}.</div>`;
   wrap.innerHTML = h;
-  wrap.querySelectorAll(".adm-per").forEach(el => el.onclick = ()=>{ ADM_ST.per = el.dataset.k; ADM_ST.evo = el.dataset.k; ADM_ST.ref = hoy; renderAdmin(); });
+  wrap.querySelectorAll(".adm-per").forEach(el => el.onclick = ()=>admIrPer(el.dataset.k));
   wrap.querySelectorAll(".adm-evo").forEach(el => el.onclick = ()=>{ ADM_ST.evo = el.dataset.k; renderAdmin(); });
   wrap.querySelector(".adm-prev").onclick = ()=>{ ADM_ST.ref = admMover(ADM_ST.per, ADM_ST.ref, -1); renderAdmin(); };
   wrap.querySelector(".adm-next").onclick = ()=>{ ADM_ST.ref = admMover(ADM_ST.per, ADM_ST.ref, 1); renderAdmin(); };
