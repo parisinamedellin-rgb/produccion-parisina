@@ -1135,6 +1135,11 @@ let activeDate = dates.find(d => d === TODAY_ISO) || dates[0];
 let activeCat = "HOME";
 // Alban 22 oct: acceso directo a Admin → .../produccion-parisina/?admin (o #admin): entra directo, sin código
 try{ if(/(^|[?&#])admin\b/i.test((location.search || "") + "#" + (location.hash || "").slice(1))) activeCat = "ADMIN"; }catch(e){}
+// Alban 22 oct: acceso directo a Mensajes → ?mensajes · dentro de pedidos-equipo (WordPress, iframe) → ?mensajes&embed (sin encabezado)
+let MSG_EMBED = false;
+try{ const q = (location.search || "") + "#" + (location.hash || "").slice(1);
+  if(/(^|[?&#])mensajes\b/i.test(q)) activeCat = "MSG";
+  if(/(^|[?&#])embed\b/i.test(q)){ MSG_EMBED = true; activeCat = "MSG"; } }catch(e){}
 // ---- Navegación (Alban 5 oct): 1) primera página = elegir categoría; 2) dentro: Producción / Stock / Fórmulas ----
 // Repostería agrupa Repostería + Tortas + Topping. "Todo" queda como enlace discreto (solo para Alban).
 const ICON_BATIDORA = `<svg viewBox="0 0 48 48" aria-label="batidora" style="height:1.05em;width:1.05em;vertical-align:-0.16em;display:inline-block;">
@@ -5145,7 +5150,7 @@ function ponerTitulo(){
 }
 function render(){
   setTimeout(ponerTitulo, 0);
-  if(usrNecesitaLogin() && activeCat !== "ADMIN"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
+  if(usrNecesitaLogin() && activeCat !== "ADMIN" && activeCat !== "MSG"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
   if(activeCat === "HOME"){ renderHome(); return; }
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }   // Alban 21 oct: mensajes a cocina (no se repinta solo)
   if(activeCat === "ADMIN"){ if(!document.querySelector("[data-adm]")) renderAdmin(); return; }   // Admin: no se repinta solo (no borra lo que se está escribiendo)
@@ -5823,6 +5828,7 @@ function renderMensajes(){
   ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
   const main = document.getElementById("main");
   main.innerHTML = "";
+  if(MSG_EMBED){ try{ document.querySelectorAll("#page > header, #page > footer").forEach(x => x.style.display = "none"); const pg = document.getElementById("page"); if(pg) pg.style.paddingBottom = "16px"; }catch(e){} }
   const w = document.createElement("div");
   w.setAttribute("data-msg", "1");
   const inp = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:11px 12px;border:1.5px solid ${C.line};border-radius:12px;width:100%;box-sizing:border-box;background:#fff;`;
@@ -5866,6 +5872,7 @@ function renderMensajes(){
   }
   yoSel.onchange = () => { lsSet("mi_persona", yoSel.value); if(!dek.value && yoSel.value) dek.value = yoSel.value; msgPintarEstado().catch(() => {}); };
   w.querySelector(".m-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  if(MSG_EMBED) w.querySelector(".m-vol").style.display = "none";
   w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
   w.querySelector(".m-env").onclick = async ev => {
