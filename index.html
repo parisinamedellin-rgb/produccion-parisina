@@ -5858,6 +5858,12 @@ function renderMensajes(){
   const dek = w.querySelector(".m-dek"), yoSel = w.querySelector(".m-yo");
   dek.value = msgYoKey() || lsGet("msg_dek") || "";
   yoSel.value = miPersona() || "";
+  // Alban 22 oct: si entró con su código ya se sabe quién envía → no se muestra "¿Quién envía?" ni "Este equipo es de"
+  if(typeof usrYo === "function" && usrYo() && msgYoKey()){
+    dek.value = msgYoKey(); de.value = usrYo().nom;
+    [dek, de, yoSel.closest("label")].forEach(x => { if(x) x.style.display = "none"; });
+    const t = dek.previousElementSibling; if(t) t.style.display = "none";
+  }
   yoSel.onchange = () => { lsSet("mi_persona", yoSel.value); if(!dek.value && yoSel.value) dek.value = yoSel.value; msgPintarEstado().catch(() => {}); };
   w.querySelector(".m-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
   w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
