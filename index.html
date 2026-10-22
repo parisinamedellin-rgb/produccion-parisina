@@ -1795,7 +1795,9 @@ function admLogin(){
   box.onsubmit = async e=>{
     e.preventDefault();
     const msg = box.querySelector(".adm-msg"); msg.style.color = C.inkSoft; msg.textContent = "Abriendo…";
-    try{ ADM = await admAbrir(box.querySelector(".adm-e").value, box.querySelector(".adm-p").value); ADM_ERR = ""; ADM_ST.ref = null; renderAdmin(); }
+    try{ ADM = await admAbrir(box.querySelector(".adm-e").value, box.querySelector(".adm-p").value); ADM_ERR = ""; ADM_ST.ref = null;
+         try{ const al = (typeof msgPers === "function" ? msgPers() : []).find(p => /alban/i.test(p[1])); if(al && !lsGet("mi_persona")) lsSet("mi_persona", al[0]); }catch(e){}   // Alban 22 oct: entrar a Admin = este equipo es de Alban (recibe sus mensajes)
+         renderAdmin(); }
     catch(err){ ADM = null; msg.style.color = "#B23A2E"; msg.textContent = "Correo o contraseña incorrectos."; }
   };
   return box;
@@ -5795,6 +5797,7 @@ function msgMostrar(pend, area){
     catch(e){ b.disabled = false; b.textContent = "✅ Ya lo leí (reintentar)"; }
   };
   pitar();
+  notificar("📣 Mensaje para " + msgLabel(area).replace(/^\S+\s/, ""), pend.map(m => m.txt + (m.de ? " — " + m.de : "")).join("\n"));
   MSG_PIT = setInterval(pitar, 12000);
 }
 async function msgRevisar(){
@@ -5857,7 +5860,9 @@ function renderMensajes(){
     <div style="font-size:0.75rem;font-weight:600;color:${C.inkSoft};margin-top:10px;">👤 Personas</div>
     <div class="m-para m-pers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
       ${msgPers().map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${C.gold};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
+      <button type="button" class="m-ofi" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">🏢 Toda la oficina</button>
     </div>
+    <div class="m-avisos" style="margin-top:14px;padding:10px 12px;border:1.5px dashed ${C.line};border-radius:12px;font-size:0.84rem;color:${C.inkSoft};display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
     <div style="font-size:0.8rem;font-weight:600;color:${C.inkSoft};margin-top:14px;text-transform:uppercase;letter-spacing:.05em;">¿Quién envía?</div>
     <select class="m-dek" style="${inp}margin-top:6px;"><option value="">— Elige —</option>${msgDest().map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select>
     <input type="text" class="m-de" placeholder="Tu nombre (opcional)" style="${inp}margin-top:8px;">
@@ -5887,6 +5892,8 @@ function renderMensajes(){
   if(MSG_EMBED) w.querySelector(".m-vol").style.display = "none";
   w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
+  w.querySelector(".m-ofi").onclick = () => w.querySelectorAll(".m-pers input").forEach(c => c.checked = true);
+  avisosUI(w.querySelector(".m-avisos"));
   w.querySelector(".m-env").onclick = async ev => {
     const t = txt.value.trim(), para = [...w.querySelectorAll(".m-para input:checked")].map(c => c.value);
     if(!t){ ok.style.color = "#B23A2E"; ok.textContent = "Escribe el mensaje."; return; }
@@ -5906,9 +5913,41 @@ function renderMensajes(){
   };
   if(DB) msgLeer().then(msgPintarEstado).catch(() => {}); else document.getElementById("msg-estado").innerHTML = "";
 }
+// ---- 🔔 Avisos con la pantalla bloqueada (Alban 22 oct) ----
+// En la web (github.io) se registra sw.js: con permiso de notificaciones, el mensaje también sale como notificación del sistema
+// (suena aunque la pantalla esté bloqueada, mientras la página siga abierta y la tablet tenga internet). Además, opción de
+// mantener la pantalla encendida (wake lock) para que la página no se duerma.
+let SW_REG = null, WAKE = null;
+function notifOK(){ return typeof Notification !== "undefined" && Notification.permission === "granted"; }
+async function bootSW(){
+  try{ if(/github\.io$/.test(location.hostname) && "serviceWorker" in navigator) SW_REG = await navigator.serviceWorker.register("./sw.js"); }catch(e){ console.warn("sw:", e); }
+}
+async function notificar(titulo, cuerpo){
+  if(!notifOK()) return;
+  try{ const reg = SW_REG || (navigator.serviceWorker && await navigator.serviceWorker.getRegistration());
+    if(reg) await reg.showNotification(titulo, {body: cuerpo, tag: "parisina-msg", renotify: true, requireInteraction: true, vibrate: [300,150,300], icon: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#B23A2E"/><text x="32" y="44" font-size="34" text-anchor="middle">📣</text></svg>')});
+    else new Notification(titulo, {body: cuerpo}); }catch(e){ console.warn("notif:", e); }
+}
+async function wakeOn(){ try{ if(lsGet("pantalla_on") === "1" && "wakeLock" in navigator && !WAKE){ WAKE = await navigator.wakeLock.request("screen"); WAKE.addEventListener("release", () => { WAKE = null; }); } }catch(e){} }
+function avisosUI(el){
+  if(!el) return;
+  const soporta = typeof Notification !== "undefined";
+  const on = notifOK(), pOn = lsGet("pantalla_on") === "1", wl = "wakeLock" in navigator;
+  el.innerHTML = `<span style="flex:1 1 100%;font-weight:700;color:${C.ink};">🔔 Avisos en este equipo</span>
+    ${soporta ? `<button type="button" class="n-act" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px solid ${on ? "#2F6DB5" : C.ink};background:${on ? "#E3EDF9" : "#fff"};color:${on ? "#2F6DB5" : C.ink};border-radius:10px;padding:9px 12px;cursor:pointer;">${on ? "✅ Notificaciones activas" : "🔔 Activar notificaciones"}</button>` : `<span>Este navegador no permite notificaciones.</span>`}
+    ${wl ? `<button type="button" class="n-wake" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px solid ${pOn ? "#2F6DB5" : C.ink};background:${pOn ? "#E3EDF9" : "#fff"};color:${pOn ? "#2F6DB5" : C.ink};border-radius:10px;padding:9px 12px;cursor:pointer;">${pOn ? "✅ Pantalla siempre encendida" : "📱 Mantener la pantalla encendida"}</button>` : ""}
+    <span style="flex:1 1 100%;font-size:0.78rem;">Con notificaciones, el mensaje suena aunque la pantalla esté bloqueada (la página debe quedar abierta y con internet). En la tablet, mejor agregar la página a la pantalla de inicio.</span>`;
+  const na = el.querySelector(".n-act");
+  if(na) na.onclick = async () => { try{ const r = await Notification.requestPermission(); if(r === "granted"){ await bootSW(); notificar("Parisina · avisos activos", "Así te llegarán los mensajes."); } else alert("No se dio permiso. Revísalo en los ajustes del navegador (candado junto a la dirección)."); }catch(e){} avisosUI(el); };
+  const nw = el.querySelector(".n-wake");
+  if(nw) nw.onclick = async () => { const v = lsGet("pantalla_on") === "1" ? "0" : "1"; lsSet("pantalla_on", v); if(v === "1") await wakeOn(); else if(WAKE){ try{ await WAKE.release(); }catch(e){} WAKE = null; } avisosUI(el); };
+}
 // Arranque (solo en un navegador real: en smoke.js no hay location)
 if(typeof location !== "undefined" && /^https?:$/.test(location.protocol || "") && typeof document.addEventListener === "function"){
   document.addEventListener("pointerdown", audioListo, {passive: true});
+  document.addEventListener("pointerdown", wakeOn, {passive: true});
+  document.addEventListener("visibilitychange", () => { if(!document.hidden) wakeOn(); });
+  bootSW();
   setTimeout(msgRevisar, 4000);
   setInterval(() => { if(!document.hidden) msgRevisar(); }, 20000);
   document.addEventListener("visibilitychange", () => { if(!document.hidden) msgRevisar(); });
