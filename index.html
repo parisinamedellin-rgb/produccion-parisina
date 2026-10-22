@@ -5865,10 +5865,13 @@ function renderMensajes(){
   dek.value = msgYoKey() || lsGet("msg_dek") || "";
   yoSel.value = miPersona() || "";
   // Alban 22 oct: si entró con su código ya se sabe quién envía → no se muestra "¿Quién envía?" ni "Este equipo es de"
-  if(typeof usrYo === "function" && usrYo() && msgYoKey()){
-    dek.value = msgYoKey(); de.value = usrYo().nom;
-    [dek, de, yoSel.closest("label")].forEach(x => { if(x) x.style.display = "none"; });
+  // Alban 22 oct: si ya se sabe quién es (entró con código, o el equipo tiene persona elegida) → esa persona envía y no se pregunta
+  const yoK = miPersona() || ((typeof usrYo === "function" && usrYo()) ? msgYoKey() : "");
+  if(yoK){
+    dek.value = yoK; de.value = (typeof usrYo === "function" && usrYo()) ? usrYo().nom : "";
+    [dek, de].forEach(x => { x.style.display = "none"; });
     const t = dek.previousElementSibling; if(t) t.style.display = "none";
+    const lb = yoSel.closest("label"); if(lb){ lb.innerHTML = `Envías como <b>${escH(msgLabel(yoK).replace(/^\S+\s/, ""))}</b> · `; const c = document.createElement("button"); c.type = "button"; c.textContent = "cambiar"; c.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0;`); c.onclick = () => { lsSet("mi_persona", ""); renderMensajes(); }; lb.appendChild(c); }
   }
   yoSel.onchange = () => { lsSet("mi_persona", yoSel.value); if(!dek.value && yoSel.value) dek.value = yoSel.value; msgPintarEstado().catch(() => {}); };
   w.querySelector(".m-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
