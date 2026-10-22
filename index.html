@@ -1937,7 +1937,9 @@ const USR_DEF = [
   {id:"u7", nom:"María", cod:"", acc:["Reposteria","Rotular"]},
   {id:"u8", nom:"Andreina", cod:"", acc:["Batido","Rotular"]},
   {id:"u9", nom:"Juan Pablo", cod:"", acc:["Logistica","Rotular"]},
-  {id:"u10", nom:"Wilson", cod:"", acc:["Marzzana","Rotular"]}
+  {id:"u10", nom:"Wilson", cod:"", acc:["Marzzana","Rotular"]},
+  {id:"u11", nom:"Isabella", cod:"", acc:["ALL"]},   // oficina (22 oct)
+  {id:"u12", nom:"Andrea", cod:"", acc:["ALL"]}
 ];
 let USUARIOS = null;
 try{ const c = JSON.parse(localStorage.getItem("usuarios_cache") || "null"); if(c && Array.isArray(c.lista)) USUARIOS = c.lista; }catch(e){}
@@ -2081,7 +2083,7 @@ function renderHome(){
   // Alban 21 oct: mensajes a cocina (alerta en la tablet del área)
   const msgB = document.createElement("button");
   msgB.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:8px;`);
-  msgB.textContent = "📣 Mensaje a cocina";
+  msgB.textContent = "📣 Mensajes";
   msgB.onclick = ()=>{ activeCat = "MSG"; render(); window.scrollTo(0,0); };
   todo.appendChild(msgB);
   main.appendChild(todo);
@@ -5689,8 +5691,19 @@ function saludoAlEntrar(fam, forzar){
 
 // ---- 📣 Mensajes ----
 const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷 Comida de sal","SAL"], ["Reposteria","🍰 Repostería","REP"], ["Batido","🥣 Batido","BAT"], ["Logistica","🚚 Logística / Rótulos","LOG"]];
-const msgSlug = a => (MSG_AREAS.find(x => x[0] === a) || [])[2];
-const msgLabel = a => (MSG_AREAS.find(x => x[0] === a) || [a, a])[1];
+// Alban 22 oct: también a personas de la oficina (no una categoría) y se puede responder
+const MSG_PERS = [["P:Isabella","👩‍💼 Isabella","PISA"], ["P:Andrea","👩‍💼 Andrea","PAND"], ["P:Alban","👨‍💼 Alban","PALB"]];
+const MSG_DEST = [...MSG_AREAS, ...MSG_PERS];
+const msgSlug = a => (MSG_DEST.find(x => x[0] === a) || [])[2];
+const msgLabel = a => (MSG_DEST.find(x => x[0] === a) || [a, a])[1];
+function miPersona(){   // persona de la oficina que usa este equipo: por su código, o elegida en Mensajes
+  const yo = typeof usrYo === "function" ? usrYo() : null;
+  if(yo){ const p = MSG_PERS.find(x => pedNorm(x[0].slice(2)) === pedNorm(yo.nom)); if(p) return p[0]; }
+  const g = lsGet("mi_persona"); return MSG_PERS.some(x => x[0] === g) ? g : null;
+}
+function misDestinos(){ return [miPersona(), miArea()].filter(Boolean); }
+function msgYoKey(){ return miPersona() || miArea() || ""; }
+function msgYoNombre(){ const yo = typeof usrYo === "function" ? usrYo() : null; const k = msgYoKey(); return yo ? yo.nom + (k && !k.startsWith("P:") ? " · " + msgLabel(k).replace(/^\S+\s/, "") : "") : (k ? msgLabel(k).replace(/^\S+\s/, "") : ""); }
 function miArea(){ const a = lsGet("mi_area"); return a === "Rotular" ? "Logistica" : (msgSlug(a) ? a : null); }
 let MSG = {lista: []};
 const MSG_V = {};
@@ -5725,55 +5738,75 @@ function msgMostrar(pend, area){
   const col = (PALETTE[area] || PALETTE.ALL).a;
   const lista = pend.map(m => `<div style="text-align:left;background:#FFF4D6;border:1.5px solid #C4791E;border-radius:14px;padding:14px 16px;margin-top:12px;">
       <div style="font-size:1.25rem;font-weight:700;line-height:1.4;white-space:pre-wrap;">${escH(m.txt)}</div>
-      <div style="font-size:0.8rem;color:#6B6255;margin-top:6px;">${msgHora(m.ts)}${m.de ? " · " + escH(m.de) : ""}</div></div>`).join("");
+      <div style="font-size:0.8rem;color:#6B6255;margin-top:6px;">${msgHora(m.ts)} · <b>De:</b> ${escH(m.de || "—")} → <b>Para:</b> ${escH((m.para || []).map(msgLabel).join(", "))}</div>
+      ${m.deK ? `<div class="mr-box" data-id="${escH(m.id)}" style="margin-top:10px;"><button type="button" class="mr" data-id="${escH(m.id)}" style="font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;background:#fff;color:#8A5A00;border:1.5px solid #C4791E;border-radius:10px;padding:9px 14px;cursor:pointer;">💬 Responder</button></div>` : ""}</div>`).join("");
   MSG_CAPA = capaModal(`<div style="font-size:3rem;line-height:1;">📣</div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin-top:8px;color:#B23A2E;">¡Ojo! Mensaje para ${escH(msgLabel(area))}</div>
     ${lista}
-    <button type="button" class="mv" style="margin-top:20px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:15px;cursor:pointer;">✅ Visto</button>`, "#B23A2E");
+    <button type="button" class="mv" style="margin-top:20px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:15px;cursor:pointer;">✅ Ya lo leí</button>`, "#B23A2E");
+  const marcarVistos = async ()=>{
+    await msgLeerVistos(area);
+    const v = Object.assign({}, MSG_V[area] || {});
+    pend.forEach(m => v[m.id] = Date.now());
+    await DB.doc("estado/MSGV-" + msgSlug(area)).set({vistos: v});
+    MSG_V[area] = v;
+  };
+  MSG_CAPA.querySelectorAll(".mr").forEach(btn => btn.onclick = () => {
+    const m = pend.find(x => x.id === btn.dataset.id), box = btn.parentNode;
+    box.innerHTML = `<textarea class="mrt" rows="2" placeholder="Escribe tu respuesta para ${escH(m.de || "")}…" style="width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px;border:1.5px solid #C4791E;border-radius:10px;"></textarea>
+      <button type="button" class="mre" style="margin-top:6px;width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#B23A2E;color:#fff;border:none;border-radius:10px;padding:11px;cursor:pointer;">📨 Enviar respuesta</button>
+      <div class="mro" style="font-size:0.85rem;margin-top:4px;"></div>`;
+    if(MSG_PIT){ clearInterval(MSG_PIT); MSG_PIT = null; }   // mientras escribe, no suena
+    const ta = box.querySelector(".mrt"); ta.focus();
+    box.querySelector(".mre").onclick = async ev => {
+      const t = ta.value.trim(); if(!t) return;
+      ev.target.disabled = true; box.querySelector(".mro").textContent = "Enviando…";
+      try{
+        await msgEnviar("↩️ " + t, [m.deK], (typeof usrYo === "function" && usrYo() ? usrYo().nom : msgLabel(area).replace(/^\S+\s/, "")), area, m.id);
+        await marcarVistos(); msgCerrarCapa();
+      }catch(e){ ev.target.disabled = false; box.querySelector(".mro").textContent = "No se pudo enviar. Intenta otra vez."; }
+    };
+  });
   MSG_CAPA.querySelector(".mv").onclick = async ev => {
     const b = ev.target; b.disabled = true; b.textContent = "Guardando…";
-    try{
-      await msgLeerVistos(area);
-      const v = Object.assign({}, MSG_V[area] || {});
-      pend.forEach(m => v[m.id] = Date.now());
-      await DB.doc("estado/MSGV-" + msgSlug(area)).set({vistos: v});
-      MSG_V[area] = v;
-      msgCerrarCapa();
-    }catch(e){ b.disabled = false; b.textContent = "✅ Visto (reintentar)"; }
+    try{ await marcarVistos(); msgCerrarCapa(); }
+    catch(e){ b.disabled = false; b.textContent = "✅ Ya lo leí (reintentar)"; }
   };
   pitar();
   MSG_PIT = setInterval(pitar, 12000);
 }
 async function msgRevisar(){
   if(!DB) return;
-  const area = miArea();
   try{
     await msgLeer();
-    if(area){
+    let mostro = false;
+    for(const area of misDestinos()){   // área de la tablet y/o persona de la oficina
       await msgLeerVistos(area);
       const pend = MSG.lista.filter(m => (m.para || []).includes(area) && !(MSG_V[area] || {})[m.id] && Date.now() - m.ts < 36*3600e3);
-      msgMostrar(pend, area);
+      if(pend.length){ msgMostrar(pend, area); mostro = true; break; }
     }
+    if(!mostro) msgCerrarCapa();
     if(activeCat === "MSG") await msgPintarEstado();
   }catch(e){ console.warn("Mensajes:", e); }
 }
-async function msgEnviar(txt, para, de){
+async function msgEnviar(txt, para, de, deK, re){
   await msgLeer();
   const lim = Date.now() - 3*864e5;
   const lista = MSG.lista.filter(m => m.ts > lim).slice(-60);
-  lista.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts: Date.now(), txt, para, de});
+  lista.push(Object.assign({id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts: Date.now(), txt, para, de}, deK ? {deK} : {}, re ? {re} : {}));
   await DB.doc("estado/MSG").set({lista});
   MSG = {lista};
 }
 async function msgPintarEstado(){
   const box = document.getElementById("msg-estado");
   if(!box || !DB) return;
-  await Promise.all(MSG_AREAS.map(a => msgLeerVistos(a[0]).catch(() => {})));
+  await Promise.all(MSG_DEST.map(a => msgLeerVistos(a[0]).catch(() => {})));
   const recientes = MSG.lista.filter(m => Date.now() - m.ts < 36*3600e3).slice().reverse();
   if(!recientes.length){ box.innerHTML = `<div style="color:${C.inkSoft};font-style:italic;font-size:0.88rem;">Sin mensajes recientes.</div>`; return; }
-  box.innerHTML = recientes.map(m => `<div style="background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:12px 14px;margin-top:10px;">
+  const mios = new Set(misDestinos());
+  box.innerHTML = recientes.map(m => `<div style="background:${(m.para || []).some(a => mios.has(a)) ? "#FFF4D6" : C.paper};border:1px solid ${C.line};border-radius:14px;padding:12px 14px;margin-top:10px;">
       <div style="font-weight:600;white-space:pre-wrap;">${escH(m.txt)}</div>
-      <div style="font-size:0.76rem;color:${C.inkSoft};margin-top:4px;">${msgHora(m.ts)}${m.de ? " · " + escH(m.de) : ""}</div>
+      <div style="font-size:0.76rem;color:${C.inkSoft};margin-top:4px;">${msgHora(m.ts)} · De: <b>${escH(m.de || "—")}</b></div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${(m.para || []).map(a => { const v = (MSG_V[a] || {})[m.id];
         return `<span style="font-size:0.78rem;border-radius:100px;padding:3px 10px;${v ? "background:#E3EDF9;color:#2F6DB5;" : "background:#FBEBD8;color:#C4791E;"}">${escH(msgLabel(a))} · ${v ? "✅ visto " + msgHora(v) : "⏳ sin ver"}</span>`; }).join("")}</div></div>`).join("");
 }
@@ -5787,7 +5820,7 @@ function renderMensajes(){
   const inp = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:11px 12px;border:1.5px solid ${C.line};border-radius:12px;width:100%;box-sizing:border-box;background:#fff;`;
   w.innerHTML = `<button type="button" class="m-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>
     <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:6px 0 4px;">📣 Mensaje a cocina</h2>
-    <div style="font-size:0.88rem;color:${C.inkSoft};">Sale en la tablet del área con alerta y sonido, hasta que toquen "Visto".</div>
+    <div style="font-size:0.88rem;color:${C.inkSoft};">Sale en la tablet del área (o en el equipo de la persona) con alerta y sonido, hasta que toquen "Ya lo leí". Se puede responder.</div>
     ${!DB ? `<div style="margin-top:12px;font-size:0.86rem;border:1.5px solid #C4791E;background:#FFF4D6;color:#8A5A00;border-radius:12px;padding:10px 14px;">Desde aquí no se puede enviar: ábrelo en la web.</div>` : ""}
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;">
       ${["⚠️ Llegó un pedido nuevo: ","🔥 Urgente: ","❌ Pedido cancelado: ","✏️ Cambio en un pedido: ","📞 Pasar por la oficina"].map(t => `<button type="button" class="m-chip" data-t="${escH(t)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;background:${C.paper};border:1px solid ${C.line};border-radius:100px;padding:7px 12px;cursor:pointer;">${escH(t.replace(/: $/, ""))}</button>`).join("")}
@@ -5798,14 +5831,26 @@ function renderMensajes(){
       ${MSG_AREAS.map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${(PALETTE[a[0]] || PALETTE.ALL).a};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
       <button type="button" class="m-todas" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Todas</button>
     </div>
-    <input type="text" class="m-de" placeholder="Tu nombre (opcional)" style="${inp}margin-top:12px;">
+    <div style="font-size:0.75rem;font-weight:600;color:${C.inkSoft};margin-top:10px;">🏢 Oficina</div>
+    <div class="m-para m-pers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+      ${MSG_PERS.map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${C.gold};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
+    </div>
+    <div style="font-size:0.8rem;font-weight:600;color:${C.inkSoft};margin-top:14px;text-transform:uppercase;letter-spacing:.05em;">¿Quién envía?</div>
+    <select class="m-dek" style="${inp}margin-top:6px;"><option value="">— Elige —</option>${MSG_DEST.map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select>
+    <input type="text" class="m-de" placeholder="Tu nombre (opcional)" style="${inp}margin-top:8px;">
+    <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:0.82rem;color:${C.inkSoft};">Este equipo es de (para recibir mensajes de oficina):
+      <select class="m-yo" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;padding:6px 8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;"><option value="">Nadie de la oficina</option>${MSG_PERS.map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select></label>
     <button type="button" class="m-env" style="margin-top:12px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#B23A2E;color:#fff;border:none;border-radius:14px;padding:14px;cursor:pointer;">📣 Enviar</button>
     <div class="m-ok" style="font-size:0.88rem;margin-top:8px;min-height:1.2em;"></div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Enviados (últimas 36 h)</div>
     <div id="msg-estado"><div style="color:${C.inkSoft};font-size:0.88rem;">Cargando…</div></div>`;
   main.appendChild(w);
   const txt = w.querySelector(".m-txt"), de = w.querySelector(".m-de"), ok = w.querySelector(".m-ok");
-  de.value = lsGet("msg_de") || "";
+  de.value = (typeof usrYo === "function" && usrYo() ? usrYo().nom : "") || lsGet("msg_de") || "";
+  const dek = w.querySelector(".m-dek"), yoSel = w.querySelector(".m-yo");
+  dek.value = msgYoKey() || lsGet("msg_dek") || "";
+  yoSel.value = miPersona() || "";
+  yoSel.onchange = () => { lsSet("mi_persona", yoSel.value); if(!dek.value && yoSel.value) dek.value = yoSel.value; msgPintarEstado().catch(() => {}); };
   w.querySelector(".m-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
   w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
@@ -5813,11 +5858,13 @@ function renderMensajes(){
     const t = txt.value.trim(), para = [...w.querySelectorAll(".m-para input:checked")].map(c => c.value);
     if(!t){ ok.style.color = "#B23A2E"; ok.textContent = "Escribe el mensaje."; return; }
     if(!para.length){ ok.style.color = "#B23A2E"; ok.textContent = "Elige para quién."; return; }
+    if(!dek.value){ ok.style.color = "#B23A2E"; ok.textContent = "Elige quién envía (así te pueden responder)."; return; }
     if(!DB){ ok.style.color = "#B23A2E"; ok.textContent = "Desde aquí no se puede enviar."; return; }
     const b = ev.target; b.disabled = true; ok.style.color = C.inkSoft; ok.textContent = "Enviando…";
     try{
-      lsSet("msg_de", de.value.trim());
-      await msgEnviar(t, para, de.value.trim());
+      lsSet("msg_de", de.value.trim()); lsSet("msg_dek", dek.value);
+      const lab = msgLabel(dek.value).replace(/^\S+\s/, ""), nom = de.value.trim();
+      await msgEnviar(t, para, nom && pedNorm(nom) !== pedNorm(lab) ? nom + " (" + lab + ")" : lab, dek.value);
       txt.value = ""; w.querySelectorAll(".m-para input").forEach(c => c.checked = false);
       ok.style.color = "#2F6DB5"; ok.textContent = "✅ Enviado";
       msgPintarEstado().catch(() => {});
