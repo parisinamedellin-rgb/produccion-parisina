@@ -1763,7 +1763,8 @@ function renderAdmin(){
   const top = document.createElement("div");
   top.setAttribute("style", "margin-top:22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;");
   top.innerHTML = `<button type="button" class="adm-back" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;background:${C.paper};border:1.5px solid ${C.line};border-radius:100px;padding:8px 16px;cursor:pointer;color:${C.ink};">← Categorías</button>
-    <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;">🔒 Admin · Ventas</span>
+    <span style="display:flex;flex-direction:column;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;">🔒 Admin · Ventas</span>
+      <span style="font-size:0.78rem;color:${C.inkSoft};">🕐 Última actualización: <b style="color:${C.ink};">${escH(((document.querySelector("#stamp-excel b") || {}).textContent || "").trim() || "—")}</b></span></span>
     ${ADM ? `<button type="button" class="adm-out" style="margin-left:auto;font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Cerrar sesión</button>` : ""}`;
   main.appendChild(top);
   top.querySelector(".adm-back").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
@@ -1997,7 +1998,7 @@ function usrAdminEl(){
   wrap.setAttribute("style", `background:${C.paper};border:1.5px solid ${C.line};border-radius:16px;padding:16px 18px;margin-top:18px;`);
   const inp = `font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:${C.ink};box-sizing:border-box;`;
   wrap.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">👥 Personas y accesos</div>
-    <div style="font-size:0.8rem;color:${C.inkSoft};margin-top:4px;line-height:1.5;">📝 <b>Nota:</b> el código de cada persona es el <b>mismo que usa en Time Station</b>. Se escribe una sola vez en cada tablet o celular.
+    <div style="font-size:0.8rem;color:${C.inkSoft};margin-top:4px;line-height:1.5;">📝 <b>Nota:</b> el código de cada persona es el <b>mismo que usa en Time Station</b>. Se escribe una sola vez en cada tablet o celular. 🎂 Es la fecha de nacimiento (día + mes, ej. 2210 = 22 de octubre): ese día, al entrar, le sale su celebración de cumpleaños.
       Mientras nadie tenga código, la página no pide código.</div>
     <div class="ul"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
@@ -5593,8 +5594,38 @@ function capaModal(html, col){
   document.body.appendChild(o);
   return o;
 }
+// 🎂 Alban 22 oct: el código (Time Station) es la fecha de nacimiento DDMM (2210 = 22 de octubre).
+// Si hoy es su cumpleaños, al entrar sale una celebración (1 vez al día por equipo) en vez del saludo normal.
+function usrEsCumple(u){
+  const c = usrCod(u); if(!/^\d{4}$/.test(c)) return false;
+  const d = Number(c.slice(0,2)), m = Number(c.slice(2,4)); if(d < 1 || d > 31 || m < 1 || m > 12) return false;
+  const h = hoyISO(); return Number(h.slice(8,10)) === d && Number(h.slice(5,7)) === m;
+}
+function cumpleCelebrar(u){
+  if(!document.getElementById("cumple-css")){ const st = document.createElement("style"); st.id = "cumple-css";
+    st.textContent = "@keyframes cumpleCae{0%{transform:translateY(-12vh) rotate(0deg);opacity:1}100%{transform:translateY(112vh) rotate(720deg);opacity:.9}}@keyframes cumpleLatido{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}";
+    document.head.appendChild(st); }
+  const o = capaModal(`<div style="font-size:4rem;line-height:1;animation:cumpleLatido 1.1s ease-in-out infinite;">🎂</div>
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.8rem;margin-top:12px;color:#B23A2E;">¡Feliz cumpleaños, ${escH(u.nom)}! 🎉</div>
+    <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">Hoy es un día muy especial y todo el equipo de Parisina lo celebra contigo. 🥳</div>
+    <div style="font-size:1rem;line-height:1.55;margin-top:12px;background:#FBF3DA;border-radius:14px;padding:12px 14px;">🎂 Si quieres, puedes <b>agendar una torta</b> para compartir con tus compañeros o con tu familia: acércate a la oficina y con gusto pides la torta que desees.</div>
+    <button type="button" style="margin-top:20px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#B23A2E;color:#fff;border:none;border-radius:14px;padding:13px 28px;cursor:pointer;">¡Gracias! 💖</button>`, "#B23A2E");
+  const conf = document.createElement("div");
+  conf.setAttribute("style", "position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:10000;");
+  const cols = ["#D9731A","#2F6DB5","#7B4FB5","#B23A2E","#B8901E","#E0B44C"], em = ["🎉","🎈","🎂","✨","🥳"];
+  for(let i = 0; i < 70; i++){
+    const p = document.createElement("span"), e = i % 6 === 0;
+    p.textContent = e ? em[i % em.length] : "";
+    p.setAttribute("style", `position:absolute;top:0;left:${Math.random()*100}%;${e ? "font-size:1.5rem;" : `width:${6+Math.random()*6}px;height:${10+Math.random()*8}px;background:${cols[i % cols.length]};border-radius:2px;`}animation:cumpleCae ${3+Math.random()*3}s linear ${Math.random()*2}s 2 both;`);
+    conf.appendChild(p);
+  }
+  document.body.appendChild(conf);
+  setTimeout(()=>conf.remove(), 12000);
+  o.querySelector("button").onclick = ()=>{ o.remove(); conf.remove(); };
+}
 function saludoAlEntrar(fam, forzar){
   const yo = usrYo();   // Alban 22 oct: saludo personalizado con el nombre de quien entró
+  if(yo && usrEsCumple(yo)){ const kc = "cumple_" + yo.nom, hc = hoyISO(); if(forzar || lsGet(kc) !== hc){ lsSet(kc, hc); lsSet("saludo_" + yo.nom, hc); cumpleCelebrar(yo); } return; }
   const nom = yo ? yo.nom : SALUDO_NOMBRES[fam];
   if(!nom) return;
   const k = "saludo_" + nom, hoy = hoyISO();
