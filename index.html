@@ -5097,7 +5097,19 @@ function marcarVidrio(){
     t.parentNode.replaceChild(frag, t);
   });
 }
+// Alban 22 oct: la pestaña del navegador dice en qué categoría está (ej. "Rotular · Parisina")
+function ponerTitulo(){
+  try{
+    let t = "";
+    if(usrNecesitaLogin() && activeCat !== "ADMIN") t = "";
+    else if(activeCat === "ADMIN") t = "Admin";
+    else if(activeCat === "MSG") t = "Mensaje a cocina";
+    else if(activeCat !== "HOME"){ const f = famObj(); t = f.key === "ALL" ? "Todo" : f.label; }
+    document.title = t ? t + " · Parisina" : "Producción Parisina";
+  }catch(e){}
+}
 function render(){
+  setTimeout(ponerTitulo, 0);
   if(usrNecesitaLogin() && activeCat !== "ADMIN"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
   if(activeCat === "HOME"){ renderHome(); return; }
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }   // Alban 21 oct: mensajes a cocina (no se repinta solo)
