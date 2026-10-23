@@ -1930,15 +1930,24 @@ function admPanel(){
   </div>`;
   // 5) Top productos y clientes
   const top = (obj, n) => Object.entries(obj).filter(([k]) => !k.startsWith("(")).sort((x, y) => y[1].v - x[1].v).slice(0, n);
+  // Alban 23 oct: los Top 15 siguen el botón Días / Semanas / Meses / Años (mismo que Evolución)
+  const [ta, tb] = admRango(ADM_ST.evo, ADM_ST.ref);
+  const tEnCurso = ADM_ST.evo !== "dia" && hoy >= ta && hoy <= tb;
+  const RT = admSumar(ta, tEnCurso ? hoy : tb);
+  h += `<div style="${card}display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="flex:1;min-width:160px;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Top 15</span>
+        <span style="display:block;font-size:0.78rem;color:${C.inkSoft};">${admCap(admTitulo(ADM_ST.evo, ta, tb))}${tEnCurso ? " · hasta hoy" : ""}</span></span>
+      ${[["dia","Día"],["semana","Semana"],["mes","Mes"],["ano","Año"]].map(([k,t])=>chip(k,t,ADM_ST.evo===k,"adm-evo")).join("")}
+    </div>`;
   h += `<div style="${card}"><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Top 15 productos</div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:6px;">
       <tr><th style="${th}text-align:left;">Producto</th><th style="${th}">Ventas</th><th style="${th}">Unid.</th></tr>
-      ${top(R.prod, 15).map(([k, o]) => `<tr><td style="${td}text-align:left;font-family:'Work Sans',sans-serif;white-space:normal;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${ADM_COL[o.a]};margin-right:6px;"></span>${k}</td><td style="${td}">${admPesoC(o.v)}</td><td style="${td}">${fmtN(Math.round(o.u))}</td></tr>`).join("")}
+      ${top(RT.prod, 15).map(([k, o]) => `<tr><td style="${td}text-align:left;font-family:'Work Sans',sans-serif;white-space:normal;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${ADM_COL[o.a]};margin-right:6px;"></span>${k}</td><td style="${td}">${admPesoC(o.v)}</td><td style="${td}">${fmtN(Math.round(o.u))}</td></tr>`).join("")}
     </table></div></div>
     <div style="${card}"><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Top 15 clientes</div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;margin-top:6px;">
       <tr><th style="${th}text-align:left;">Cliente</th><th style="${th}">Ventas</th><th style="${th}">Pedidos</th><th style="${th}">%</th></tr>
-      ${top(R.cli, 15).map(([k, o]) => `<tr><td style="${td}text-align:left;font-family:'Work Sans',sans-serif;white-space:normal;">${k}</td><td style="${td}">${admPesoC(o.v)}</td><td style="${td}">${fmtN(o.ped.size)}</td><td style="${td}">${R.v ? fmtN(Math.round(o.v / R.v * 100)) : 0} %</td></tr>`).join("")}
+      ${top(RT.cli, 15).map(([k, o]) => `<tr><td style="${td}text-align:left;font-family:'Work Sans',sans-serif;white-space:normal;">${k}</td><td style="${td}">${admPesoC(o.v)}</td><td style="${td}">${fmtN(o.ped.size)}</td><td style="${td}">${RT.v ? fmtN(Math.round(o.v / RT.v * 100)) : 0} %</td></tr>`).join("")}
     </table></div></div>
     <div style="font-size:0.72rem;color:${C.inkSoft};margin-top:10px;">Datos desde el 1 de septiembre de 2026 · actualizados ${D.gen}.</div>`;
   wrap.innerHTML = h;
