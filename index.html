@@ -5189,6 +5189,7 @@ function render(){
   const main = document.getElementById("main");
   main.innerHTML = "";
   setTimeout(marcarVidrio, 0);   // Alban 22 oct: "*V*" = va en vidrio -> etiqueta visible para el operador
+  if(["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
   const day = DATA[activeDate];
   const groups = activeCat === "ALL" ? [...GROUP_ORDER, ...EXTRA_GROUPS_ALL] : [activeCat];
   let any = false;
@@ -5686,6 +5687,60 @@ function cumpleCelebrar(u){
   setTimeout(()=>conf.remove(), 12000);
   o.querySelector("button").onclick = ()=>{ o.remove(); conf.remove(); };
 }
+// ---- 🧹 Cronograma de aseo (Alban 23 oct) ----
+// 7 personas rotan por 7 zonas. Semana 1 = lunes 3 ago 2026; cada lunes todos avanzan una zona: zona = (puesto + w) mod 7.
+// La tablet de cada área (Panadería, Comida de sal, Repostería, Batido) muestra a SUS personas (Admin › Personas, campo puesto) con su zona.
+const ASEO_ROTA = ["Ronald","Deysi","Andreina","Adolfo","Sergio","Camila","Yessica"];
+const ASEO_ALIAS = {camila:["maria"]};   // en Personas aparece como "María" (Maria Camila)
+const ASEO_ZONAS = ["Hornos","Zona de bultos","Neveras","Cuarto de neveras","Aseo, agua y temperatura","Cuarto de hornos","Cuarto de empaques"];
+// Tareas por zona: {d:[diarias], s:[semanales (se reportan el sábado)]} — falta cargarlas (Alban)
+const ASEO_TAREAS = {};
+const ASEO_W0 = Date.UTC(2026, 7, 3);
+function aseoW(iso){ const [y,m,d] = (iso || hoyISO()).split("-").map(Number); return Math.floor((Date.UTC(y, m-1, d) - ASEO_W0) / (7*864e5)); }
+function aseoNorm(t){ return pedNorm(String(t || "").split(/\s+/)[0]).replace(/[yj]/g, "i").replace(/(.)\1+/g, "$1"); }
+function aseoPuesto(nom){
+  const n = aseoNorm(nom);
+  return ASEO_ROTA.findIndex(r=>{ const k = aseoNorm(r); return k === n || (ASEO_ALIAS[pedNorm(r)] || []).includes(n); });
+}
+function aseoZona(i, iso){ const w = aseoW(iso); return ASEO_ZONAS[(((i + w) % 7) + 7) % 7]; }
+function aseoAreaDe(u){ const p = pedNorm(u.puesto || ""); return p.includes("panad") ? "Panaderia" : p.includes("comida") || p.includes("sal") ? "Comida de sal" : p.includes("repos") ? "Reposteria" : p.includes("batid") ? "Batido" : null; }
+function aseoDelArea(fam, iso){
+  const L = typeof usrLista === "function" ? usrLista() : [];
+  return L.filter(u=>aseoAreaDe(u) === fam).map(u=>({u, i: aseoPuesto(u.nom)})).filter(x=>x.i >= 0).map(x=>({nom: x.u.nom, zona: aseoZona(x.i, iso)}));
+}
+function aseoExtras(fam, iso){ const w = aseoW(iso), out = [];
+  if((w % 2 === 0 && fam === "Panaderia") || (w % 2 !== 0 && fam === "Batido")) out.push("Congelador 5 esta semana");
+  return out; }
+function aseoDetalleHTML(zona){
+  const t = ASEO_TAREAS[zona], sab = new Date(hoyISO() + "T12:00:00").getDay() === 6;
+  if(!t) return `<div style="font-size:0.9rem;color:${C.inkSoft};">Las tareas de esta zona se cargan pronto.</div>`;
+  const li = a => (a || []).map(x=>`<li style="margin:3px 0;">${escH(x)}</li>`).join("");
+  return `${t.d && t.d.length ? `<div style="font-weight:700;margin-top:6px;">Cada día</div><ul style="margin:4px 0 0 18px;padding:0;">${li(t.d)}</ul>` : ""}
+    ${t.s && t.s.length ? `<div style="font-weight:700;margin-top:8px;">Semanales${sab ? " — hoy sábado se reportan" : " (se reportan el sábado)"}</div><ul style="margin:4px 0 0 18px;padding:0;">${li(t.s)}</ul>` : ""}`;
+}
+let ASEO_ABIERTO = null;
+function aseoCardEl(fam){
+  const lista = aseoDelArea(fam), ex = aseoExtras(fam);
+  if(!lista.length && !ex.length) return null;
+  const col = (PALETTE[fam] || PALETTE.ALL);
+  const box = document.createElement("div");
+  box.setAttribute("style", `margin-top:14px;background:${C.paper};border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;`);
+  box.innerHTML = `<div style="padding:10px 14px;background:${col.s};font-weight:700;color:${col.a};">🧹 Aseo de esta semana <span style="font-weight:500;font-size:0.8rem;color:${C.inkSoft};">· semana ${aseoW() + 1}</span></div>`
+    + lista.map((x,i)=>`<button type="button" data-i="${i}" style="display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:none;border-top:1px solid ${C.line};background:#fff;padding:11px 14px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.98rem;color:${C.ink};">
+        <span style="flex:1;"><b>${escH(x.nom)}</b> → ${escH(x.zona)}</span><span style="color:${col.a};font-size:0.8rem;">${ASEO_ABIERTO === fam + i ? "▲" : "ver ▼"}</span></button>
+        ${ASEO_ABIERTO === fam + i ? `<div style="padding:4px 18px 12px;font-size:0.92rem;">${aseoDetalleHTML(x.zona)}</div>` : ""}`).join("")
+    + ex.map(t=>`<div style="padding:10px 14px;border-top:1px solid ${C.line};font-size:0.95rem;">🧊 ${escH(t)}</div>`).join("");
+  box.querySelectorAll("button[data-i]").forEach(b=>{ b.onclick = ()=>{ const k = fam + b.dataset.i; ASEO_ABIERTO = ASEO_ABIERTO === k ? null : k; render(); }; });
+  return box;
+}
+function aseoSaludoHTML(fam){
+  const lista = aseoDelArea(fam), ex = aseoExtras(fam);
+  if(!lista.length && !ex.length) return "";
+  return `<div style="text-align:left;margin-top:16px;background:#FBF3DA;border-radius:14px;padding:12px 14px;font-size:1rem;line-height:1.5;">
+    <div style="font-weight:700;margin-bottom:4px;">🧹 Esta semana en aseo:</div>
+    ${lista.map(x=>`<div>${escH(x.nom)}, acuérdate que esta semana te encargas de <b>${escH(x.zona)}</b>.</div>`).join("")}
+    ${ex.map(t=>`<div>🧊 ${escH(t)}</div>`).join("")}</div>`;
+}
 function saludoAlEntrar(fam, forzar){
   const yo = usrYo();   // Alban 22 oct: saludo personalizado con el nombre de quien entró
   if(yo && usrEsCumple(yo)){ const kc = "cumple_" + yo.nom, hc = hoyISO(); if(forzar || lsGet(kc) !== hc){ lsSet(kc, hc); lsSet("saludo_" + yo.nom, hc); cumpleCelebrar(yo); } return; }
@@ -5703,6 +5758,7 @@ function saludoAlEntrar(fam, forzar){
   const o = capaModal(`<div style="font-size:3rem;line-height:1;">${em}</div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;margin-top:10px;color:${col};">¡${sal}, ${escH(nom)}!</div>
     <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">${escH(frase)}</div>
+    ${aseoSaludoHTML(fam)}
     <button type="button" style="margin-top:20px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:13px 28px;cursor:pointer;">¡Vamos! 💪</button>`, col);
   o.querySelector("button").onclick = () => o.remove();
 }
