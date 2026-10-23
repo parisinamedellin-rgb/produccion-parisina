@@ -42,6 +42,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -1698,7 +1699,7 @@ const ADMIN_KEY = {"pub": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoPxgAV0cF
 let ADM = null;          // datos ya descifrados (solo en memoria, nunca se guardan)
 let ADM_ERR = "";
 const ADM_ST = {per:"dia", ref:null, evo:"dia"};   // Alban 22 oct: al abrir Admin sale la venta del DÍA (hoy)
-const ADM_COL = {"Panadería":"#D9731A","Comida de sal":"#2F6DB5","Dulcería":"#7B4FB5","Tortas":"#B37FD9","Cajas especiales":"#C4791E","Refrigerios":"#8C5A2B","Otros":"#8A8378"};
+const ADM_COL = {"Panadería":"#D9731A","Comida de sal":"#2F6DB5","Repostería":"#7B4FB5","Dulcería":"#7B4FB5","Tortas":"#B37FD9","Cajas especiales":"#C4791E","Refrigerios":"#8C5A2B","Otros":"#8A8378"};
 const b64u8 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 async function admAbrir(email, pw){
   const te = new TextEncoder(), cs = crypto.subtle;
@@ -1875,18 +1876,33 @@ function admPanel(){
       ${kpi("Unidades", fmtN(Math.round(R.u)), admDelta(R.u, R0.u), fmtN(Math.round(R0.u)))}
     </div>
     <div style="font-size:0.75rem;color:${C.inkSoft};margin-top:6px;">Ventas sin impuestos y sin domicilio, por fecha de entrega${enCurso ? "" : " (incluye pedidos ya agendados)"}. Domicilios del período: ${admPeso(R.dom)}.</div>`;
-  // 3) Por área
+  // 3) Por área — Alban 23 oct: grupos que se abren con un clic
   const areas = D.areas.filter(x => R.area[x].v || R0.area[x].v);
+  const ADM_GRUPOS = [["Panadería",["Panadería"]],["Comida de sal",["Comida de sal","Cajas especiales","Refrigerios"]],["Repostería",["Dulcería","Tortas"]]];
+  const usadas = new Set(ADM_GRUPOS.flatMap(g => g[1]));
+  const grupos = ADM_GRUPOS.concat(areas.filter(x => !usadas.has(x)).map(x => [x,[x]]));
+  const sumG = (RR, xs) => xs.reduce((o, x) => { const q = RR.area[x] || {v:0,u:0}; o.v += q.v || 0; o.u += q.u || 0; return o; }, {v:0,u:0});
+  const colG = (g, xs) => ADM_COL[g] || ADM_COL[xs[0]] || "#8A8378";
+  ADM_ST.abiertos = ADM_ST.abiertos || {};
+  const fila = (nom, A, B, col, sub, gk, n) => `<tr ${gk ? `class="adm-grp" data-g="${gk}" style="cursor:pointer;"` : ""}><td style="${td}text-align:left;white-space:normal;${sub ? "padding-left:26px;color:" + C.inkSoft + ";" : "font-weight:700;"}"><span style="display:inline-block;width:${sub ? 8 : 10}px;height:${sub ? 8 : 10}px;border-radius:3px;background:${col};margin-right:6px;"></span>${nom}${gk ? ` <span style="font-size:0.7rem;color:${C.inkSoft};">${ADM_ST.abiertos[gk] ? "▲" : "▼"}</span>` : ""}</td>
+        <td style="${td}">${admPesoC(A.v)}</td><td style="${td}">${R.v ? fmtN(Math.round(A.v / R.v * 100)) : 0} %</td>
+        <td style="${td}">${fmtN(Math.round(A.u))}</td><td style="${td}">${admDelta(A.v, B.v)}</td></tr>`;
+  const filas = grupos.map(([g, xs]) => {
+    const vis = xs.filter(x => areas.includes(x));
+    if(!vis.length) return "";
+    const A = sumG(R, vis), B = sumG(R0, vis);
+    if(xs.length === 1) return fila(g, A, B, colG(g, xs), false, null);
+    return fila(g, A, B, colG(g, xs), false, g) + (ADM_ST.abiertos[g] ? vis.map(x => fila(x, R.area[x], R0.area[x], ADM_COL[x], true, null)).join("") : "");
+  }).join("");
   h += `<div style="${card}"><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Por área</div>
     <div style="display:flex;height:14px;border-radius:7px;overflow:hidden;margin:10px 0 6px;background:${C.line};">
-      ${areas.map(x => R.v > 0 && R.area[x].v > 0 ? `<span title="${x}" style="width:${R.area[x].v / R.v * 100}%;background:${ADM_COL[x]};"></span>` : "").join("")}
+      ${grupos.map(([g, xs]) => { const v = sumG(R, xs.filter(x => areas.includes(x))).v; return R.v > 0 && v > 0 ? `<span title="${g}" style="width:${v / R.v * 100}%;background:${colG(g, xs)};"></span>` : ""; }).join("")}
     </div>
     <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
       <tr><th style="${th}text-align:left;">Área</th><th style="${th}">Ventas</th><th style="${th}">%</th><th style="${th}">Unid.</th><th style="${th}">vs ant.</th></tr>
-      ${areas.map(x => `<tr><td style="${td}text-align:left;white-space:normal;"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${ADM_COL[x]};margin-right:6px;"></span>${x}</td>
-        <td style="${td}">${admPesoC(R.area[x].v)}</td><td style="${td}">${R.v ? fmtN(Math.round(R.area[x].v / R.v * 100)) : 0} %</td>
-        <td style="${td}">${fmtN(Math.round(R.area[x].u))}</td><td style="${td}">${admDelta(R.area[x].v, R0.area[x].v)}</td></tr>`).join("")}
-    </table></div></div>`;
+      ${filas}
+    </table></div>
+    <div style="font-size:0.72rem;color:${C.inkSoft};margin-top:6px;">Toca Comida de sal o Repostería para ver el detalle.</div></div>`;
   // 4) Evolución
   const N = {dia:14, semana:12, mes:12, ano:3}[ADM_ST.evo];
   const per = ADM_ST.evo, serie = [];
@@ -1928,6 +1944,7 @@ function admPanel(){
   wrap.innerHTML = h;
   wrap.querySelectorAll(".adm-per").forEach(el => el.onclick = ()=>admIrPer(el.dataset.k));
   wrap.querySelectorAll(".adm-evo").forEach(el => el.onclick = ()=>{ ADM_ST.evo = el.dataset.k; renderAdmin(); });
+  wrap.querySelectorAll(".adm-grp").forEach(el => el.onclick = ()=>{ const g = el.dataset.g; ADM_ST.abiertos[g] = !ADM_ST.abiertos[g]; renderAdmin(); });
   wrap.querySelector(".adm-prev").onclick = ()=>{ ADM_ST.ref = admMover(ADM_ST.per, ADM_ST.ref, -1); renderAdmin(); };
   wrap.querySelector(".adm-next").onclick = ()=>{ ADM_ST.ref = admMover(ADM_ST.per, ADM_ST.ref, 1); renderAdmin(); };
   return wrap;
@@ -6049,6 +6066,7 @@ bootDb();
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
 </script>
+
 
 
 
