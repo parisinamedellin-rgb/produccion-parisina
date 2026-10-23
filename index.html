@@ -5204,7 +5204,7 @@ function render(){
     setAccent(navFam); tintPage(navFam);
     const av = document.getElementById("aviso");
     if(av){ av.innerHTML = ""; av.style.display = "none"; }
-    if(ROTM.includes(activeCat)) renderRotular(); else if(activeCat === "EMPAQUE") renderEmpaque(); else if(LOG) renderLogistica(); else if(activeCat === "STOCK") renderStock(); else if(activeCat === "SEMANA") renderSemana(); else renderFormulas();
+    if(ROTM.includes(activeCat)) renderRotular(); else if(activeCat === "EMPAQUE") renderEmpaque(); else if(LOG){ renderLogistica(); if(navFam === "Logistica" && activeDate === hoyISO()){ const ac = aseoCardEl("Logistica"), mm = document.getElementById("main"); if(ac && mm) mm.insertBefore(ac, mm.firstChild); } } else if(activeCat === "STOCK") renderStock(); else if(activeCat === "SEMANA") renderSemana(); else renderFormulas();
     return;
   }
   setAccent(activeCat);
@@ -5730,7 +5730,9 @@ function aseoPuesto(nom){
 }
 function aseoZona(i, iso){ const w = aseoW(iso); return ASEO_ZONAS[(((i + w) % 7) + 7) % 7]; }
 function aseoAreaDe(u){ const p = pedNorm(u.puesto || ""); return p.includes("panad") ? "Panaderia" : p.includes("comida") || p.includes("sal") ? "Comida de sal" : p.includes("repos") ? "Reposteria" : p.includes("batid") ? "Batido" : null; }
+const ASEO_FIJOS = {"Logistica":[{nom:"Juan Pablo", zona:"Logística (área fija)"}]};   // Alban 23 oct: Juan Pablo no rota
 function aseoDelArea(fam, iso){
+  if(ASEO_FIJOS[fam]) return ASEO_FIJOS[fam];
   const L = typeof usrLista === "function" ? usrLista() : [];
   return L.filter(u=>aseoAreaDe(u) === fam).map(u=>({u, i: aseoPuesto(u.nom)})).filter(x=>x.i >= 0).map(x=>({nom: x.u.nom, zona: aseoZona(x.i, iso)}));
 }
