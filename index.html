@@ -2093,6 +2093,7 @@ function confirmar(t){ try{ return window.confirm(t); }catch(e){ return true; } 
 
 // Primera página: elegir categoría
 function renderHome(){
+  setTimeout(compraViernesAviso, 400);   // Alban 24 oct: viernes = compra semanal
   setAccent("ALL"); tintPage("ALL");
   ["days","cats","aviso","adelantos"].forEach(id=>{ const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
   const main = document.getElementById("main");
@@ -5796,6 +5797,27 @@ function aseoSaludoHTML(fam){
     ${lista.map(x=>`<div>${escH(x.nom)}, acuérdate que esta semana te encargas de <b>${escH(x.zona)}</b>.</div>`).join("")}
     ${ex.map(t=>`<div>🧊 ${escH(t)}</div>`).join("")}</div>`;
 }
+// 🛒 Alban 24 oct: los viernes, a cada persona que entra, recordar la compra semanal (1 vez por persona ese día)
+function esViernes(){ return new Date(hoyISO() + "T12:00:00").getDay() === 5; }
+function compraViernesHTML(){
+  return `<div style="text-align:left;margin-top:16px;background:#F4EADF;border:1.5px solid #8C5A2B;border-radius:14px;padding:12px 14px;font-size:1rem;line-height:1.5;">
+    <div style="font-weight:700;">🛒 Hoy es viernes: recuerda realizar la compra semanal.</div>
+    <a href="https://laparisina.co/compras" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-weight:700;color:#fff;background:#8C5A2B;border-radius:10px;padding:8px 16px;text-decoration:none;">Ir a Comprar</a></div>`;
+}
+function compraViernesToca(nom){ return esViernes() && nom && lsGet("compra_" + nom) !== hoyISO(); }
+function compraViernesAviso(){
+  const yo = typeof usrYo === "function" ? usrYo() : null;
+  if(!yo || !compraViernesToca(yo.nom) || document.querySelector("[data-compra]")) return;
+  lsSet("compra_" + yo.nom, hoyISO());
+  const o = capaModal(`<div data-compra="1" style="font-size:3rem;line-height:1;">🛒</div>
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin-top:10px;color:#8C5A2B;">${escH(yo.nom)}, hoy es viernes</div>
+    <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">Recuerda realizar la <b>compra semanal</b>.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+      <a href="https://laparisina.co/compras" target="_blank" rel="noopener" class="cv-ir" style="font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#8C5A2B;color:#fff;border-radius:14px;padding:13px 24px;text-decoration:none;">Ir a Comprar</a>
+      <button type="button" class="cv-ok" style="font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:600;background:#fff;color:#8C5A2B;border:1.5px solid #8C5A2B;border-radius:14px;padding:13px 24px;cursor:pointer;">Más tarde</button></div>`, "#8C5A2B");
+  o.querySelector(".cv-ok").onclick = () => o.remove();
+  o.querySelector(".cv-ir").addEventListener("click", () => o.remove());
+}
 function saludoAlEntrar(fam, forzar){
   const yo = usrYo();   // Alban 22 oct: saludo personalizado con el nombre de quien entró
   if(yo && usrEsCumple(yo)){ const kc = "cumple_" + yo.nom, hc = hoyISO(); if(forzar || lsGet(kc) !== hc){ lsSet(kc, hc); lsSet("saludo_" + yo.nom, hc); cumpleCelebrar(yo); } return; }
@@ -5804,6 +5826,7 @@ function saludoAlEntrar(fam, forzar){
   const k = "saludo_" + nom, hoy = hoyISO();
   if(!forzar && lsGet(k) === hoy) return;
   lsSet(k, hoy);
+  const conCompra = !!(yo && compraViernesToca(yo.nom)); if(conCompra) lsSet("compra_" + yo.nom, hoy);
   const h = new Date().getHours();
   const sal = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
   const em = h < 12 ? "☀️" : h < 19 ? "🌤️" : "🌙";
@@ -5814,6 +5837,7 @@ function saludoAlEntrar(fam, forzar){
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;margin-top:10px;color:${col};">¡${sal}, ${escH(nom)}!</div>
     <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">${escH(frase)}</div>
     ${aseoSaludoHTML(fam)}
+    ${conCompra ? compraViernesHTML() : ""}
     <button type="button" style="margin-top:20px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:13px 28px;cursor:pointer;">¡Vamos! 💪</button>`, col);
   o.querySelector("button").onclick = () => o.remove();
 }
