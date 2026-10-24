@@ -45,6 +45,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -2134,6 +2135,17 @@ function renderHome(){
       </span>`;
     msgB.onclick = ()=>{ activeCat = "MSG"; render(); window.scrollTo(0,0); };
     grid.appendChild(msgB); }
+  // Alban 24 oct: tarjeta "Calculadora" para todos
+  { const colK = PALETTE.ALL;
+    const kB = document.createElement("button");
+    kB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colK.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    kB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🧮</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colK.a};">Calculadora</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Sumar, restar, multiplicar…</span>
+      </span>`;
+    kB.onclick = ()=>{ activeCat = "CALC"; render(); window.scrollTo(0,0); };
+    grid.appendChild(kB); }
   main.appendChild(todo);
   const yo = usrYo();
   if(yo){ const u = document.createElement("div"); u.setAttribute("style", `margin-top:6px;text-align:center;font-size:0.8rem;color:${C.inkSoft};`);
@@ -5181,6 +5193,7 @@ function ponerTitulo(){
     if(usrNecesitaLogin() && activeCat !== "ADMIN") t = "";
     else if(activeCat === "ADMIN") t = "Admin";
     else if(activeCat === "MSG") t = "Mensaje a cocina";
+    else if(activeCat === "CALC") t = "Calculadora";
     else if(activeCat !== "HOME"){ const f = famObj(); t = f.key === "ALL" ? "Todo" : f.label; }
     document.title = t ? t + " · Parisina" : "Producción Parisina";
   }catch(e){}
@@ -5189,7 +5202,8 @@ function render(){
   setTimeout(ponerTitulo, 0);
   if(usrNecesitaLogin() && activeCat !== "ADMIN" && activeCat !== "MSG"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
   if(activeCat === "HOME"){ renderHome(); return; }
-  if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }   // Alban 21 oct: mensajes a cocina (no se repinta solo)
+  if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
+  if(activeCat === "CALC"){ if(!document.querySelector("[data-calc]")) renderCalc(); return; }   // Alban 24 oct: calculadora   // Alban 21 oct: mensajes a cocina (no se repinta solo)
   if(activeCat === "ADMIN"){ if(!document.querySelector("[data-adm]")) renderAdmin(); return; }   // Admin: no se repinta solo (no borra lo que se está escribiendo)
   if(activeDate < TODAY_ISO && !conAyer()) activeDate = dates.find(d => d === TODAY_ISO) || dates[0];   // "Ayer" solo existe en Panadería
   syncNav();
@@ -5928,6 +5942,75 @@ async function msgPintarEstado(){
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${(m.para || []).map(a => { const v = (MSG_V[a] || {})[m.id];
         return `<span style="font-size:0.78rem;border-radius:100px;padding:3px 10px;${v ? "background:#E3EDF9;color:#2F6DB5;" : "background:#FBEBD8;color:#C4791E;"}">${escH(msgLabel(a))} · ${v ? "✅ visto " + msgHora(v) : "⏳ sin ver"}</span>`; }).join("")}</div></div>`).join("");
 }
+// ============================================================
+// 🧮 CALCULADORA (Alban 24 oct 2026) — para todos, desde la portada
+// ============================================================
+let CALC_EXP = "", CALC_HIST = [];
+function calcEval(e){
+  const t = String(e).replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/,/g,".");
+  let i = 0;
+  const num = ()=>{ const m = t.slice(i).match(/^\d*\.?\d+|^\d+\.?/); if(!m) throw 0; i += m[0].length; let v = parseFloat(m[0]); if(t[i] === "%"){ i++; v /= 100; } return v; };
+  const fac = ()=>{ if(t[i] === "-"){ i++; return -fac(); } if(t[i] === "+"){ i++; return fac(); }
+    if(t[i] === "("){ i++; const v = sum(); if(t[i] === ")") i++; return v; } return num(); };
+  const prod = ()=>{ let v = fac(); while(t[i] === "*" || t[i] === "/"){ const o = t[i++]; const w = fac(); v = o === "*" ? v * w : v / w; } return v; };
+  const sum = ()=>{ let v = prod(); while(t[i] === "+" || t[i] === "-"){ const o = t[i++];
+      // 200 + 10%  →  200 + 20 (como una calculadora normal)
+      const j = i; let w = prod(); if(/^\d*\.?\d+%$/.test(t.slice(j, i))) w = v * w;
+      v = o === "+" ? v + w : v - w; } return v; };
+  const r = sum(); if(i < t.length || !isFinite(r)) throw 0; return Math.round(r * 1e9) / 1e9;
+}
+function calcFmt(n){ return new Intl.NumberFormat("es-CO", {maximumFractionDigits: 6}).format(n); }
+function calcVer(e){ return String(e).replace(/\*/g,"×").replace(/\//g,"÷").replace(/\./g,","); }
+function renderCalc(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const w = document.createElement("div"); w.setAttribute("data-calc", "1");
+  const teclas = [["C","(",")","÷"],["7","8","9","×"],["4","5","6","−"],["1","2","3","+"],["%","0",",","⌫"]];
+  const bt = (k)=>{ const op = "÷×−+".includes(k), esp = "C()%⌫".includes(k);
+    return `<button type="button" data-k="${k}" style="-webkit-appearance:none;appearance:none;font-family:'Work Sans',sans-serif;font-size:1.6rem;font-weight:600;height:68px;border-radius:16px;cursor:pointer;
+      border:1.5px solid ${op ? C.gold : C.line};background:${op ? C.goldSoft : esp ? "#F3EEE4" : C.paper};color:${k === "C" ? "#B23A2E" : C.ink};">${k}</button>`; };
+  w.innerHTML = `<button type="button" class="k-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>
+    <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:6px 0 12px;">🧮 Calculadora</h2>
+    <div style="max-width:420px;margin:0 auto;">
+      <div style="background:${C.paper};border:1.5px solid ${C.line};border-radius:18px;padding:14px 18px;text-align:right;">
+        <div class="k-exp" style="min-height:1.4em;font-size:1.15rem;color:${C.inkSoft};word-break:break-all;font-family:'IBM Plex Mono',monospace;"></div>
+        <div class="k-res" style="min-height:1.3em;font-size:2.4rem;font-weight:700;font-family:'Fraunces',serif;word-break:break-all;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;">
+        ${teclas.flat().map(bt).join("")}
+        <button type="button" data-k="=" style="grid-column:1 / -1;-webkit-appearance:none;appearance:none;font-family:'Work Sans',sans-serif;font-size:1.6rem;font-weight:700;height:64px;border-radius:16px;cursor:pointer;border:none;background:${C.gold};color:#fff;">=</button>
+      </div>
+      <div class="k-hist" style="margin-top:16px;"></div>
+    </div>`;
+  main.appendChild(w);
+  const pintar = (fin)=>{
+    w.querySelector(".k-exp").textContent = calcVer(CALC_EXP) || " ";
+    let r = ""; try{ if(CALC_EXP) r = "= " + calcFmt(calcEval(CALC_EXP)); }catch(e){ r = fin ? "Revisa la operación" : ""; }
+    w.querySelector(".k-res").textContent = r || "0";
+    w.querySelector(".k-hist").innerHTML = CALC_HIST.length ? `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:${C.inkSoft};font-weight:700;margin-bottom:6px;">Últimas</div>`
+      + CALC_HIST.map((h, i)=>`<button type="button" data-h="${i}" style="display:flex;width:100%;justify-content:space-between;gap:10px;background:${C.paper};border:1px solid ${C.line};border-radius:10px;padding:9px 12px;margin-bottom:6px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span style="color:${C.inkSoft};">${escH(calcVer(h.e))}</span><b>= ${escH(calcFmt(h.r))}</b></button>`).join("") : "";
+    w.querySelectorAll("[data-h]").forEach(b => b.onclick = ()=>{ CALC_EXP = String(CALC_HIST[+b.dataset.h].r); pintar(); });
+  };
+  const tecla = (k)=>{
+    if(k === "C"){ CALC_EXP = ""; }
+    else if(k === "⌫"){ CALC_EXP = CALC_EXP.slice(0, -1); }
+    else if(k === "="){ try{ const r = calcEval(CALC_EXP); if(String(r) !== CALC_EXP){ CALC_HIST.unshift({e: CALC_EXP, r}); CALC_HIST = CALC_HIST.slice(0, 6); } CALC_EXP = String(r); w.__fin = true; pintar(); return; }catch(e){ pintar(true); return; } }
+    else { if(w.__fin && /^[\d,(]$/.test(k)) CALC_EXP = "";   // después de "=" un número empieza una cuenta nueva
+      const m = {"×":"*","÷":"/","−":"-",",":"."}; const c = m[k] || k;
+      if("+-*/".includes(c) && "+-*/".includes(CALC_EXP.slice(-1)) && CALC_EXP) CALC_EXP = CALC_EXP.slice(0, -1);
+      CALC_EXP += c; }
+    w.__fin = false; pintar();
+  };
+  w.querySelectorAll("[data-k]").forEach(b => b.onclick = ()=>tecla(b.dataset.k));
+  w.querySelector(".k-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  if(!window.__calcTeclado){ window.__calcTeclado = true;
+    document.addEventListener("keydown", ev => { const box = document.querySelector("[data-calc]"); if(!box || activeCat !== "CALC") return;
+      const k = ev.key, map = {"*":"×","/":"÷","-":"−","+":"+",".":",",",":",","Enter":"=","=":"=","Backspace":"⌫","Escape":"C","Delete":"C","%":"%","(":"(",")":")"};
+      const b = /^\d$/.test(k) ? k : map[k]; if(!b) return; ev.preventDefault();
+      const el = box.querySelector(`[data-k="${b}"]`); if(el) el.click(); }); }
+  pintar();
+}
 function renderMensajes(){
   setAccent("ALL"); tintPage("ALL");
   ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
@@ -6079,6 +6162,7 @@ bootDb();
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
 </script>
+
 
 
 
