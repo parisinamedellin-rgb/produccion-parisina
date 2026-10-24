@@ -5758,35 +5758,29 @@ function cumpleCelebrar(u){
 const ASEO_ROTA = ["Ronald","Deysi","Andreina","Adolfo","Sergio","Camila","Yessica"];
 const ASEO_ALIAS = {camila:["maria"]};   // en Personas aparece como "María" (Maria Camila)
 const ASEO_ZONAS = ["Hornos","Zona de bultos","Neveras","Cuarto de neveras","Aseo, agua y temperatura","Cuarto de hornos","Cuarto de empaques"];
-// Tareas por zona (de la hoja "Tareas de planta — Parisina", pestaña Zonas). d = cada día · s = semanales (se reportan el sábado) · n = notas
+// Tareas por zona — detalle de Alban (24 oct 2026). d = cada día · s = semanales (se reportan el sábado)
 const ASEO_TAREAS = {
-  "Cuarto de hornos": {d:["Pisos limpios","Paredes limpias","Corredor limpio"],
-    s:["Limpieza profunda de las esquinas entre paredes y piso, dentro y fuera del corredor","Desplazar los hornos para su limpieza profunda (desconectar previamente tubos de evacuación, desenchufar con cuidado, y evitar desconectar la manguera de gas)"],
-    n:["Con escoba, limpiar las paredes lo más alto posible."]},
-  "Hornos": {d:["Sin productos sobre, debajo ni dentro de los hornos o del carrito","Latas organizadas por tamaño y volteadas","Sin moldes visibles","Parte externa de los hornos limpia, incluyendo puertas (interior y exterior)","Parte superior de los hornos limpia (usar escalera)","Cortinas limpias","Carrito y rejillas debajo del horno desengrasados y desinfectados"],
-    s:["Limpieza profunda del carrito y de las rejillas situadas debajo de los hornos","Desengrasar y desinfectar los guantes todos los sábados y dejarlos secar adecuadamente"]},
-  "Zona de bultos": {d:["Bultos limpios y cerrados","Pisos y paredes limpios","Carrito desengrasado y desinfectado","Quitar el polvo del computador y la impresora","Lavar el lavamanos"],
-    s:["Mover la nevera número 1 para limpiar debajo","Sacar todos los bultos por completo, desengrasar y desinfectar la estantería de los bultos"]},
-  "Neveras": {d:["Superficies externas e internas superiores de los equipos de refrigeración desengrasadas y desinfectadas, incluyendo empaques con cepillo adecuado"],
-    s:["Desinfectar filtros","Limpieza profunda de la bandeja de condensación"]},
-  "Cuarto de neveras": {d:["Piso barrido y trapeado","Paredes, tomas eléctricas y puerta del clóset limpias","Neveras movidas (excepto la número 1) y limpiado alrededor","Organizar las cocas"], s:[]},
-  "Cuarto de empaques": {d:["Piso y cortinas desengrasados y desinfectados","Productos tapados en canastas o estanterías","Superficie de las canastas limpia","Sin bolsas abiertas ni en contacto con el piso","Área completamente organizada","Última canasta de cada columna tapada","Primera canasta vacía","Canastas de huevos tapadas, no expuestas"],
-    s:["Limpieza profunda de las paredes del cuarto de empaques","Lavar las estibas"]},
-  "Aseo, agua y temperatura": {d:["Aseo · Recogedores, escobas y baldes desengrasados y desinfectados","Aseo · Pocetas desengrasadas y desinfectadas, sin restos de basura ni espuma","Aseo · Estanterías, paredes, puertas, ventanas y pisos limpios","Aseo · Implementos limpios, secos y organizados","Aseo · Puerta cerrada","Agua · Medición de pH y cloro hecha en la canilla del día","Agua · Color registrado según la tabla (primero el agua, luego las pastillas)","Agua · Recipiente vaciado, desinfectado y guardado en su estuche","Temperatura · Temperaturas registradas en la apertura","Temperatura · Temperaturas registradas al cierre","Temperatura · Sin productos obstruyendo ni cubriendo los termómetros"],
-    s:[],
-    n:["Canilla del día (no se repite en la semana): lunes Baño · martes Lavamanos principal · miércoles Repostería · jueves Comida de sal · viernes Batido · sábado Cuarto de aseo.","Si el pH o el cloro sale anormal, notificar de inmediato al responsable. Avisar con anticipación cuando las pastillas estén por agotarse.","Termómetros: parte inferior de los congeladores; parte superior y fondo de las neveras. Rango correcto: neveras 0 a 4 °C, congeladores −18 °C o menos. Fuera de rango, notificar de inmediato."]}
+  "Hornos": {d:["Verificar que no queden productos sobre, debajo ni dentro de los hornos o del carrito","Organizar las latas por tamaño y voltearlas","Verificar que no queden moldes visibles","Limpiar completamente la parte externa de los hornos, incluyendo puertas (interior y exterior)","Limpiar la parte superior de los hornos (usar escalera)","Limpiar las cortinas","Desengrasar y desinfectar el carrito y las rejillas debajo del horno"],
+    s:["Limpieza profunda del carrito y de las rejillas debajo de los hornos","Desengrasar y desinfectar los guantes todos los sábados y dejarlos secar"]},
+  "Zona de bultos": {d:["Limpiar los bultos y dejarlos cerrados","Limpiar pisos y paredes","Desengrasar y desinfectar el carrito","Quitar el polvo del computador y la impresora","Lavar el lavamanos"],
+    s:["Mover la nevera N.º 1 para limpiar debajo","Sacar todos los bultos y desengrasar/desinfectar la estantería"]},
+  "Neveras": {d:["Desengrasar y desinfectar superficies externas e internas superiores de los equipos de refrigeración, incluyendo empaques con cepillo adecuado"],
+    s:["Desinfectar los filtros","Limpieza profunda de la bandeja de condensación"]},
+  "Cuarto de neveras": {d:["Barrer y trapear el piso","Limpiar paredes, tomas eléctricas y la puerta del clóset","Mover todas las neveras (excepto la N.º 1) y limpiar alrededor","Organizar las cocas"], s:[]},
+  "Aseo, agua y temperatura": {d:["Desengrasar y desinfectar recogedores, escobas y baldes","Desengrasar y desinfectar las pocetas, sin restos de basura ni espuma","Limpiar estanterías, paredes, puertas, ventanas y pisos","Dejar los implementos limpios, secos y organizados","Verificar que la puerta del cuarto de aseo quede cerrada","Medir pH y cloro del agua en el punto del día (rota: Baño · Lavamanos principal · Repostería · Comida de sal · Batido · Cuarto de aseo)","Registrar el color según la tabla (primero el agua, luego las pastillas)","Vaciar y desinfectar el recipiente de la muestra y guardarlo en su estuche","Registrar temperaturas en la apertura de la planta","Registrar temperaturas al cierre de la planta","Verificar que nada obstruya o cubra los termómetros"], s:[]},
+  "Cuarto de hornos": {d:["Limpiar piso","Limpiar paredes","Limpiar corredor"],
+    s:["Limpieza profunda de esquinas entre paredes y piso, dentro y fuera del corredor","Desplazar los hornos para limpieza profunda (desconectar tubos de evacuación, desenchufar con cuidado, NO desconectar la manguera de gas)"]},
+  "Cuarto de empaques": {d:["Desengrasar y desinfectar el piso y las cortinas","Verificar que todos los productos estén tapados en canastas o estanterías","Limpiar la superficie de las canastas","Verificar que no haya bolsas abiertas ni en contacto con el piso","Dejar el área completamente organizada","La última canasta de cada columna debe estar tapada","La primera canasta de cada columna debe estar vacía","Canastas de huevos tapadas, no expuestas"],
+    s:["Limpieza profunda de las paredes del cuarto de empaques","Lavar las estibas"]}
 };
-// Tareas del área (pestaña Areas): las hace el equipo del área, además de su zona
-const AREA_TAREAS = {
-  "Panaderia": {d:["Lavar las latas y los tapetes de silicona que les corresponden","Rellenar la planilla de aseo","Rellenar la planilla de desinfección de alimentos","Pegar los rótulos"], s:["Limpieza completa del congelador 2","Limpieza completa del congelador 10"]},
-  "Batido": {d:["Lavar las latas y los tapetes de silicona que les corresponden","Rellenar la planilla de aseo","Rellenar la planilla de desinfección de alimentos"], s:["Limpieza completa del congelador 9","Limpieza completa del congelador 6"]},
-  "Reposteria": {d:["Lavar las latas y los tapetes de silicona que les corresponden","Rellenar la planilla de aseo","Rellenar la planilla de desinfección de alimentos","Pegar los rótulos"], s:["Limpieza completa del congelador 3","Limpieza completa de la nevera 8"]},
-  "Comida de sal": {d:["Lavar las latas y los tapetes de silicona que les corresponden","Rellenar la planilla de aseo","Rellenar la planilla de desinfección de alimentos"], s:["Limpieza completa del congelador 7","Limpieza completa de la nevera 11"]},
-  "Logistica": {d:["Organizar y lavar su área"], s:["Vaciar todas las cajas, limpiar el mesón y la estantería completa","Limpieza completa de la nevera 4"]}
-};
-// Aseo de la tarde (Arelis) — pestaña "Aseo tarde"
-const ASEO_TARDE = {d:["Dejar limpios el comedor, el baño y la entrada","Chequeo de la planta completa: si encuentra algo que se debe lavar, lo lava y lo notifica para hablar con el responsable","Rellenar las planillas","Aplicar sanitizante al cerrar: aire, mesones, paredes y utensilios","Preguntar si alguien necesita ayuda con el aseo de los equipos o la loza"],
-  dias:{1:["Zona exterior incluida la terraza","Baños de Parisina y La Marzzana","Canecas de basura"], 2:["Limpieza profunda de la oficina: televisor, pantallas, ventanas, persianas, tableros, escritorios y sillas"], 3:["Lavar el horno de la semana"], 4:["Zona exterior incluida la terraza","Baños de Parisina y La Marzzana","Canecas de basura","Desengrasar y desinfectar la nevera 1"], 5:["Organizar, desengrasar y desinfectar el cuarto de mercado"]}};
+// Punto del agua (pH y cloro) según el día: lunes … sábado
+const ASEO_AGUA_PUNTO = {1:"Baño", 2:"Lavamanos principal", 3:"Repostería", 4:"Comida de sal", 5:"Batido", 6:"Cuarto de aseo"};
+// Para todos (área común, cada día)
+const ASEO_COMUN = ["Lavar las latas y los tapetes de silicona de su área","Rellenar la planilla de aseo","Rellenar la planilla de desinfección de alimentos"];
+// Arelis — Aseo planta, turno tarde (fijo). Miércoles: el horno que toque (rota cada semana)
+const ASEO_TARDE = ["Dejar limpios el comedor, el baño y la entrada","Chequeo de la planta completa: lo que se deba lavar, lavarlo y notificarlo","Rellenar las planillas","Al cerrar, aplicar sanitizante en aire, mesones, paredes y utensilios","Preguntar si alguien necesita ayuda con equipos o loza"];
+const ASEO_HORNOS_ARELIS = ["1","2","3","4","5","6","eléctrico"];
+function aseoHornoArelis(){ return ASEO_HORNOS_ARELIS[((aseoW() % 7) + 7) % 7]; }
 // Si la lista de Personas no está cargada: equipos actuales (Alban 21–23 oct)
 const ASEO_EQUIPO_DEF = {"Panaderia":["Deysi","Ronald"], "Comida de sal":["Sergio","Adolfo"], "Reposteria":["Camila","Yessica"], "Batido":["Andreina"]};
 const ASEO_W0 = Date.UTC(2026, 7, 3);
@@ -6116,23 +6110,22 @@ function renderSanidad(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${SAN_AREAS.map(([k,t])=>`<button type="button" data-a="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:600;border-radius:100px;padding:8px 14px;cursor:pointer;border:1.5px solid ${k===fam ? col : C.line};background:${k===fam ? col : C.paper};color:${k===fam ? "#fff" : C.ink};">${t}${k===miArea ? " · mi equipo" : ""}</button>`).join("")}</div>`;
   const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
   if(fam === "ARELIS"){
-    const dn = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
     h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">Arelis → Aseo planta (turno tarde)</div>
-      ${sanLista("Cada día", ASEO_TARDE.d, col)}
-      ${ASEO_TARDE.dias[hoyD] ? sanLista("Hoy " + dn[hoyD], ASEO_TARDE.dias[hoyD], col) : ""}
-      <div style="font-weight:700;margin-top:10px;color:${col};">Semanales por día</div>
-      ${[1,2,3,4,5].map(d=>`<div style="margin-top:6px;${d===hoyD ? "font-weight:700;" : ""}"><span style="text-transform:capitalize;">${dn[d]}</span>: ${ASEO_TARDE.dias[d].map(escH).join(" · ")}</div>`).join("")}`, col);
+      ${sanLista("Cada día", ASEO_TARDE, col)}
+      ${sanLista("Miércoles" + (hoyD === 3 ? " (hoy)" : ""), ["Limpiar el horno de esta semana: horno " + aseoHornoArelis() + " (rota 1, 2, 3, 4, 5, 6, eléctrico)"], col)}`, col);
   } else {
     const gente = fam === "Logistica" ? [{nom:"Juan Pablo", zona:null}] : aseoDelArea(fam);
+    const agua = ASEO_AGUA_PUNTO[hoyD];
     gente.forEach(p => {
       const t = p.zona ? (ASEO_TAREAS[p.zona] || {}) : {};
       h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">${escH(p.nom)}${p.zona ? ` → <span style="color:${col};">${escH(p.zona)}</span>` : ` · área fija`}</div>
-        ${p.zona ? sanLista("Cada día", t.d, col) + sanLista("Semanales", t.s, col) + (t.n && t.n.length ? `<div style="margin-top:8px;font-size:0.85rem;color:${C.inkSoft};">${t.n.map(x=>"ℹ️ " + escH(x)).join("<br>")}</div>` : "") : ""}`, col);
+        ${p.zona ? sanLista("Cada día", t.d, col) + (t.s && t.s.length ? sanLista("Semanales", t.s, col) : `<div style="margin-top:10px;font-weight:700;color:${col};">Semanales: ninguna</div>`)
+          + (p.zona === "Aseo, agua y temperatura" && agua ? `<div style="margin-top:8px;font-size:0.9rem;">💧 Punto del agua hoy: <b>${agua}</b></div>` : "")
+          : `<div style="margin-top:6px;color:${C.inkSoft};">Logística (área fija): sin lista de tareas.</div>`}`, col);
     });
-    const at = AREA_TAREAS[fam];
-    if(at){ const ex = aseoExtras(fam);
-      h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Tareas del área (todo el equipo)</div>
-        ${sanLista("Cada día", at.d, col)}${sanLista("Semanales", at.s.concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), col)}`, col);
+    if(fam !== "Logistica"){ const ex = aseoExtras(fam);
+      h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Para todos (área común, cada día)</div>
+        ${sanLista("Cada día", ASEO_COMUN, col)}${ex.length ? `<div style="margin-top:8px;">🧊 ${escH(ex[0])}</div>` : ""}`, col);
     }
     if(!gente.length) h += `<div style="margin-top:14px;color:${C.inkSoft};">No hay personas de esta área en la lista.</div>`;
   }
