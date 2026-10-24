@@ -2146,6 +2146,17 @@ function renderHome(){
       </span>`;
     kB.onclick = ()=>{ activeCat = "CALC"; render(); window.scrollTo(0,0); };
     grid.appendChild(kB); }
+  // Alban 24 oct: tarjeta "Comprar" → laparisina.co/compras
+  { const colC = PALETTE.Logistica || PALETTE.ALL;
+    const cB = document.createElement("a");
+    cB.href = "https://laparisina.co/compras"; cB.target = "_blank"; cB.rel = "noopener";
+    cB.setAttribute("style", `text-decoration:none;text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colC.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;box-sizing:border-box;`);
+    cB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🛒</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colC.a};">Comprar</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Pedir compras</span>
+      </span>`;
+    grid.appendChild(cB); }
   main.appendChild(todo);
   const yo = usrYo();
   if(yo){ const u = document.createElement("div"); u.setAttribute("style", `margin-top:6px;text-align:center;font-size:0.8rem;color:${C.inkSoft};`);
