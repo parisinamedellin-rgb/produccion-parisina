@@ -46,6 +46,7 @@
 
 
 
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -2167,6 +2168,17 @@ function renderHome(){
         <span style="font-size:0.8rem;color:${C.inkSoft};">Pedir compras</span>
       </span>`;
     grid.appendChild(cB); }
+  // Alban 24 oct: tarjeta "Registrarse" → laparisina.co/reloj (reloj de entrada y salida)
+  { const colR = PALETTE.Rotular || PALETTE.ALL;
+    const rB = document.createElement("a");
+    rB.href = "https://laparisina.co/reloj"; rB.target = "_blank"; rB.rel = "noopener";
+    rB.setAttribute("style", `text-decoration:none;text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colR.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;box-sizing:border-box;`);
+    rB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🕒</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colR.a};">Registrarse</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Marcar entrada y salida</span>
+      </span>`;
+    grid.appendChild(rB); }
   main.appendChild(todo);
   const yo = usrYo();
   if(yo){ const u = document.createElement("div"); u.setAttribute("style", `margin-top:6px;text-align:center;font-size:0.8rem;color:${C.inkSoft};`);
@@ -6284,6 +6296,7 @@ bootDb();
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
 </script>
+
 
 
 
