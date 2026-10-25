@@ -45,6 +45,9 @@
 
 
 
+
+
+
 <title>Producción Parisina</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 
@@ -52,10 +55,8 @@
   <header style="padding:28px 0 18px 0;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid #E4DBC9;">
     <div style="display:flex;flex-direction:column;gap:2px;">
       <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;letter-spacing:-0.01em;">Parisina · Producción</span>
-      <span style="color:#6B6255;font-size:0.85rem;">Panadería · Comida de sal · Repostería · Tortas · Topping · Batido</span>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-      <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;background:#FBEBD8;color:#C4791E;border:1px solid #C4791E;border-radius:100px;padding:3px 10px;font-weight:600;white-space:nowrap;">Borrador — falta afinar</span>
       <span id="stamp-excel" style="display:none;font-size:0.72rem;color:#6B6255;font-family:'IBM Plex Mono',monospace;white-space:nowrap;">Datos actualizados: <b style="color:#2A241C;font-weight:600;">25 oct 2026, 4:20 p.m.</b></span>
     </div>
   </header>
@@ -2092,6 +2093,7 @@ function confirmar(t){ try{ return window.confirm(t); }catch(e){ return true; } 
 
 // Primera página: elegir categoría
 function renderHome(){
+  setTimeout(compraViernesAviso, 400);   // Alban 24 oct: viernes = compra semanal
   setAccent("ALL"); tintPage("ALL");
   ["days","cats","aviso","adelantos"].forEach(id=>{ const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
   const main = document.getElementById("main");
@@ -2134,6 +2136,50 @@ function renderHome(){
       </span>`;
     msgB.onclick = ()=>{ activeCat = "MSG"; render(); window.scrollTo(0,0); };
     grid.appendChild(msgB); }
+  // Alban 24 oct: tarjeta "Sanidad" (tareas de aseo del equipo)
+  { const colS = PALETTE["Comida de sal"];
+    const sB = document.createElement("button");
+    sB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colS.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    sB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🧼</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colS.a};">Sanidad</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Tareas de aseo de tu equipo · semana ${aseoW() + 1}</span>
+      </span>`;
+    sB.onclick = ()=>{ SAN_AREA = null; activeCat = "SANIDAD"; render(); window.scrollTo(0,0); };
+    grid.appendChild(sB); }
+  // Alban 24 oct: tarjeta "Calculadora" para todos
+  { const colK = PALETTE.ALL;
+    const kB = document.createElement("button");
+    kB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colK.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    kB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🧮</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colK.a};">Calculadora</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Sumar, restar, multiplicar…</span>
+      </span>`;
+    kB.onclick = ()=>{ activeCat = "CALC"; render(); window.scrollTo(0,0); };
+    grid.appendChild(kB); }
+  // Alban 24 oct: tarjeta "Comprar" → laparisina.co/compras
+  { const colC = PALETTE.Logistica || PALETTE.ALL;
+    const cB = document.createElement("a");
+    cB.href = "https://laparisina.co/compras"; cB.target = "_blank"; cB.rel = "noopener";
+    cB.setAttribute("style", `text-decoration:none;text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colC.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;box-sizing:border-box;`);
+    cB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🛒</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colC.a};">Comprar</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Pedir compras</span>
+      </span>`;
+    grid.appendChild(cB); }
+  // Alban 24 oct: tarjeta "Registrarse" → laparisina.co/reloj (reloj de entrada y salida)
+  { const colR = PALETTE.Rotular || PALETTE.ALL;
+    const rB = document.createElement("a");
+    rB.href = "https://laparisina.co/reloj"; rB.target = "_blank"; rB.rel = "noopener";
+    rB.setAttribute("style", `text-decoration:none;text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colR.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;box-sizing:border-box;`);
+    rB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🕒</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colR.a};">Registrarse</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Marcar entrada y salida</span>
+      </span>`;
+    grid.appendChild(rB); }
   main.appendChild(todo);
   const yo = usrYo();
   if(yo){ const u = document.createElement("div"); u.setAttribute("style", `margin-top:6px;text-align:center;font-size:0.8rem;color:${C.inkSoft};`);
@@ -5181,6 +5227,8 @@ function ponerTitulo(){
     if(usrNecesitaLogin() && activeCat !== "ADMIN") t = "";
     else if(activeCat === "ADMIN") t = "Admin";
     else if(activeCat === "MSG") t = "Mensaje a cocina";
+    else if(activeCat === "CALC") t = "Calculadora";
+    else if(activeCat === "SANIDAD") t = "Sanidad";
     else if(activeCat !== "HOME"){ const f = famObj(); t = f.key === "ALL" ? "Todo" : f.label; }
     document.title = t ? t + " · Parisina" : "Producción Parisina";
   }catch(e){}
@@ -5189,7 +5237,9 @@ function render(){
   setTimeout(ponerTitulo, 0);
   if(usrNecesitaLogin() && activeCat !== "ADMIN" && activeCat !== "MSG"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
   if(activeCat === "HOME"){ renderHome(); return; }
-  if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }   // Alban 21 oct: mensajes a cocina (no se repinta solo)
+  if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
+  if(activeCat === "CALC"){ if(!document.querySelector("[data-calc]")) renderCalc(); return; }
+  if(activeCat === "SANIDAD"){ if(!document.querySelector("[data-san]")) renderSanidad(); return; }   // Alban 24 oct: sanidad   // Alban 24 oct: calculadora   // Alban 21 oct: mensajes a cocina (no se repinta solo)
   if(activeCat === "ADMIN"){ if(!document.querySelector("[data-adm]")) renderAdmin(); return; }   // Admin: no se repinta solo (no borra lo que se está escribiendo)
   if(activeDate < TODAY_ISO && !conAyer()) activeDate = dates.find(d => d === TODAY_ISO) || dates[0];   // "Ayer" solo existe en Panadería
   syncNav();
@@ -5721,8 +5771,31 @@ function cumpleCelebrar(u){
 const ASEO_ROTA = ["Ronald","Deysi","Andreina","Adolfo","Sergio","Camila","Yessica"];
 const ASEO_ALIAS = {camila:["maria"]};   // en Personas aparece como "María" (Maria Camila)
 const ASEO_ZONAS = ["Hornos","Zona de bultos","Neveras","Cuarto de neveras","Aseo, agua y temperatura","Cuarto de hornos","Cuarto de empaques"];
-// Tareas por zona: {d:[diarias], s:[semanales (se reportan el sábado)]} — falta cargarlas (Alban)
-const ASEO_TAREAS = {};
+// Tareas por zona — detalle de Alban (24 oct 2026). d = cada día · s = semanales (se reportan el sábado)
+const ASEO_TAREAS = {
+  "Hornos": {d:["Verificar que no queden productos sobre, debajo ni dentro de los hornos o del carrito","Organizar las latas por tamaño y voltearlas","Verificar que no queden moldes visibles","Limpiar completamente la parte externa de los hornos, incluyendo puertas (interior y exterior)","Limpiar la parte superior de los hornos (usar escalera)","Limpiar las cortinas","Desengrasar y desinfectar el carrito y las rejillas debajo del horno"],
+    s:["Limpieza profunda del carrito y de las rejillas debajo de los hornos","Desengrasar y desinfectar los guantes todos los sábados y dejarlos secar"]},
+  "Zona de bultos": {d:["Limpiar los bultos y dejarlos cerrados","Limpiar pisos y paredes","Desengrasar y desinfectar el carrito","Quitar el polvo del computador y la impresora","Lavar el lavamanos"],
+    s:["Mover la nevera N.º 1 para limpiar debajo","Sacar todos los bultos y desengrasar/desinfectar la estantería"]},
+  "Neveras": {d:["Desengrasar y desinfectar superficies externas e internas superiores de los equipos de refrigeración, incluyendo empaques con cepillo adecuado"],
+    s:["Desinfectar los filtros","Limpieza profunda de la bandeja de condensación"]},
+  "Cuarto de neveras": {d:["Barrer y trapear el piso","Limpiar paredes, tomas eléctricas y la puerta del clóset","Mover todas las neveras (excepto la N.º 1) y limpiar alrededor","Organizar las cocas"], s:[]},
+  "Aseo, agua y temperatura": {d:["Desengrasar y desinfectar recogedores, escobas y baldes","Desengrasar y desinfectar las pocetas, sin restos de basura ni espuma","Limpiar estanterías, paredes, puertas, ventanas y pisos","Dejar los implementos limpios, secos y organizados","Verificar que la puerta del cuarto de aseo quede cerrada","Medir pH y cloro del agua en el punto del día (rota: Baño · Lavamanos principal · Repostería · Comida de sal · Batido · Cuarto de aseo)","Registrar el color según la tabla (primero el agua, luego las pastillas)","Vaciar y desinfectar el recipiente de la muestra y guardarlo en su estuche","Registrar temperaturas en la apertura de la planta","Registrar temperaturas al cierre de la planta","Verificar que nada obstruya o cubra los termómetros"], s:[]},
+  "Cuarto de hornos": {d:["Limpiar piso","Limpiar paredes","Limpiar corredor"],
+    s:["Limpieza profunda de esquinas entre paredes y piso, dentro y fuera del corredor","Desplazar los hornos para limpieza profunda (desconectar tubos de evacuación, desenchufar con cuidado, NO desconectar la manguera de gas)"]},
+  "Cuarto de empaques": {d:["Desengrasar y desinfectar el piso y las cortinas","Verificar que todos los productos estén tapados en canastas o estanterías","Limpiar la superficie de las canastas","Verificar que no haya bolsas abiertas ni en contacto con el piso","Dejar el área completamente organizada","La última canasta de cada columna debe estar tapada","La primera canasta de cada columna debe estar vacía","Canastas de huevos tapadas, no expuestas"],
+    s:["Limpieza profunda de las paredes del cuarto de empaques","Lavar las estibas"]}
+};
+// Punto del agua (pH y cloro) según el día: lunes … sábado
+const ASEO_AGUA_PUNTO = {1:"Baño", 2:"Lavamanos principal", 3:"Repostería", 4:"Comida de sal", 5:"Batido", 6:"Cuarto de aseo"};
+// Para todos (área común, cada día)
+const ASEO_COMUN = ["Lavar las latas y los tapetes de silicona de su área","Rellenar la planilla de aseo","Rellenar la planilla de desinfección de alimentos"];
+// Arelis — Aseo planta, turno tarde (fijo). Miércoles: el horno que toque (rota cada semana)
+const ASEO_TARDE = ["Dejar limpios el comedor, el baño y la entrada","Chequeo de la planta completa: lo que se deba lavar, lavarlo y notificarlo","Rellenar las planillas","Al cerrar, aplicar sanitizante en aire, mesones, paredes y utensilios","Preguntar si alguien necesita ayuda con equipos o loza"];
+const ASEO_HORNOS_ARELIS = ["1","2","3","4","5","6","eléctrico"];
+function aseoHornoArelis(){ return ASEO_HORNOS_ARELIS[((aseoW() % 7) + 7) % 7]; }
+// Si la lista de Personas no está cargada: equipos actuales (Alban 21–23 oct)
+const ASEO_EQUIPO_DEF = {"Panaderia":["Deysi","Ronald"], "Comida de sal":["Sergio","Adolfo"], "Reposteria":["Camila","Yessica"], "Batido":["Andreina"]};
 const ASEO_W0 = Date.UTC(2026, 7, 3);
 function aseoW(iso){ const [y,m,d] = (iso || hoyISO()).split("-").map(Number); return Math.floor((Date.UTC(y, m-1, d) - ASEO_W0) / (7*864e5)); }
 function aseoNorm(t){ return pedNorm(String(t || "").split(/\s+/)[0]).replace(/[yj]/g, "i").replace(/(.)\1+/g, "$1"); }
@@ -5736,7 +5809,9 @@ const ASEO_FIJOS = {"Logistica":[{nom:"Juan Pablo", zona:"Logística (área fija
 function aseoDelArea(fam, iso){
   if(ASEO_FIJOS[fam]) return ASEO_FIJOS[fam];
   const L = typeof usrLista === "function" ? usrLista() : [];
-  return L.filter(u=>aseoAreaDe(u) === fam).map(u=>({u, i: aseoPuesto(u.nom)})).filter(x=>x.i >= 0).map(x=>({nom: x.u.nom, zona: aseoZona(x.i, iso)}));
+  const r = L.filter(u=>aseoAreaDe(u) === fam).map(u=>({u, i: aseoPuesto(u.nom)})).filter(x=>x.i >= 0).map(x=>({nom: x.u.nom, zona: aseoZona(x.i, iso)}));
+  if(r.length) return r;
+  return (ASEO_EQUIPO_DEF[fam] || []).map(n=>({nom: n, zona: aseoZona(aseoPuesto(n), iso)}));
 }
 function aseoExtras(fam, iso){ const w = aseoW(iso), out = [];
   if((w % 2 === 0 && fam === "Panaderia") || (w % 2 !== 0 && fam === "Batido")) out.push("Congelador 5 esta semana");
@@ -5746,7 +5821,8 @@ function aseoDetalleHTML(zona){
   if(!t) return `<div style="font-size:0.9rem;color:${C.inkSoft};">Las tareas de esta zona se cargan pronto.</div>`;
   const li = a => (a || []).map(x=>`<li style="margin:3px 0;">${escH(x)}</li>`).join("");
   return `${t.d && t.d.length ? `<div style="font-weight:700;margin-top:6px;">Cada día</div><ul style="margin:4px 0 0 18px;padding:0;">${li(t.d)}</ul>` : ""}
-    ${t.s && t.s.length ? `<div style="font-weight:700;margin-top:8px;">Semanales${sab ? " — hoy sábado se reportan" : " (se reportan el sábado)"}</div><ul style="margin:4px 0 0 18px;padding:0;">${li(t.s)}</ul>` : ""}`;
+    ${t.s && t.s.length ? `<div style="font-weight:700;margin-top:8px;">Semanales${sab ? " — hoy sábado se reportan" : " (se reportan el sábado)"}</div><ul style="margin:4px 0 0 18px;padding:0;">${li(t.s)}</ul>` : ""}
+    ${t.n && t.n.length ? `<div style="margin-top:8px;font-size:0.85rem;color:${C.inkSoft};">${t.n.map(x=>"ℹ️ " + escH(x)).join("<br>")}</div>` : ""}`;
 }
 let ASEO_ABIERTO = null;
 function aseoCardEl(fam){
@@ -5771,6 +5847,27 @@ function aseoSaludoHTML(fam){
     ${lista.map(x=>`<div>${escH(x.nom)}, acuérdate que esta semana te encargas de <b>${escH(x.zona)}</b>.</div>`).join("")}
     ${ex.map(t=>`<div>🧊 ${escH(t)}</div>`).join("")}</div>`;
 }
+// 🛒 Alban 24 oct: los viernes, a cada persona que entra, recordar la compra semanal (1 vez por persona ese día)
+function esViernes(){ return new Date(hoyISO() + "T12:00:00").getDay() === 5; }
+function compraViernesHTML(){
+  return `<div style="text-align:left;margin-top:16px;background:#F4EADF;border:1.5px solid #8C5A2B;border-radius:14px;padding:12px 14px;font-size:1rem;line-height:1.5;">
+    <div style="font-weight:700;">🛒 Hoy es viernes: recuerda realizar la compra semanal.</div>
+    <a href="https://laparisina.co/compras" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-weight:700;color:#fff;background:#8C5A2B;border-radius:10px;padding:8px 16px;text-decoration:none;">Ir a Comprar</a></div>`;
+}
+function compraViernesToca(nom){ return esViernes() && nom && lsGet("compra_" + nom) !== hoyISO(); }
+function compraViernesAviso(){
+  const yo = typeof usrYo === "function" ? usrYo() : null;
+  if(!yo || !compraViernesToca(yo.nom) || document.querySelector("[data-compra]")) return;
+  lsSet("compra_" + yo.nom, hoyISO());
+  const o = capaModal(`<div data-compra="1" style="font-size:3rem;line-height:1;">🛒</div>
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin-top:10px;color:#8C5A2B;">${escH(yo.nom)}, hoy es viernes</div>
+    <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">Recuerda realizar la <b>compra semanal</b>.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
+      <a href="https://laparisina.co/compras" target="_blank" rel="noopener" class="cv-ir" style="font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#8C5A2B;color:#fff;border-radius:14px;padding:13px 24px;text-decoration:none;">Ir a Comprar</a>
+      <button type="button" class="cv-ok" style="font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:600;background:#fff;color:#8C5A2B;border:1.5px solid #8C5A2B;border-radius:14px;padding:13px 24px;cursor:pointer;">Más tarde</button></div>`, "#8C5A2B");
+  o.querySelector(".cv-ok").onclick = () => o.remove();
+  o.querySelector(".cv-ir").addEventListener("click", () => o.remove());
+}
 function saludoAlEntrar(fam, forzar){
   const yo = usrYo();   // Alban 22 oct: saludo personalizado con el nombre de quien entró
   if(yo && usrEsCumple(yo)){ const kc = "cumple_" + yo.nom, hc = hoyISO(); if(forzar || lsGet(kc) !== hc){ lsSet(kc, hc); lsSet("saludo_" + yo.nom, hc); cumpleCelebrar(yo); } return; }
@@ -5779,6 +5876,7 @@ function saludoAlEntrar(fam, forzar){
   const k = "saludo_" + nom, hoy = hoyISO();
   if(!forzar && lsGet(k) === hoy) return;
   lsSet(k, hoy);
+  const conCompra = !!(yo && compraViernesToca(yo.nom)); if(conCompra) lsSet("compra_" + yo.nom, hoy);
   const h = new Date().getHours();
   const sal = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
   const em = h < 12 ? "☀️" : h < 19 ? "🌤️" : "🌙";
@@ -5789,6 +5887,7 @@ function saludoAlEntrar(fam, forzar){
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;margin-top:10px;color:${col};">¡${sal}, ${escH(nom)}!</div>
     <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">${escH(frase)}</div>
     ${aseoSaludoHTML(fam)}
+    ${conCompra ? compraViernesHTML() : ""}
     <button type="button" style="margin-top:20px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:13px 28px;cursor:pointer;">¡Vamos! 💪</button>`, col);
   o.querySelector("button").onclick = () => o.remove();
 }
@@ -5927,6 +6026,125 @@ async function msgPintarEstado(){
       <div style="font-size:0.76rem;color:${C.inkSoft};margin-top:4px;">${msgHora(m.ts)} · De: <b>${escH(m.de || "—")}</b></div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${(m.para || []).map(a => { const v = (MSG_V[a] || {})[m.id];
         return `<span style="font-size:0.78rem;border-radius:100px;padding:3px 10px;${v ? "background:#E3EDF9;color:#2F6DB5;" : "background:#FBEBD8;color:#C4791E;"}">${escH(msgLabel(a))} · ${v ? "✅ visto " + msgHora(v) : "⏳ sin ver"}</span>`; }).join("")}</div></div>`).join("");
+}
+// ============================================================
+// 🧮 CALCULADORA (Alban 24 oct 2026) — para todos, desde la portada
+// ============================================================
+let CALC_EXP = "", CALC_HIST = [];
+function calcEval(e){
+  const t = String(e).replace(/×/g,"*").replace(/÷/g,"/").replace(/−/g,"-").replace(/,/g,".");
+  let i = 0;
+  const num = ()=>{ const m = t.slice(i).match(/^\d*\.?\d+|^\d+\.?/); if(!m) throw 0; i += m[0].length; let v = parseFloat(m[0]); if(t[i] === "%"){ i++; v /= 100; } return v; };
+  const fac = ()=>{ if(t[i] === "-"){ i++; return -fac(); } if(t[i] === "+"){ i++; return fac(); }
+    if(t[i] === "("){ i++; const v = sum(); if(t[i] === ")") i++; return v; } return num(); };
+  const prod = ()=>{ let v = fac(); while(t[i] === "*" || t[i] === "/"){ const o = t[i++]; const w = fac(); v = o === "*" ? v * w : v / w; } return v; };
+  const sum = ()=>{ let v = prod(); while(t[i] === "+" || t[i] === "-"){ const o = t[i++];
+      // 200 + 10%  →  200 + 20 (como una calculadora normal)
+      const j = i; let w = prod(); if(/^\d*\.?\d+%$/.test(t.slice(j, i))) w = v * w;
+      v = o === "+" ? v + w : v - w; } return v; };
+  const r = sum(); if(i < t.length || !isFinite(r)) throw 0; return Math.round(r * 1e9) / 1e9;
+}
+function calcFmt(n){ return new Intl.NumberFormat("es-CO", {maximumFractionDigits: 6}).format(n); }
+function calcVer(e){ return String(e).replace(/\*/g,"×").replace(/\//g,"÷").replace(/\./g,","); }
+function renderCalc(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const w = document.createElement("div"); w.setAttribute("data-calc", "1");
+  const teclas = [["C","(",")","÷"],["7","8","9","×"],["4","5","6","−"],["1","2","3","+"],["%","0",",","⌫"]];
+  const bt = (k)=>{ const op = "÷×−+".includes(k), esp = "C()%⌫".includes(k);
+    return `<button type="button" data-k="${k}" style="-webkit-appearance:none;appearance:none;font-family:'Work Sans',sans-serif;font-size:1.6rem;font-weight:600;height:68px;border-radius:16px;cursor:pointer;
+      border:1.5px solid ${op ? C.gold : C.line};background:${op ? C.goldSoft : esp ? "#F3EEE4" : C.paper};color:${k === "C" ? "#B23A2E" : C.ink};">${k}</button>`; };
+  w.innerHTML = `<button type="button" class="k-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>
+    <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:6px 0 12px;">🧮 Calculadora</h2>
+    <div style="max-width:420px;margin:0 auto;">
+      <div style="background:${C.paper};border:1.5px solid ${C.line};border-radius:18px;padding:14px 18px;text-align:right;">
+        <div class="k-exp" style="min-height:1.4em;font-size:1.15rem;color:${C.inkSoft};word-break:break-all;font-family:'IBM Plex Mono',monospace;"></div>
+        <div class="k-res" style="min-height:1.3em;font-size:2.4rem;font-weight:700;font-family:'Fraunces',serif;word-break:break-all;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px;">
+        ${teclas.flat().map(bt).join("")}
+        <button type="button" data-k="=" style="grid-column:1 / -1;-webkit-appearance:none;appearance:none;font-family:'Work Sans',sans-serif;font-size:1.6rem;font-weight:700;height:64px;border-radius:16px;cursor:pointer;border:none;background:${C.gold};color:#fff;">=</button>
+      </div>
+      <div class="k-hist" style="margin-top:16px;"></div>
+    </div>`;
+  main.appendChild(w);
+  const pintar = (fin)=>{
+    w.querySelector(".k-exp").textContent = calcVer(CALC_EXP) || " ";
+    let r = ""; try{ if(CALC_EXP) r = "= " + calcFmt(calcEval(CALC_EXP)); }catch(e){ r = fin ? "Revisa la operación" : ""; }
+    w.querySelector(".k-res").textContent = r || "0";
+    w.querySelector(".k-hist").innerHTML = CALC_HIST.length ? `<div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.06em;color:${C.inkSoft};font-weight:700;margin-bottom:6px;">Últimas</div>`
+      + CALC_HIST.map((h, i)=>`<button type="button" data-h="${i}" style="display:flex;width:100%;justify-content:space-between;gap:10px;background:${C.paper};border:1px solid ${C.line};border-radius:10px;padding:9px 12px;margin-bottom:6px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.95rem;color:${C.ink};"><span style="color:${C.inkSoft};">${escH(calcVer(h.e))}</span><b>= ${escH(calcFmt(h.r))}</b></button>`).join("") : "";
+    w.querySelectorAll("[data-h]").forEach(b => b.onclick = ()=>{ CALC_EXP = String(CALC_HIST[+b.dataset.h].r); pintar(); });
+  };
+  const tecla = (k)=>{
+    if(k === "C"){ CALC_EXP = ""; }
+    else if(k === "⌫"){ CALC_EXP = CALC_EXP.slice(0, -1); }
+    else if(k === "="){ try{ const r = calcEval(CALC_EXP); if(String(r) !== CALC_EXP){ CALC_HIST.unshift({e: CALC_EXP, r}); CALC_HIST = CALC_HIST.slice(0, 6); } CALC_EXP = String(r); w.__fin = true; pintar(); return; }catch(e){ pintar(true); return; } }
+    else { if(w.__fin && /^[\d,(]$/.test(k)) CALC_EXP = "";   // después de "=" un número empieza una cuenta nueva
+      const m = {"×":"*","÷":"/","−":"-",",":"."}; const c = m[k] || k;
+      if("+-*/".includes(c) && "+-*/".includes(CALC_EXP.slice(-1)) && CALC_EXP) CALC_EXP = CALC_EXP.slice(0, -1);
+      CALC_EXP += c; }
+    w.__fin = false; pintar();
+  };
+  w.querySelectorAll("[data-k]").forEach(b => b.onclick = ()=>tecla(b.dataset.k));
+  w.querySelector(".k-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  if(!window.__calcTeclado){ window.__calcTeclado = true;
+    document.addEventListener("keydown", ev => { const box = document.querySelector("[data-calc]"); if(!box || activeCat !== "CALC") return;
+      const k = ev.key, map = {"*":"×","/":"÷","-":"−","+":"+",".":",",",":",","Enter":"=","=":"=","Backspace":"⌫","Escape":"C","Delete":"C","%":"%","(":"(",")":")"};
+      const b = /^\d$/.test(k) ? k : map[k]; if(!b) return; ev.preventDefault();
+      const el = box.querySelector(`[data-k="${b}"]`); if(el) el.click(); }); }
+  pintar();
+}
+// ============================================================
+// 🧼 SANIDAD (Alban 24 oct 2026): tarjeta en la portada. Quien entra con su código ve
+// las tareas detalladas de cada persona de su equipo (zona de la semana + tareas del área).
+// ============================================================
+let SAN_AREA = null;
+const SAN_AREAS = [["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["ARELIS","🧽 Aseo tarde"]];
+function sanLunes(){ const w = aseoW(); const d = new Date(ASEO_W0 + w * 7 * 864e5); return d; }
+function sanLista(tit, arr, col){ if(!arr || !arr.length) return "";
+  return `<div style="font-weight:700;margin-top:10px;color:${col};">${tit}</div><ul style="margin:4px 0 0 20px;padding:0;line-height:1.45;">${arr.map(x=>`<li style="margin:3px 0;">${escH(x)}</li>`).join("")}</ul>`; }
+function renderSanidad(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const yo = typeof usrYo === "function" ? usrYo() : null;
+  const miArea = yo ? (pedNorm(yo.nom).startsWith("arelis") ? "ARELIS" : aseoAreaDe(yo) || (pedNorm(String(yo.puesto||"")).includes("log") ? "Logistica" : null)) : null;
+  if(!SAN_AREA) SAN_AREA = miArea || "Panaderia";
+  const fam = SAN_AREA, col = (PALETTE[fam] || PALETTE.ALL).a;
+  const lun = sanLunes(), sab = new Date(lun.getTime() + 5 * 864e5);
+  const f = d => d.getUTCDate() + " " + ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][d.getUTCMonth()];
+  const hoyD = new Date(hoyISO() + "T12:00:00").getDay();
+  const w = document.createElement("div"); w.setAttribute("data-san", "1");
+  let h = `<button type="button" class="s-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>
+    <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:6px 0 2px;">🧼 Sanidad</h2>
+    <div style="font-size:0.88rem;color:${C.inkSoft};">Semana ${aseoW() + 1} · ${f(lun)} – ${f(sab)}. Las semanales se reportan el sábado.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${SAN_AREAS.map(([k,t])=>`<button type="button" data-a="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:600;border-radius:100px;padding:8px 14px;cursor:pointer;border:1.5px solid ${k===fam ? col : C.line};background:${k===fam ? col : C.paper};color:${k===fam ? "#fff" : C.ink};">${t}${k===miArea ? " · mi equipo" : ""}</button>`).join("")}</div>`;
+  const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
+  if(fam === "ARELIS"){
+    h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">Arelis → Aseo planta (turno tarde)</div>
+      ${sanLista("Cada día", ASEO_TARDE, col)}
+      ${sanLista("Miércoles" + (hoyD === 3 ? " (hoy)" : ""), ["Limpiar el horno de esta semana: horno " + aseoHornoArelis() + " (rota 1, 2, 3, 4, 5, 6, eléctrico)"], col)}`, col);
+  } else {
+    const gente = fam === "Logistica" ? [{nom:"Juan Pablo", zona:null}] : aseoDelArea(fam);
+    const agua = ASEO_AGUA_PUNTO[hoyD];
+    gente.forEach(p => {
+      const t = p.zona ? (ASEO_TAREAS[p.zona] || {}) : {};
+      h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">${escH(p.nom)}${p.zona ? ` → <span style="color:${col};">${escH(p.zona)}</span>` : ` · área fija`}</div>
+        ${p.zona ? sanLista("Cada día", t.d, col) + (t.s && t.s.length ? sanLista("Semanales", t.s, col) : `<div style="margin-top:10px;font-weight:700;color:${col};">Semanales: ninguna</div>`)
+          + (p.zona === "Aseo, agua y temperatura" && agua ? `<div style="margin-top:8px;font-size:0.9rem;">💧 Punto del agua hoy: <b>${agua}</b></div>` : "")
+          : `<div style="margin-top:6px;color:${C.inkSoft};">Logística (área fija): sin lista de tareas.</div>`}`, col);
+    });
+    if(fam !== "Logistica"){ const ex = aseoExtras(fam);
+      h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;">Para todos (área común, cada día)</div>
+        ${sanLista("Cada día", ASEO_COMUN, col)}${ex.length ? `<div style="margin-top:8px;">🧊 ${escH(ex[0])}</div>` : ""}`, col);
+    }
+    if(!gente.length) h += `<div style="margin-top:14px;color:${C.inkSoft};">No hay personas de esta área en la lista.</div>`;
+  }
+  w.innerHTML = h; main.appendChild(w);
+  w.querySelector(".s-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  w.querySelectorAll("[data-a]").forEach(b => b.onclick = ()=>{ SAN_AREA = b.dataset.a; renderSanidad(); });
 }
 function renderMensajes(){
   setAccent("ALL"); tintPage("ALL");
@@ -6079,6 +6297,9 @@ bootDb();
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
 </script>
+
+
+
 
 
 
