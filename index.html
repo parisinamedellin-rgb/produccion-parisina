@@ -5769,7 +5769,13 @@ function cumpleCelebrar(u){
 // ---- 🧹 Cronograma de aseo (Alban 23 oct) ----
 // 7 personas rotan por 7 zonas. Semana 1 = lunes 3 ago 2026; cada lunes todos avanzan una zona: zona = (puesto + w) mod 7.
 // La tablet de cada área (Panadería, Comida de sal, Repostería, Batido) muestra a SUS personas (Admin › Personas, campo puesto) con su zona.
-const ASEO_ROTA = ["Ronald","Deysi","Andreina","Adolfo","Sergio","Camila","Yessica"];
+// Personal (Alban 27 oct): sale de la hoja "Datos Personales - Ingreso Parisina" (pestaña Personal de Ventas Parisina). Lo arma personal.py.
+// n = nombre corto · a = área · p = puesto de aseo 1–7 (o "Fijo" = no rota). Sin puesto = no participa.
+const PERSONAL = [{"n":"Adolfo","a":"Panaderia","p":4},{"n":"Arelis","a":"","p":"Fijo"},{"n":"Deysi","a":"Panaderia","p":2},{"n":"Juan Pablo","a":"Logistica","p":"Fijo"},{"n":"Camila","a":"Reposteria","p":6},{"n":"Ronald","a":"Panaderia","p":1},{"n":"Sergio","a":"Reposteria","p":5},{"n":"Yesica","a":"Reposteria","p":7},{"n":"Andreina","a":"Batido","p":3}];
+const ASEO_ROTA_DEF = ["Ronald","Deysi","Andreina","Adolfo","Sergio","Camila","Yessica"];
+const ASEO_ROTA = (()=>{ const r = Array(7).fill(null); let ok = false;
+  (PERSONAL || []).forEach(p=>{ if(typeof p.p === "number" && p.p >= 1 && p.p <= 7){ r[p.p - 1] = p.n; ok = true; } });
+  return ok ? r : ASEO_ROTA_DEF; })();
 const ASEO_ALIAS = {camila:["maria"]};   // en Personas aparece como "María" (Maria Camila)
 const ASEO_ZONAS = ["Hornos","Zona de bultos","Neveras","Cuarto de neveras","Aseo, agua y temperatura","Cuarto de hornos","Cuarto de empaques"];
 // Tareas por zona — detalle de Alban (24 oct 2026). d = cada día · s = semanales (se reportan el sábado)
@@ -5796,19 +5802,25 @@ const ASEO_TARDE = ["Dejar limpios el comedor, el baño y la entrada","Chequeo d
 const ASEO_HORNOS_ARELIS = ["1","2","3","4","5","6","eléctrico"];
 function aseoHornoArelis(){ return ASEO_HORNOS_ARELIS[((aseoW() % 7) + 7) % 7]; }
 // Si la lista de Personas no está cargada: equipos actuales (Alban 21–23 oct)
-const ASEO_EQUIPO_DEF = {"Panaderia":["Deysi","Ronald"], "Comida de sal":["Sergio","Adolfo"], "Reposteria":["Camila","Yessica"], "Batido":["Andreina"]};
+const ASEO_EQUIPO_DEF_OLD = {"Panaderia":["Deysi","Ronald"], "Comida de sal":["Sergio","Adolfo"], "Reposteria":["Camila","Yessica"], "Batido":["Andreina"]};
+const ASEO_EQUIPO_DEF = (()=>{ const o = {};
+  (PERSONAL || []).forEach(p=>{ if(p.a && typeof p.p === "number") (o[p.a] = o[p.a] || []).push(p.n); });
+  return Object.keys(o).length ? o : ASEO_EQUIPO_DEF_OLD; })();
 const ASEO_W0 = Date.UTC(2026, 7, 3);
 function aseoW(iso){ const [y,m,d] = (iso || hoyISO()).split("-").map(Number); return Math.floor((Date.UTC(y, m-1, d) - ASEO_W0) / (7*864e5)); }
 function aseoNorm(t){ return pedNorm(String(t || "").split(/\s+/)[0]).replace(/[yj]/g, "i").replace(/(.)\1+/g, "$1"); }
 function aseoPuesto(nom){
   const n = aseoNorm(nom);
-  return ASEO_ROTA.findIndex(r=>{ const k = aseoNorm(r); return k === n || (ASEO_ALIAS[pedNorm(r)] || []).includes(n); });
+  return ASEO_ROTA.findIndex(r=>{ if(!r) return false; const k = aseoNorm(r); return k === n || (ASEO_ALIAS[pedNorm(r)] || []).includes(n); });
 }
 function aseoZona(i, iso){ const w = aseoW(iso); return ASEO_ZONAS[(((i + w) % 7) + 7) % 7]; }
 function aseoAreaDe(u){ const p = pedNorm(u.puesto || ""); return p.includes("panad") ? "Panaderia" : p.includes("comida") || p.includes("sal") ? "Comida de sal" : p.includes("repos") ? "Reposteria" : p.includes("batid") ? "Batido" : null; }
-const ASEO_FIJOS = {"Logistica":[{nom:"Juan Pablo", zona:"Logística (área fija)"}]};   // Alban 23 oct: Juan Pablo no rota
+const ASEO_FIJOS = (()=>{ const L = (PERSONAL || []).filter(p=>p.p === "Fijo" && p.a === "Logistica").map(p=>({nom: p.n, zona: "Logística (área fija)"}));
+  return {"Logistica": L.length ? L : [{nom:"Juan Pablo", zona:"Logística (área fija)"}]}; })();   // Alban 23 oct: Juan Pablo no rota
 function aseoDelArea(fam, iso){
   if(ASEO_FIJOS[fam]) return ASEO_FIJOS[fam];
+  const P = (PERSONAL || []).filter(p=>p.a === fam && typeof p.p === "number");   // 27 oct: manda la hoja Datos Personales
+  if(P.length || ASEO_ROTA !== ASEO_ROTA_DEF) return P.map(p=>({nom: p.n, zona: aseoZona(p.p - 1, iso)}));
   const L = typeof usrLista === "function" ? usrLista() : [];
   const r = L.filter(u=>aseoAreaDe(u) === fam).map(u=>({u, i: aseoPuesto(u.nom)})).filter(x=>x.i >= 0).map(x=>({nom: x.u.nom, zona: aseoZona(x.i, iso)}));
   if(r.length) return r;
