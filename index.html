@@ -3695,7 +3695,7 @@ function rotuloHTML(r, iso, w, h){
 // de TODO el rótulo de 0,25 pt en 0,25 pt hasta que quepa completo. También revisa que nada se salga de lado.
 const ROT_NOM_MAX = 20;        // tope del nombre del producto en pt (= tamaño con que sale "RED VELVET PM MARCADA")
 const ROT_SEGURIDAD_MM = 2;    // margen de seguridad abajo
-const ROT_MARGEN_SUP_MM = 4.5;  // Alban 30 oct: la QL-600 no imprime ~3,5 mm del borde de arriba → el contenido arranca a 4,5 mm
+const ROT_MARGEN_SUP_MM = 3.5;  // Alban 30 oct: la QL-600 no imprime ~3,5 mm del borde de arriba → el contenido arranca a 4,5 mm
 function rotAltoContenido(el){
   const k = [...el.children]; if(!k.length) return el.scrollHeight;
   const top = k[0].getBoundingClientRect().top - parseFloat(getComputedStyle(k[0]).marginTop || 0);
@@ -5236,6 +5236,7 @@ function render(){
   main.innerHTML = "";
   setTimeout(marcarVidrio, 0);   // Alban 22 oct: "*V*" = va en vidrio -> etiqueta visible para el operador
   if(["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
+  if(activeCat === "Tortas"){ const tb = tortasTableroEl(activeDate); if(tb) main.appendChild(tb); }   // Alban 30 oct: tablero de tortas (palitos)
   const day = DATA[activeDate];
   const groups = activeCat === "ALL" ? [...GROUP_ORDER, ...EXTRA_GROUPS_ALL] : [activeCat];
   let any = false;
@@ -6207,6 +6208,51 @@ function renderSanidad(){
   sanCheckBind(w, fam, genteChk);
   w.querySelector(".s-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
   w.querySelectorAll("[data-a]").forEach(b => b.onclick = ()=>{ SAN_AREA = b.dataset.a; renderSanidad(); });
+}
+// ============================================================
+// 🎂 TABLERO DE TORTAS (Alban 30 oct 2026): reemplaza la hoja de la ventana (Particular / Por mayor) donde
+// el operador hacía un palito por torta y lo tachaba al hacerla. Aquí cada torta tiene sus palitos; tocar
+// un palito lo tacha (y todos los de antes). Tocar uno tachado lo destacha. Se guarda como los chulos
+// (claves "<fecha>::Tortas::<sub>::<nombre>::#n" en COMPLETED), así que lo ven todas las tablets.
+// Cuando están todas, se marca también el chulo de la torta en la lista.
+// ============================================================
+const TORT_COLS = [["Particular", ["Particular"]], ["Por mayor", ["Por mayor - PM"]], ["PM marcada", ["PM Marcada"]]];
+function tortHechas(base, q){ let n = 0; for(let i = 1; i <= q; i++) if(COMPLETED[base + "::#" + i]) n = i; return n; }
+function tortNombre(n){ return String(n).replace(/\s*PM MARCADA\s*$/i, "").replace(/\s+/g, " ").trim(); }
+function tortasTableroEl(iso){
+  const day = (DATA[iso] || {})["Tortas"] || {};
+  const cols = TORT_COLS.map(([t, subs]) => [t, subs.flatMap(sk => (day[sk] || []).map(([name, qty]) => ({sk, name, q: Math.max(0, Math.round(qty))})))]).filter(c => c[1].some(x => x.q > 0));
+  if(!cols.length) return null;
+  const col = PALETTE.Tortas.a;
+  let tot = 0, hech = 0;
+  cols.forEach(c => c[1].forEach(x => { const b = [iso, "Tortas", x.sk, x.name].join("::"); tot += x.q; hech += Math.min(x.q, tortHechas(b, x.q)); }));
+  const box = document.createElement("div");
+  box.setAttribute("style", `margin-top:14px;background:${C.paper};border:2px solid ${col};border-radius:16px;padding:14px 16px;`);
+  const palito = (b, i, on) => `<button type="button" data-b="${logEsc(b)}" data-i="${i}" aria-label="Torta ${i}" style="-webkit-appearance:none;appearance:none;position:relative;width:26px;height:40px;border:none;background:none;cursor:pointer;padding:0;margin:0 1px;">
+      <span style="position:absolute;left:10px;top:4px;width:6px;height:32px;border-radius:3px;background:${on ? C.inkSoft : C.ink};opacity:${on ? .45 : 1};"></span>
+      ${on ? `<span style="position:absolute;left:-2px;top:17px;width:30px;height:4px;border-radius:2px;background:#B23A2E;transform:rotate(-20deg);"></span>` : ""}</button>`;
+  box.innerHTML = `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+      <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:${col};">🎂 Tablero de tortas</span>
+      <span style="font-size:0.9rem;color:${C.inkSoft};">Toca un palito cada vez que termines una torta · <b style="color:${C.ink};">${hech}/${tot}</b> hechas</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px;">
+    ${cols.map(([t, items]) => `<div style="border:1.5px solid ${C.line};border-radius:12px;overflow:hidden;">
+        <div style="background:${PALETTE.Tortas.s};font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;font-size:0.95rem;">${t}</div>
+        ${items.filter(x => x.q > 0).map(x => { const b = [iso, "Tortas", x.sk, x.name].join("::"), h = Math.min(x.q, tortHechas(b, x.q)), ok = h >= x.q;
+          return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid ${C.line};${ok ? `background:${PALETTE.Tortas.s};` : ""}">
+            <span style="flex:1 1 150px;font-weight:700;font-size:0.95rem;text-transform:uppercase;${ok ? `text-decoration:line-through;color:${C.inkSoft};` : ""}">${logEsc(tortNombre(x.name))}</span>
+            <span style="display:flex;flex-wrap:wrap;align-items:center;">${Array.from({length: x.q}, (_, k) => palito(b, k + 1, k < h)).join("")}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;color:${ok ? col : C.inkSoft};min-width:3em;text-align:right;">${ok ? "✓ " : ""}${h}/${x.q}</span></div>`; }).join("")}
+      </div>`).join("")}
+    </div>`;
+  box.querySelectorAll("button[data-b]").forEach(btn => btn.onclick = () => {
+    const b = btn.dataset.b, i = +btn.dataset.i;
+    const it = cols.flatMap(c => c[1]).find(x => [iso, "Tortas", x.sk, x.name].join("::") === b); if(!it) return;
+    const h = tortHechas(b, it.q), nuevo = i <= h ? i - 1 : i;
+    for(let k = 1; k <= it.q; k++){ const on = k <= nuevo; if(!!COMPLETED[b + "::#" + k] !== on) marcar(b + "::#" + k, on); }
+    const todas = nuevo >= it.q; if(!!COMPLETED[b] !== todas) marcar(b, todas);
+    flushDb(); render();
+  });
+  return box;
 }
 function renderMensajes(){
   setAccent("ALL"); tintPage("ALL");
