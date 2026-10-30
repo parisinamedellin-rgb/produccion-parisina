@@ -1380,7 +1380,7 @@ function adelPendientesMios(){
   areas.forEach(ar => avisosAdelanto(ar, hoy).forEach(a => { if(a.tipo !== "hacer" || COMPLETED[a.clave] || vistos.has(a.clave)) return; vistos.add(a.clave); out.push(a); }));
   return out;
 }
-function adelRecordatorio(){
+function adelRecordatorio(){ const _r = document.getElementById("adel-rec"); if(_r) _r.remove(); return;   // Alban 30 oct: quitado, basta con el tablero + el aviso
   let el = document.getElementById("adel-rec"), lista = [];
   try{ lista = (horaBogota() >= ADEL_HORA && !usrNecesitaLogin()) ? adelPendientesMios() : []; }catch(e){}
   if(!lista.length){ if(el) el.remove(); return; }
