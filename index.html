@@ -1369,8 +1369,8 @@ function avisosAdelanto(area, hoy){
   return out.filter(x=>x.limite <= hoy).sort((x,y)=> x.limite < y.limite ? -1 : x.limite > y.limite ? 1 : 0);
 }
 // Alban 30 oct: recordatorio "¡No te vayas sin…!" desde las 2 p.m. si un adelanto (hacer) de mis áreas no tiene chulo
-const ADEL_HORA = 14;
-function horaBogota(){ try{ return (+new Intl.DateTimeFormat("en-US", {timeZone: "America/Bogota", hour: "numeric", hour12: false}).format(new Date())) % 24; }catch(e){ return new Date().getHours(); } }
+const ADEL_HORA = 11 + 44/60;   // Alban 30 oct: desde las 11:44 a.m.
+function horaBogota(){ try{ const p = new Intl.DateTimeFormat("en-US", {timeZone: "America/Bogota", hour: "numeric", minute: "numeric", hour12: false}).formatToParts(new Date()), g = t => +((p.find(x => x.type === t) || {}).value || 0); return (g("hour") % 24) + g("minute") / 60; }catch(e){ const n = new Date(); return n.getHours() + n.getMinutes() / 60; } }
 function adelPendientesMios(){
   if(!usrActivo()) return [];
   const u = usrYo(); if(!u) return [];
