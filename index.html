@@ -1319,7 +1319,7 @@ function habilAntes(iso, n){
 // Adelantos por producto (Alban 5 oct): si hay una torta tres leches pedida, Repostería y Tortas
 // ven el aviso desde que entra el pedido; hay que prepararla el día hábil anterior a la entrega.
 const ADELANTOS_PRODUCTO = [
-  {id:"Tres leches", match:/tres\s+leches/i, grupo:"Tortas", areas:["Reposteria","Tortas","Topping"], dias:1, texto:"Preparar la tres leches"}
+  {id:"Tres leches", match:/tres\s+leches/i, grupo:"Tortas", areas:["Reposteria","Tortas","Topping"], dias:1, texto:"Remojar la tres leches"}
 ];
 function avisosAdelanto(area, hoy){
   const out = [];
@@ -1342,7 +1342,7 @@ function avisosAdelanto(area, hoy){
           const it = info.items.find(x=>x.name === a.item);
           detalle = `${it ? fmtN(it.dia) + " " : ""}${a.texto}`;
         }
-        out.push({iso, limite, area:a.area, tipo:a.tipo, def, total:info.total, unit:info.unit, detalle,
+        out.push({iso, limite, area:a.area, tipo:a.tipo, def, total:info.total, unit:info.unit, detalle, clave:[limite,"ADEL",def.id,iso,a.area,a.tipo].join("::"),
                   estado: limite < hoy ? "atrasado" : (limite === hoy ? "hoy" : "futuro")});
       });
     });
@@ -1360,7 +1360,7 @@ function avisosAdelanto(area, hoy){
       const total = names.reduce((t,n)=>t+acc[n],0);
       const limite = habilAntes(iso, r.dias);
       out.push({iso, limite, area: area === "ALL" ? r.areas.map(x=>GROUP_LABEL[x] || x).join(", ") : area,
-                tipo:"hacer", def:{id:r.id}, total, unit:"unid",
+                tipo:"hacer", def:{id:r.id}, total, unit:"unid", clave:[limite,"ADEL",r.id,iso].join("::"), nombres:names.map(n=>({name:n, q:Math.max(1, Math.round(acc[n]))})),
                 detalle: `${r.texto}: ${names.map(n=>fmtN(acc[n]) + " × " + n).join(" · ")}`,
                 estado: limite < hoy ? "atrasado" : (limite === hoy ? "hoy" : "futuro")});
     });
@@ -1368,6 +1368,31 @@ function avisosAdelanto(area, hoy){
   // Alban 7 oct: el aviso sale solo desde el día hábil anterior (no días antes)
   return out.filter(x=>x.limite <= hoy).sort((x,y)=> x.limite < y.limite ? -1 : x.limite > y.limite ? 1 : 0);
 }
+// Alban 30 oct: recordatorio "¡No te vayas sin…!" desde las 2 p.m. si un adelanto (hacer) de mis áreas no tiene chulo
+const ADEL_HORA = 14;
+function horaBogota(){ try{ return (+new Intl.DateTimeFormat("en-US", {timeZone: "America/Bogota", hour: "numeric", hour12: false}).format(new Date())) % 24; }catch(e){ return new Date().getHours(); } }
+function adelPendientesMios(){
+  if(!usrActivo()) return [];
+  const u = usrYo(); if(!u) return [];
+  const acc = u.acc || []; if(acc.includes("ALL")) return [];
+  const areas = new Set(); FAMS.forEach(f => { if(acc.includes(f.key)) (f.subs || []).forEach(s => areas.add(s)); });
+  const hoy = hoyISO(), vistos = new Set(), out = [];
+  areas.forEach(ar => avisosAdelanto(ar, hoy).forEach(a => { if(a.tipo !== "hacer" || COMPLETED[a.clave] || vistos.has(a.clave)) return; vistos.add(a.clave); out.push(a); }));
+  return out;
+}
+function adelRecordatorio(){
+  let el = document.getElementById("adel-rec"), lista = [];
+  try{ lista = (horaBogota() >= ADEL_HORA && !usrNecesitaLogin()) ? adelPendientesMios() : []; }catch(e){}
+  if(!lista.length){ if(el) el.remove(); return; }
+  if(!el){ el = document.createElement("div"); el.id = "adel-rec"; document.body.appendChild(el); }
+  el.setAttribute("style", "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#A3252B;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.35);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:1rem;line-height:1.4;max-height:60vh;overflow:auto;max-width:720px;margin:0 auto;");
+  el.innerHTML = `<div style="font-weight:800;font-size:1.15rem;">⏰ ¡No te vayas sin hacer esto!</div>` + lista.map(a => { const fp = fmtDay(a.iso);
+    return `<div style="display:flex;align-items:center;gap:10px;margin-top:10px;background:rgba(255,255,255,.14);border-radius:12px;padding:8px 10px;">
+      <div style="flex:1;"><b>${a.detalle}</b><div style="font-size:.85rem;opacity:.9;">Pedido para el ${fp.dow} ${fp.dm}</div></div>
+      <button type="button" data-adelr="${logEsc(a.clave)}" style="flex:none;padding:10px 14px;border-radius:10px;border:none;background:#fff;color:#A3252B;font-weight:800;font-size:1rem;cursor:pointer;">✓ Hecho</button></div>`; }).join("");
+  el.querySelectorAll("button[data-adelr]").forEach(b => b.onclick = () => { marcar(b.dataset.adelr, true); flushDb(); render(); adelRecordatorio(); });
+}
+setInterval(adelRecordatorio, 60000);
 function renderAdelantos(){
   const el = document.getElementById("adelantos");
   if(!el) return;
@@ -1376,10 +1401,10 @@ function renderAdelantos(){
   const AREA_NOMBRE = {"Reposteria":"Dulcería","Panaderia":"Panadería"};
   el.style.display = "block";
   el.innerHTML = list.map(a=>{
-    const urg = a.estado !== "futuro";
-    const col = urg ? "#A3252B" : "#8A5A00", bg = urg ? "#FBE4E4" : "#FFF4D6";
+    const ok = !!COMPLETED[a.clave], urg = !ok && a.estado !== "futuro";   // Alban 30 oct: chulo del adelanto
+    const col = ok ? "#6B6257" : urg ? "#A3252B" : "#8A5A00", bg = ok ? "#F1EEE8" : urg ? "#FBE4E4" : "#FFF4D6";
     const fl = fmtDay(a.limite), fp = fmtDay(a.iso);
-    const cuando = a.estado === "atrasado" ? `YA — debía estar el ${fl.dow} ${fl.dm}` : a.estado === "hoy" ? "HOY" : `a más tardar ${fl.dow} ${fl.dm}`;
+    const cuando = ok ? "✓ HECHO" : a.estado === "atrasado" ? `YA — debía estar el ${fl.dow} ${fl.dm}` : a.estado === "hoy" ? "HOY" : `a más tardar ${fl.dow} ${fl.dm}`;
     const titulo = a.tipo === "insumos" ? "🛒 Tener en stock" : "👩‍🍳 Hacer con adelanto";
     const cuerpo = a.tipo === "insumos"
       ? `Para <b>${fmtN(a.total)} ${a.def.id}</b>: ${a.detalle}.<br><span style="opacity:.85;">Revisa que haya de todo. Si falta algo, pídelo ya.</span>`
@@ -1391,8 +1416,10 @@ function renderAdelantos(){
       </div>
       <div style="margin-top:4px;color:#2A241C;">${cuerpo}</div>
       <div style="margin-top:4px;font-size:0.76rem;">Pedido para el ${fp.dow} ${fp.dm}</div>
+      <button type="button" data-adel="${logEsc(a.clave)}" style="margin-top:10px;width:100%;padding:12px;border-radius:12px;border:2px solid ${col};background:${ok ? "#fff" : col};color:${ok ? col : "#fff"};font-weight:800;font-size:1rem;cursor:pointer;">${ok ? "↩︎ Desmarcar" : "✓ Listo, ya lo hice"}</button>
     </div>`;
   }).join("");
+  el.querySelectorAll("button[data-adel]").forEach(b => b.onclick = () => { const k = b.dataset.adel; marcar(k, !COMPLETED[k]); flushDb(); render(); });
 }
 
 // ---- Pendientes de Panadería (las demás áreas se hacen el mismo día) ----
@@ -5203,6 +5230,7 @@ function ponerTitulo(){
 }
 function render(){
   setTimeout(ponerTitulo, 0);
+  setTimeout(adelRecordatorio, 0);   // Alban 30 oct
   if(usrNecesitaLogin() && activeCat !== "ADMIN" && activeCat !== "MSG"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
   if(activeCat === "HOME"){ renderHome(); return; }
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
@@ -6221,35 +6249,42 @@ function tortHechas(base, q){ let n = 0; for(let i = 1; i <= q; i++) if(COMPLETE
 function tortNombre(n){ return String(n).replace(/\s*PM MARCADA\s*$/i, "").replace(/\s+/g, " ").trim(); }
 function tortasTableroEl(iso){
   const day = (DATA[iso] || {})["Tortas"] || {};
-  const cols = TORT_COLS.map(([t, subs]) => [t, subs.flatMap(sk => (day[sk] || []).map(([name, qty]) => ({sk, name, q: Math.max(0, Math.round(qty))})))]).filter(c => c[1].some(x => x.q > 0));
+  const TL = /tres\s+leches/i;
+  const cols = TORT_COLS.map(([t, subs]) => [t, subs.flatMap(sk => (day[sk] || []).map(([name, qty]) => ({sk, name, q: Math.max(0, Math.round(qty)), b: [iso, "Tortas", sk, name].join("::")})))]).filter(c => c[1].some(x => x.q > 0));
+  // Alban 30 oct: tres leches en 2 pasos -> el día hábil anterior se REMOJA (columna "Remojar hoy"), el día del pedido se DECORA
+  const rem = (typeof avisosAdelanto === "function" ? avisosAdelanto("Tortas", iso) : []).filter(a => a.nombres && a.limite <= iso);
+  if(rem.length) cols.unshift(["🥛 Remojar hoy", rem.flatMap(a => a.nombres.map(x => ({name: x.name, q: x.q, b: a.clave + "::" + x.name, para: a.iso, clave: a.clave})))]);
   if(!cols.length) return null;
   const col = PALETTE.Tortas.a;
   let tot = 0, hech = 0;
-  cols.forEach(c => c[1].forEach(x => { const b = [iso, "Tortas", x.sk, x.name].join("::"); tot += x.q; hech += Math.min(x.q, tortHechas(b, x.q)); }));
+  cols.forEach(c => c[1].forEach(x => { tot += x.q; hech += Math.min(x.q, tortHechas(x.b, x.q)); }));
   const box = document.createElement("div");
   box.setAttribute("style", `margin-top:14px;background:${C.paper};border:2px solid ${col};border-radius:16px;padding:14px 16px;`);
   const palito = (b, i, on) => `<button type="button" data-b="${logEsc(b)}" data-i="${i}" aria-label="Torta ${i}" style="-webkit-appearance:none;appearance:none;position:relative;width:26px;height:40px;border:none;background:none;cursor:pointer;padding:0;margin:0 1px;">
       <span style="position:absolute;left:10px;top:4px;width:6px;height:32px;border-radius:3px;background:${on ? C.inkSoft : C.ink};opacity:${on ? .45 : 1};"></span>
       ${on ? `<span style="position:absolute;left:-2px;top:17px;width:30px;height:4px;border-radius:2px;background:#B23A2E;transform:rotate(-20deg);"></span>` : ""}</button>`;
+  const etq = x => { if(x.para){ const f = fmtDay(x.para); return ` <span style="font-weight:600;text-transform:none;color:#A3252B;">· para ${f.dow} ${f.dm}</span>`; }
+    return TL.test(x.name) ? ` <span style="font-weight:600;text-transform:none;color:${C.inkSoft};">· decorar</span>` : ""; };
   box.innerHTML = `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
       <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:${col};">🎂 Tablero de tortas</span>
       <span style="font-size:0.9rem;color:${C.inkSoft};">Toca un palito cada vez que termines una torta · <b style="color:${C.ink};">${hech}/${tot}</b> hechas</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px;">
-    ${cols.map(([t, items]) => `<div style="border:1.5px solid ${C.line};border-radius:12px;overflow:hidden;">
-        <div style="background:${PALETTE.Tortas.s};font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;font-size:0.95rem;">${t}</div>
-        ${items.filter(x => x.q > 0).map(x => { const b = [iso, "Tortas", x.sk, x.name].join("::"), h = Math.min(x.q, tortHechas(b, x.q)), ok = h >= x.q;
+    ${cols.map(([t, items]) => `<div style="border:${items[0] && items[0].clave ? "2px solid #A3252B" : `1.5px solid ${C.line}`};border-radius:12px;overflow:hidden;">
+        <div style="background:${items[0] && items[0].clave ? "#FBE4E4" : PALETTE.Tortas.s};${items[0] && items[0].clave ? "color:#A3252B;" : ""}font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;font-size:0.95rem;">${t}</div>
+        ${items.filter(x => x.q > 0).map(x => { const b = x.b, h = Math.min(x.q, tortHechas(b, x.q)), ok = h >= x.q;
           return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid ${C.line};${ok ? `background:${PALETTE.Tortas.s};` : ""}">
-            <span style="flex:1 1 150px;font-weight:700;font-size:0.95rem;text-transform:uppercase;${ok ? `text-decoration:line-through;color:${C.inkSoft};` : ""}">${logEsc(tortNombre(x.name))}</span>
+            <span style="flex:1 1 150px;font-weight:700;font-size:0.95rem;text-transform:uppercase;${ok ? `text-decoration:line-through;color:${C.inkSoft};` : ""}">${logEsc(tortNombre(x.name))}${etq(x)}</span>
             <span style="display:flex;flex-wrap:wrap;align-items:center;">${Array.from({length: x.q}, (_, k) => palito(b, k + 1, k < h)).join("")}</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;color:${ok ? col : C.inkSoft};min-width:3em;text-align:right;">${ok ? "✓ " : ""}${h}/${x.q}</span></div>`; }).join("")}
       </div>`).join("")}
     </div>`;
   box.querySelectorAll("button[data-b]").forEach(btn => btn.onclick = () => {
     const b = btn.dataset.b, i = +btn.dataset.i;
-    const it = cols.flatMap(c => c[1]).find(x => [iso, "Tortas", x.sk, x.name].join("::") === b); if(!it) return;
+    const all = cols.flatMap(c => c[1]), it = all.find(x => x.b === b); if(!it) return;
     const h = tortHechas(b, it.q), nuevo = i <= h ? i - 1 : i;
     for(let k = 1; k <= it.q; k++){ const on = k <= nuevo; if(!!COMPLETED[b + "::#" + k] !== on) marcar(b + "::#" + k, on); }
     const todas = nuevo >= it.q; if(!!COMPLETED[b] !== todas) marcar(b, todas);
+    if(it.clave){ const listo = all.filter(x => x.clave === it.clave).every(x => tortHechas(x.b, x.q) >= x.q); if(!!COMPLETED[it.clave] !== listo) marcar(it.clave, listo); }   // remojo completo = adelanto hecho
     flushDb(); render();
   });
   return box;
