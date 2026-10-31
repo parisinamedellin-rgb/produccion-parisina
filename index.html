@@ -5524,6 +5524,17 @@ function render(){
 // queda guardado en estado/RH-<fecha> = {rehacer:[{torta, cant, ts}]} (campo "rehacer", no "items", para
 // que no se confunda con los chulos) y se mete en DATA[fecha].Topping["Rehacer"] como "Rehacer · <torta>",
 // que la fórmula Topping cuenta con el mismo gramaje de la torta.
+// Alban 31 oct: la crema musselina cuenta TODAS las tortas Fraisier / Rojos y amarillos de los pedidos, se escriban como se escriban
+// (1/2 lb, 1/2 libra, 1 Libra, PM…). Peso por tamaño: 1/4 = 600 g · 1/2 = 1.100 g · 1 libra = 1.300 g · 2 lb = 2.100 g.
+(function(){
+  const def = FORMULA_DEFS.find(d => d.id === "Crema musselina"); if(!def || typeof DATA === "undefined") return;
+  const peso = n => { const s = String(n).toLowerCase(); if(!/fraisier|fresera|rojos/.test(s)) return 0;
+    if(/1\/4|¼/.test(s)) return 600; if(/1\/2|½/.test(s)) return 1100; if(/\b2\s*(lb|libras?)\b/.test(s)) return 2100; return 1300; };
+  const ya = new Set(def.channels.total.map(t => t.sub + "::" + t.name));
+  Object.keys(DATA).forEach(iso => Object.entries((DATA[iso] || {}).Tortas || {}).forEach(([sub, l]) => (l || []).forEach(([n]) => {
+    const nm = String(n).trim(), k = sub + "::" + nm, c = peso(nm);
+    if(c && !ya.has(k)){ ya.add(k); def.channels.total.push({group: "Tortas", sub, name: nm, coef: c}); } })));
+})();
 const REHACER_OPC = ["Red velvet 1/4 libra","Red velvet 1/2 libra","Red velvet 1/2 libra doble topping",
   "Red velvet 1 libra","Red velvet 1 libra doble topping","Red velvet 2 libras",
   "Zanahoria 1/4 libra","Zanahoria 1/2 libra","Zanahoria 1 libra","Tres leches Milo","Tres leches Arequipe"];
