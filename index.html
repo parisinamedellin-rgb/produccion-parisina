@@ -2082,6 +2082,7 @@ function renderHome(){
   h.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:0 0 4px;">¿Cuál es tu área?</h2>
     <div style="font-size:0.9rem;color:${C.inkSoft};">Elige tu categoría para ver tu producción, tu stock y tus fórmulas.</div>`;
   main.appendChild(bannerPublicado());   // Alban 7 oct: hora de publicación en grande
+  try{ if(typeof location !== "undefined" && /github\.io$/.test(location.hostname)){ const av = document.createElement("div"); av.className = "m-avisos"; avisosUI(av); if(av.style.display !== "none") main.appendChild(av); } }catch(e){}   // Alban 31 oct: aviso obligatorio también en la portada
   main.appendChild(h);
   const grid = document.createElement("div");
   grid.setAttribute("style", "display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px;");
@@ -5931,15 +5932,15 @@ const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷
 // Alban 22 oct: también a personas de la oficina (no una categoría) y se puede responder
 // Las personas que reciben mensajes directos salen de Admin › Personas (casilla "📣 Mensajes"), con su nombre y puesto.
 function msgPers(){ const L = typeof usrLista === "function" ? usrLista() : [];
-  const alguno = L.some(u => u.msg);   // si nadie tiene "📣 Recibe mensajes" marcado: los de puesto Oficina / Gerente (o Alban, Isabella, Andrea)
-  return L.filter(u => String(u.nom || "").trim() && (alguno ? u.msg : (/oficina|gerente|admin/i.test(String(u.puesto || "")) || ["alban","isabella","andrea"].includes(pedNorm(u.nom)))))
-  .map(u => ["U:" + u.id, "👤 " + u.nom + (u.puesto ? " · " + u.puesto : ""), "U" + String(u.id).replace(/[^A-Za-z0-9]/g, "")]); }
+  // Alban 31 oct: TODAS las personas (les llega donde tengan su sesión abierta); 4º dato = es de la oficina
+  return L.filter(u => String(u.nom || "").trim())
+  .map(u => ["U:" + u.id, "👤 " + u.nom + (u.puesto ? " · " + u.puesto : ""), "U" + String(u.id).replace(/[^A-Za-z0-9]/g, ""), /oficina|gerente|admin/i.test(String(u.puesto || ""))]); }
 function msgDest(){ return [...MSG_AREAS, ...msgPers()]; }
 const msgSlug = a => (msgDest().find(x => x[0] === a) || [])[2];
 const msgLabel = a => (msgDest().find(x => x[0] === a) || [a, a])[1];
 function miPersona(){   // persona de la oficina que usa este equipo: por su código, o elegida en Mensajes
   const yo = typeof usrYo === "function" ? usrYo() : null;
-  if(yo && (yo.msg || msgPers().some(x => x[0] === "U:" + yo.id))) return "U:" + yo.id;   // 23 oct: si entró con su código y está en la lista de Mensajes, recibe lo suyo
+  if(yo) return "U:" + yo.id;   // Alban 31 oct: con sesión abierta, siempre es la persona   // 23 oct: si entró con su código y está en la lista de Mensajes, recibe lo suyo
   const g = lsGet("mi_persona"); return msgPers().some(x => x[0] === g) ? g : null;
 }
 function misDestinos(){ return [miPersona(), miArea()].filter(Boolean); }
@@ -6336,11 +6337,11 @@ function renderMensajes(){
       ${MSG_AREAS.map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${(PALETTE[a[0]] || PALETTE.ALL).a};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
       <button type="button" class="m-todas" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Todas</button>
     </div>
-    <div style="font-size:0.75rem;font-weight:600;color:${C.inkSoft};margin-top:10px;">👤 Personas</div>
+    <details class="m-pdet" style="margin-top:12px;"><summary style="cursor:pointer;font-size:0.95rem;font-weight:700;color:${C.ink};padding:6px 0;">👤 Personas (${msgPers().length}) · toca para ver</summary>
     <div class="m-para m-pers" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
       ${msgPers().map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${C.gold};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
       <button type="button" class="m-ofi" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">🏢 Toda la oficina</button>
-    </div>
+    </div></details>
     <div class="m-avisos" style="margin-top:14px;padding:10px 12px;border:1.5px dashed ${C.line};border-radius:12px;font-size:0.84rem;color:${C.inkSoft};display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
     <div style="font-size:0.8rem;font-weight:600;color:${C.inkSoft};margin-top:14px;text-transform:uppercase;letter-spacing:.05em;">¿Quién envía?</div>
     <select class="m-dek" style="${inp}margin-top:6px;"><option value="">— Elige —</option>${msgDest().map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select>
@@ -6365,14 +6366,14 @@ function renderMensajes(){
     dek.value = yoK; de.value = (typeof usrYo === "function" && usrYo()) ? usrYo().nom : "";
     [dek, de].forEach(x => { x.style.display = "none"; });
     const t = dek.previousElementSibling; if(t) t.style.display = "none";
-    const lb = yoSel.closest("label"); if(lb){ lb.innerHTML = `Envías como <b>${escH(msgLabel(yoK).replace(/^\S+\s/, ""))}</b> · `; const c = document.createElement("button"); c.type = "button"; c.textContent = "cambiar"; c.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0;`); c.onclick = () => { lsSet("mi_persona", ""); renderMensajes(); }; lb.appendChild(c); }
+    const lb = yoSel.closest("label"); if(lb){ lb.innerHTML = `Envías como <b>${escH(msgLabel(yoK).replace(/^\S+\s/, ""))}</b> · `; const c = document.createElement("button"); c.type = "button"; c.textContent = "cambiar"; c.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0;`); c.onclick = () => { lsSet("mi_persona", ""); renderMensajes(); }; if(!(typeof usrYo === "function" && usrYo())) lb.appendChild(c); }
   }
   yoSel.onchange = () => { lsSet("mi_persona", yoSel.value); if(!dek.value && yoSel.value) dek.value = yoSel.value; msgPintarEstado().catch(() => {}); };
   w.querySelector(".m-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
   if(MSG_EMBED) w.querySelector(".m-vol").style.display = "none";
   w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
-  w.querySelector(".m-ofi").onclick = () => { w.querySelectorAll(".m-pers input").forEach(c => c.checked = true); const o = w.querySelector('.m-para input[value="Oficina"]'); if(o) o.checked = true; };
+  w.querySelector(".m-ofi").onclick = () => { w.querySelectorAll(".m-pers input").forEach(c => { if((msgPers().find(p => p[0] === c.value) || [])[3]) c.checked = true; }); const o = w.querySelector('.m-para input[value="Oficina"]'); if(o) o.checked = true; };
   avisosUI(w.querySelector(".m-avisos"));
   callSeccionBind(w);   // Alban 31 oct: llamadas
   w.querySelector(".m-env").onclick = async ev => {
@@ -6528,10 +6529,12 @@ async function callRevisar(){
 // Sección "📞 Llamar" dentro de Mensajes
 function callSeccionHTML(){
   if(!callOK()) return `<div style="margin-top:18px;font-size:0.86rem;color:${C.inkSoft};">📞 Las llamadas funcionan en la web, con micrófono.</div>`;
-  const yo = msgYoKey(), lista = msgDest().filter(a => a[0] !== yo && a[0] !== "Oficina");
+  const yo = msgYoKey(), boton = a => `<button type="button" class="c-call" data-k="${escH(a[0])}" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#fff;border:1.5px solid #2F6DB5;color:#2F6DB5;border-radius:12px;padding:10px 14px;cursor:pointer;">📞 ${escH(callNom(a[0]))}</button>`;
+  const areas = MSG_AREAS.filter(a => a[0] !== yo && a[0] !== "Oficina"), pers = msgPers().filter(a => a[0] !== yo);
   return `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;margin-top:22px;">📞 Llamar</div>
     <div style="font-size:0.85rem;color:${C.inkSoft};">Hablar en vivo. Le suena a la persona o al área si tiene la página abierta.</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${lista.map(a => `<button type="button" class="c-call" data-k="${escH(a[0])}" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#fff;border:1.5px solid #2F6DB5;color:#2F6DB5;border-radius:12px;padding:10px 14px;cursor:pointer;">📞 ${escH(callNom(a[0]))}</button>`).join("")}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${areas.map(boton).join("")}</div>
+    <details style="margin-top:10px;"><summary style="cursor:pointer;font-size:0.95rem;font-weight:700;color:${C.ink};padding:6px 0;">👤 Personas (${pers.length}) · toca para ver</summary><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">${pers.map(boton).join("")}</div></details>
     ${yo ? "" : `<div style="font-size:0.8rem;color:#B23A2E;margin-top:6px;">Para que te puedan llamar a ti, este equipo debe tener área o persona (arriba).</div>`}`;
 }
 function callSeccionBind(w){ w.querySelectorAll(".c-call").forEach(b => b.onclick = () => { audioListo(); callLlamar(b.dataset.k); }); }
@@ -6555,7 +6558,10 @@ function avisosUI(el){
   if(!el) return;
   const soporta = typeof Notification !== "undefined";
   const on = notifOK(), pOn = lsGet("pantalla_on") === "1", wl = "wakeLock" in navigator;
-  el.innerHTML = `<span style="flex:1 1 100%;font-weight:700;color:${C.ink};">🔔 Avisos en este equipo</span>
+  const listo = (!soporta || on) && (!wl || pOn);   // Alban 31 oct: obligatorio; cuando están los 2, desaparece
+  if(listo){ el.innerHTML = ""; el.style.display = "none"; return; }
+  el.setAttribute("style", "margin-top:14px;padding:16px;border:3px solid #B23A2E;border-radius:16px;background:#FBE4E4;font-size:0.9rem;color:#7A1F17;display:flex;flex-wrap:wrap;gap:10px;align-items:center;");
+  el.innerHTML = `<span style="flex:1 1 100%;font-weight:800;font-size:1.15rem;color:#B23A2E;">⚠️ Obligatorio en este equipo: activa estas 2 opciones</span>
     ${soporta ? `<button type="button" class="n-act" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px solid ${on ? "#2F6DB5" : C.ink};background:${on ? "#E3EDF9" : "#fff"};color:${on ? "#2F6DB5" : C.ink};border-radius:10px;padding:9px 12px;cursor:pointer;">${on ? "✅ Notificaciones activas" : "🔔 Activar notificaciones"}</button>` : `<span>Este navegador no permite notificaciones.</span>`}
     ${wl ? `<button type="button" class="n-wake" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px solid ${pOn ? "#2F6DB5" : C.ink};background:${pOn ? "#E3EDF9" : "#fff"};color:${pOn ? "#2F6DB5" : C.ink};border-radius:10px;padding:9px 12px;cursor:pointer;">${pOn ? "✅ Pantalla siempre encendida" : "📱 Mantener la pantalla encendida"}</button>` : ""}
     <span style="flex:1 1 100%;font-size:0.78rem;">Con notificaciones, el mensaje suena aunque la pantalla esté bloqueada (la página debe quedar abierta y con internet). En la tablet, mejor agregar la página a la pantalla de inicio.</span>`;
