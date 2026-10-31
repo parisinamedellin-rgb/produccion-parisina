@@ -5290,6 +5290,7 @@ function render(){
   main.innerHTML = "";
   setTimeout(marcarVidrio, 0);   // Alban 22 oct: "*V*" = va en vidrio -> etiqueta visible para el operador
   if(["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
+  if(activeCat === "Tortas"){ const tb = tortasTableroEl(activeDate); if(tb) main.appendChild(tb); }   // Alban 30 oct: tablero de tortas (palitos) · 31 oct: ANTES del Orden de realización (ya tiene las horas en naranja)
   const day = DATA[activeDate];
   const groups = activeCat === "ALL" ? [...GROUP_ORDER, ...EXTRA_GROUPS_ALL] : [activeCat];
   let any = false;
@@ -5302,7 +5303,6 @@ function render(){
   // ¿se pintó el cuadro "Orden de realización"? (si no, los bloques de fórmula salen abiertos, p. ej. Topping)
   const hayOrden = activeCat !== "ALL" && !!(main.children && main.children.length > nMain0);
   if(hayOrden) any = true;
-  if(activeCat === "Tortas"){ const tb = tortasTableroEl(activeDate); if(tb){ main.appendChild(tb); any = true; } }   // Alban 30 oct: tablero de tortas (palitos) · 31 oct: después del Orden de realización
   const AREA = activeCat !== "ALL" && !PANA_FUT;
   const FORMULA_IDS = new Set(FORMULA_DEFS.map(d=>d.id));
   const HORAS = prioHoras(activeDate);
