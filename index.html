@@ -6292,26 +6292,32 @@ function tortasTableroEl(iso){
   const rem = (typeof avisosAdelanto === "function" ? avisosAdelanto("Tortas", iso) : []).filter(a => a.nombres && a.limite <= iso);
   if(rem.length) cols.unshift(["🥛 Remojar hoy", rem.flatMap(a => a.nombres.map(x => ({name: x.name, q: x.q, b: a.clave + "::" + x.name, para: a.iso, clave: a.clave})))]);
   if(!cols.length) return null;
+  // Alban 31 oct: las que tienen hora de salida (Orden de realización) van primero y en NARANJA (las primeras N, N = cantidad con hora)
+  const PH = {};
+  (typeof PRIO !== "undefined" && PRIO[iso] || []).forEach(p => (p.items || []).forEach(it => { const k = prioKey(iso, it), o = PH[k] || (PH[k] = {q: 0, h: p.hora}); o.q += Number(it[3]) || 0; if(p.hora < o.h) o.h = p.hora; }));
+  cols.forEach(c => { c[1].forEach(x => { const o = PH[x.b]; x.pr = o ? {h: o.h, n: Math.min(x.q, Math.max(1, Math.round(o.q)))} : null; });
+    c[1].sort((a, b) => (a.pr ? 0 : 1) - (b.pr ? 0 : 1) || (a.pr && b.pr ? (a.pr.h < b.pr.h ? -1 : a.pr.h > b.pr.h ? 1 : 0) : 0)); });
+  const hra = x => x.pr ? ` <span style="font-weight:800;text-transform:none;color:#E8820C;white-space:nowrap;">⏰ ${fmtHora(x.pr.h)}${x.pr.n < x.q ? " · " + x.pr.n + " primero" : ""}</span>` : "";
   const col = PALETTE.Tortas.a;
   let tot = 0, hech = 0;
   cols.forEach(c => c[1].forEach(x => { tot += x.q; hech += Math.min(x.q, tortHechas(x.b, x.q)); }));
   const box = document.createElement("div");
   box.setAttribute("style", `margin-top:14px;background:${C.paper};border:2px solid ${col};border-radius:16px;padding:14px 16px;`);
-  const palito = (b, i, on) => `<button type="button" data-b="${logEsc(b)}" data-i="${i}" aria-label="Torta ${i}" style="-webkit-appearance:none;appearance:none;position:relative;width:26px;height:40px;border:none;background:none;cursor:pointer;padding:0;margin:0 1px;">
-      <span style="position:absolute;left:10px;top:4px;width:6px;height:32px;border-radius:3px;background:${on ? C.inkSoft : C.ink};opacity:${on ? .45 : 1};"></span>
+  const palito = (b, i, on, nar) => `<button type="button" data-b="${logEsc(b)}" data-i="${i}" aria-label="Torta ${i}" style="-webkit-appearance:none;appearance:none;position:relative;width:26px;height:40px;border:none;background:none;cursor:pointer;padding:0;margin:0 1px;">
+      <span style="position:absolute;left:10px;top:4px;width:6px;height:32px;border-radius:3px;background:${on ? C.inkSoft : nar ? "#E8820C" : C.ink};opacity:${on ? .45 : 1};"></span>
       ${on ? `<span style="position:absolute;left:-2px;top:17px;width:30px;height:4px;border-radius:2px;background:#B23A2E;transform:rotate(-20deg);"></span>` : ""}</button>`;
   const etq = x => { if(x.para){ const f = fmtDay(x.para); return ` <span style="font-weight:600;text-transform:none;color:#A3252B;">· para ${f.dow} ${f.dm}</span>`; }
     return TL.test(x.name) ? ` <span style="font-weight:600;text-transform:none;color:${C.inkSoft};">· decorar</span>` : ""; };
   box.innerHTML = `<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
       <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:${col};">🎂 Tablero de tortas</span>
-      <span style="font-size:0.9rem;color:${C.inkSoft};">Toca un palito cada vez que termines una torta · <b style="color:${C.ink};">${hech}/${tot}</b> hechas</span></div>
+      <span style="font-size:0.9rem;color:${C.inkSoft};">Toca un palito cada vez que termines una torta · <span style="color:#E8820C;font-weight:700;">▮ naranja = sale primero</span> · <b style="color:${C.ink};">${hech}/${tot}</b> hechas</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:12px;">
     ${cols.map(([t, items]) => `<div style="border:${items[0] && items[0].clave ? "2px solid #A3252B" : `1.5px solid ${C.line}`};border-radius:12px;overflow:hidden;">
         <div style="background:${items[0] && items[0].clave ? "#FBE4E4" : PALETTE.Tortas.s};${items[0] && items[0].clave ? "color:#A3252B;" : ""}font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:8px 12px;font-size:0.95rem;">${t}</div>
         ${items.filter(x => x.q > 0).map(x => { const b = x.b, h = Math.min(x.q, tortHechas(b, x.q)), ok = h >= x.q;
           return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid ${C.line};${ok ? `background:${PALETTE.Tortas.s};` : ""}">
-            <span style="flex:1 1 150px;font-weight:700;font-size:0.95rem;text-transform:uppercase;${ok ? `text-decoration:line-through;color:${C.inkSoft};` : ""}">${logEsc(tortNombre(x.name))}${etq(x)}</span>
-            <span style="display:flex;flex-wrap:wrap;align-items:center;">${Array.from({length: x.q}, (_, k) => palito(b, k + 1, k < h)).join("")}</span>
+            <span style="flex:1 1 150px;font-weight:700;font-size:0.95rem;text-transform:uppercase;${ok ? `text-decoration:line-through;color:${C.inkSoft};` : ""}">${logEsc(tortNombre(x.name))}${etq(x)}${hra(x)}</span>
+            <span style="display:flex;flex-wrap:wrap;align-items:center;">${Array.from({length: x.q}, (_, k) => palito(b, k + 1, k < h, x.pr && k < x.pr.n)).join("")}</span>
             <span style="font-family:'IBM Plex Mono',monospace;font-size:0.85rem;color:${ok ? col : C.inkSoft};min-width:3em;text-align:right;">${ok ? "✓ " : ""}${h}/${x.q}</span></div>`; }).join("")}
       </div>`).join("")}
     </div>`;
