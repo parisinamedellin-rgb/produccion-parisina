@@ -3724,7 +3724,7 @@ function rotuloHTML(r, iso, w, h){
 const ROT_NOM_MAX = 20;        // tope del nombre del producto en pt (= tamaño con que sale "RED VELVET PM MARCADA")
 const ROT_SEGURIDAD_MM = 2;    // margen de seguridad abajo
 const ROT_MARGEN_SUP_CLI_MM = 5.5;   // Alban 31 oct: rótulos CON cliente seguían cortando "Elaboración/Vence" arriba → más margen solo en esos
-const ROT_MARGEN_SUP_MM = 3.5;  // Alban 30 oct: la QL-600 no imprime ~3,5 mm del borde de arriba → el contenido arranca a 4,5 mm
+const ROT_MARGEN_SUP_MM = 5.5;   // Alban 31 oct: con 5,5 mm (cliente) sale bien; con 3,5 mm se cortaba → todos a 5,5  // Alban 30 oct: la QL-600 no imprime ~3,5 mm del borde de arriba → el contenido arranca a 4,5 mm
 function rotAltoContenido(el){
   const k = [...el.children]; if(!k.length) return el.scrollHeight;
   const top = k[0].getBoundingClientRect().top - parseFloat(getComputedStyle(k[0]).marginTop || 0);
