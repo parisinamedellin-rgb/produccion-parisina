@@ -3707,7 +3707,7 @@ function rotuloHTML(r, iso, w, h){
   const [nom, dias, cons, ingr, alerg] = pr;
   const lote = `${LOTE_PLANTA}&nbsp;&nbsp;${ddmmyy(iso).replace(/-/g,"")}&nbsp;&nbsp;${logEsc(r.cod)}&nbsp;&nbsp;${fmtN(r.q)}`;
   // Alban 30 oct: contenido ARRIBA (no centrado) para que "Elaboración / Vence / Lote" siempre se vea; el nombre tiene tope (ROT_NOM_MAX)
-  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:${ROT_MARGEN_SUP_MM}mm 3mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;text-align:center;line-height:1.18;font-size:7pt;">
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:${r.conCli && r.cli ? ROT_MARGEN_SUP_CLI_MM : ROT_MARGEN_SUP_MM}mm 3mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;text-align:center;line-height:1.18;font-size:7pt;">
     <div style="font-size:1.25em;text-align:right;">Elaboración:&nbsp; ${ddmmyy(iso)}&nbsp;&nbsp;&nbsp; Vence:&nbsp; ${ddmmyy(masDias(iso, dias))}</div>
     <div style="font-size:1.25em;text-align:right;">Lote:&nbsp;&nbsp; ${lote}</div>
     ${r.conCli && r.cli ? `<div style="font-size:1.35em;font-weight:700;text-align:left;border:0.3mm solid #000;border-radius:1mm;padding:.5mm 1.5mm;margin-top:.8mm;">Cliente: ${logEsc(r.cli)}</div>` : ""}
@@ -3723,6 +3723,7 @@ function rotuloHTML(r, iso, w, h){
 // de TODO el rótulo de 0,25 pt en 0,25 pt hasta que quepa completo. También revisa que nada se salga de lado.
 const ROT_NOM_MAX = 20;        // tope del nombre del producto en pt (= tamaño con que sale "RED VELVET PM MARCADA")
 const ROT_SEGURIDAD_MM = 2;    // margen de seguridad abajo
+const ROT_MARGEN_SUP_CLI_MM = 5.5;   // Alban 31 oct: rótulos CON cliente seguían cortando "Elaboración/Vence" arriba → más margen solo en esos
 const ROT_MARGEN_SUP_MM = 3.5;  // Alban 30 oct: la QL-600 no imprime ~3,5 mm del borde de arriba → el contenido arranca a 4,5 mm
 function rotAltoContenido(el){
   const k = [...el.children]; if(!k.length) return el.scrollHeight;
