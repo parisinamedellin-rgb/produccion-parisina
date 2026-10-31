@@ -4860,7 +4860,7 @@ function refrigHTML(d, w, h){
       ${c.ingr ? `<div style="font-style:italic;margin-top:.4mm;">${logEsc(c.ingr)}</div>` : ""}
       ${c.alerg ? `<div style="margin-top:.4mm;">${logEsc(c.alerg)}</div>` : ""}
     </div>`).join("");
-  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:2mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:center;text-align:center;line-height:1.15;font-size:8pt;">
+  return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:${ROT_MARGEN_SUP_MM}mm 2.5mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;text-align:center;line-height:1.15;font-size:8pt;">
     <div style="font-size:1.15em;display:flex;flex-wrap:wrap;justify-content:space-between;column-gap:3mm;border-bottom:0.25mm solid #000;padding-bottom:.8mm;margin-bottom:1mm;">
       <span style="white-space:nowrap;">Elaboración: <b>${ddmmyy(d.fecha)}</b> &nbsp; Vence: <b>${ddmmyy(d.vence)}</b></span><span style="white-space:nowrap;">Lote: ${logEsc(d.lote)}</span></div>
     <div style="display:flex;align-items:stretch;">${prods}</div>
