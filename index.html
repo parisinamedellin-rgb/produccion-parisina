@@ -6248,6 +6248,7 @@ function renderSanidad(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${SAN_AREAS.map(([k,t])=>`<button type="button" data-a="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:600;border-radius:100px;padding:8px 14px;cursor:pointer;border:1.5px solid ${k===fam ? col : C.line};background:${k===fam ? col : C.paper};color:${k===fam ? "#fff" : C.ink};">${t}${k===miArea ? " · mi equipo" : ""}</button>`).join("")}</div>`;
   const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
   const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [] : aseoDelArea(fam);
+  h += planSeccionHTML();   // Alban 31 oct: planillas con firma
   h += sanCheckHTML(fam, genteChk, col);
   if(genteChk.length) h += `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Tareas del equipo esta semana</div>`;
   if(fam === "ARELIS"){
@@ -6272,6 +6273,7 @@ function renderSanidad(){
   }
   w.innerHTML = h; main.appendChild(w);
   sanCheckBind(w, fam, genteChk);
+  planPintarSeccion();
   w.querySelector(".s-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
   w.querySelectorAll("[data-a]").forEach(b => b.onclick = ()=>{ SAN_AREA = b.dataset.a; renderSanidad(); });
 }
@@ -6556,6 +6558,347 @@ function callSeccionHTML(){
     ${yo ? "" : `<div style="font-size:0.8rem;color:#B23A2E;margin-top:6px;">Para que te puedan llamar a ti, este equipo debe tener área o persona (arriba).</div>`}`;
 }
 function callSeccionBind(w){ w.querySelectorAll(".c-call").forEach(b => b.onclick = () => { audioListo(); callLlamar(b.dataset.k); }); }
+// ============================================================
+// 📋 PLANILLAS DE SANIDAD CON FIRMA (Alban 31 oct 2026)
+// Las planillas que se llenaban a mano ahora se llenan en la página. Cada persona ve las suyas (según su área y su
+// puesto de aseo de la semana), las llena y FIRMA: entra con su código personal + dibuja su firma con el dedo.
+// Se envían al Apps Script propio "Planillas sanidad" (PLAN_API), que guarda cada registro en la hoja
+// "Planillas sanidad - Parisina" (solo se agregan filas) con fecha y hora del SERVIDOR y una huella SHA-256 encadenada
+// (cada registro incluye la huella del anterior: si alguien cambia una fila, la cadena se rompe).
+// Cada quincena, Alban saca el PDF desde aquí (Sanidad › 📄 PDF de la quincena).
+// ============================================================
+// URL del Apps Script "Planillas sanidad" (web app). Vacío = todavía no está activado.
+const PLAN_API = "";
+const PLAN_QUIM = [["1","Aerowash Plus (jabón multiusos)"],["2","Suma Grill (desengrasante)"],["3","Suma Sanitaizer (amonio cuaternario)"],["4","Suma Eden (frutas y verduras)"],["5","Break Up Chlor (pisos y paredes)"],["6","Soft Care Plus Foam (jabón de manos)"],["7","Soft Care Des-E H5 (alcohol gel)"]];
+const PLAN_EQUIPOS_FRIO = ["Nevera #1","Nevera #4","Nevera #8","Nevera #11","Congelador #2","Congelador #3","Congelador #5","Congelador #6","Congelador #7","Congelador #9","Congelador #10"];
+const PLANILLAS = [
+  {id:"ASEO_BAT", cod:"PLD-F-02", t:"Control de aseo – Batido", quien:{area:"Batido"}, tipo:"aseo", items:[
+    ["Bowl grande, pequeño y plano",7],["Canastas de huevos",43],["Canastas, canecas",4],["Moldes tortas",70],["Espátula codo, miserable, cuchillo sierra, liras, globo de mano",8],
+    ["Paredes"],["Piso",1],["Mesones, repisas",4],["Diluidores, mangueras, tarros de almacenamiento",4],["Lavaplatos, jabonera",2],["Timer",1],["Canecas residuos",1],["Tomas eléctricos",1],["Esponjas y trapos",4],
+    ["Selladora, calculadora, báscula",3],["Batidora 20 L, rejilla, base",2],["Congelador #6",1],["Congelador #9",1]]},
+  {id:"ASEO_SAL", cod:"PLD-F-02", t:"Control de aseo – Comida de sal", quien:{area:"Comida de sal"}, tipo:"aseo", items:[
+    ["Bowl, ollas, sartenes"],["Jarras, vasos, platos"],["Tijeras, espátulas, cuchillos, cucharas, tenedores, miserables, brochas, cortadores, moldes, otros"],["Tablas para picar"],
+    ["Paredes"],["Piso",1],["Lavaplatos, mesón, repisas, jabonera",4],["Estufa, parrillas, quemadores",6],["Canecas de residuos",2],["Canastas",2],["Esponjas y trapos",4],["Tomas eléctricos, timer, calculadora",4],
+    ["Licuadora",2],["Mixer",1],["Microondas, plato",2],["Selladora",1],["Báscula",1],["Procesadora",1],["Nevera #11",1],["Congelador #7",1]]},
+  {id:"ASEO_DES", cod:"PLD-F-02", t:"Control de aseo – Despacho", quien:{area:"Logistica"}, tipo:"aseo", items:[
+    ["Tijeras",1],["Cinta",1],["Paredes"],["Piso",1],["Mesón",1],["Tomas eléctricos",4],["Basurera blanca",1],["Repisas",2],["Cortinas",1],["Nevera #4",1],["Congelador #3",1],["Portátil, base, cables",3],["Impresora, cables",2]]},
+  {id:"ASEO_MAN", cod:"PLD-F-02", t:"Control de aseo – Zona de manipulación de alimentos", quien:{aseo:true}, tipo:"aseo", items:[
+    ["Extintores",2],["Ventanas (repostería, despacho, hornos, cuarto de aseo)",4],["Tomas eléctricos"],["Bandejas",10],["Horno 1",1],["Horno 2",1],["Horno 3",1],["Campana, estufa, hornillas",3],["Carretillas",1],["Cuarto de aseo",1],["Base de los bultos",1],
+    ["Techos y mallas (bodega plásticos, batidos, despacho)",4],["Ambiente"],["Ventiladores",4],["Impresoras, monitores, cables, portátil",5],["Microondas, plato",2],["Diluidores, mangueras, tarros de almacenamiento",6]]},
+  {id:"ASEO_PAN", cod:"PLD-F-02", t:"Control de aseo – Panadería", quien:{area:"Panaderia"}, tipo:"aseo", items:[
+    ["Cuchillos, cubiertos, cucharas medidoras, espátulas, brocha, raspadoras, cortadores pizza, rodillos, cortadores pasteles",14],["Moldes plásticos",5],["Moldes de aluminio",5],["Reglas",3],["Rodillo hojaldre",1],["Tabla blanca",1],
+    ["Paredes"],["Lavaplatos, mesón, repisas, jabonera",5],["Piso",1],["Mesones",1],["Esponjas y trapos",4],["Canastas",2],["Cortinas, puerta",2],["Tomas eléctricos",2],
+    ["Mojadora",1],["Laminadora, brocha laminadora",2],["Báscula",1],["Calculadora",1],["Nevera #1",1],["Nevera #8",1],["Congelador #2",1],["Congelador #5",1]]},
+  {id:"ASEO_REP", cod:"PLD-F-02", t:"Control de aseo – Repostería", quien:{area:"Reposteria"}, tipo:"aseo", items:[
+    ["Bowl grande y pequeño",6],["Mangas, jarra, cucharas medidoras",16],["Bailarinas, tijeras, rodillos",5],["Brocha, espátulas, miserables, cortadores, boquillas, cuchillos, moldes tartas",26],["Moldes tartas",40],["Tabla blanca",1],
+    ["Paredes"],["Piso",1],["Mesón, repisas, imán",5],["Lavaplatos, escurridor, jabonera, esponjas y trapos",7],["Canecas de residuos",2],["Canastas, carpetas",7],["Tomas eléctricos, timers",3],
+    ["Batidora grande (8 L), gancho, escudo, globo, base",5],["Microondas, plato",2],["Batidora KitchenAid, aspas",3],["Báscula",2],["Batidora de mano, ganchos",3],["Procesadora, tapa, cuchillas",3],["Nevera #1",1],["Congelador #10",1]]},
+  {id:"ASEO_ZC", cod:"PLD-F-02", t:"Control de aseo – Zonas comunes", quien:{aseo:true}, tipo:"aseo", items:[
+    ["Extintores"],["Ventanas y persianas (cuarto de descanso, oficina)"],["Tomas eléctricos, caja de llaves"],["Escritorio, comedor, sillas, forros del comedor"],["Puertas, reja, muebles, estantería de bolsos, lockers, estantería zapatos, repisas de vajilla"],
+    ["Paredes, fachada, jardinera"],["Pisos"],["Baño (orinal, inodoro, espejo, ventana, jabonera, lavamanos, utensilios baño)"],["Canecas de residuos"],["Ventiladores, escalera"],["Ambiente"],
+    ["Microondas, plato"],["Computadores, teclados, impresoras, televisores, monitor, timbres, mouses"],["Dispensador de agua, cauchos, nevera del dispensador"],["Diluidores, mangueras, tarros de almacenamiento"]]},
+  // Lista chequeo cierre (planta). Días: D diario · LJ lunes y jueves · MV martes y viernes · M martes · W miércoles · L lunes · S semanal (cualquier día) · X mensual
+  {id:"CIERRE", cod:"LCC", t:"Lista chequeo cierre – Planta", quien:{aseo:true}, tipo:"check", items:[
+    ["Limpieza de paredes zona calientes","D"],["Limpieza de paredes (otras áreas)","LJ"],["Limpieza de neveras y congeladores","D"],["Limpieza de recipientes de almacenamiento","D"],["Limpieza de mesas de trabajo","D"],
+    ["Limpieza de pisos (incluye franjas)","D"],["Limpieza puerta de ingreso","D"],["Limpieza de equipos licuadora","D"],["Limpieza de estufa","D"],["Limpieza de parrillas","D"],["Limpieza de campana","MV"],
+    ["Lavado de trampa de grasa","D"],["Limpieza de horno microondas","D"],["Limpieza de horno","D"],["Limpieza de batidora","MV"],["Limpieza de poceta de lavado","D"],["Desinfección de choque","X"],
+    ["Limpieza de recipientes de residuos y tapas","D"],["Limpieza de recipientes y ollas","D"],["Actualización de rótulos","D"],["Limpieza de cortinas plásticas","D"],["Verificación de rotulación","D"],
+    ["Limpieza de utensilios de cocina (cucharas, cuchillos, tablas de picar, ralladores, coladores, ollas…)","D"],["Lavado y desinfección de baños (dispensadores, paredes, espejos, lavamanos, sanitario, pisos)","D"],
+    ["Limpieza de lockers","M"],["Limpieza de lockers interno","M"],["Limpieza de oficina","D"],["Limpieza de ventanas","W"],["Limpieza de salón","D"],["Limpieza y desinfección de mesas y sillas","D"],["Limpieza y orden de bodega","L"],["Lavado y desinfección de utensilios de aseo","D"]]},
+  {id:"SUPERV", cod:"LCC-S", t:"Lista chequeo cierre del supervisor", quien:{area:"Logistica"}, tipo:"check", items:[
+    ["§ Cuarto de aseo"],["Recogedores, trapeadores, escobas, baldes","D"],["Pocetas","D"],["Estantería","D"],["Paredes y piso","D"],
+    ["§ Test de agua"],["Planilla de pH y cloro llena","D"],
+    ["§ Hornos"],["No se encuentran alimentos afuera","D"],["No se encuentran moldes","D"],["No se encuentran latas o tapetes de silicona sucios","D"],["Hornos limpios","D"],["Lavado de los guantes","S"],
+    ["§ Cuarto de hornos"],["Paredes y piso del corredor","D"],["Paredes y piso del cuarto de hornos","D"],
+    ["§ Zona de bultos"],["Bultos cerrados","D"],["Paredes y piso","D"],["Estantería de los bultos","S"],
+    ["§ Cuarto de neveras"],["Paredes y piso","D"],
+    ["§ Temperatura"],["Planilla de temperaturas llena (2 veces al día)","D"],
+    ["§ Neveras"],["Superficie externa","D"],["Empaques","D"],["Filtro y bandeja de agua","S"],
+    ["§ Cuarto de empaques"],["Paredes y piso","D"],["Ninguna bolsa queda abierta ni en contacto con el piso","D"]]},
+  {id:"DESINF", cod:"PLD-P-01", t:"Desinfección de alimentos", quien:{areas:["Batido","Comida de sal","Reposteria"]}, tipo:"tabla", evento:true, cols:[
+    {k:"ali", t:"Alimento", req:1},{k:"qui", t:"Producto químico", op:["Suma Eden","Otro"], req:1},{k:"tie", t:"Tiempo de desinfección (min)", num:1, req:1},{k:"enj", t:"Enjuague", op:["Sí","No"], req:1}]},
+  {id:"PLAGAS", cod:"PCIP-F-01", t:"Inspección de presencia de plagas", quien:{aseo:true}, tipo:"plagas", semanal:true, items:[
+    ["§ Área de cocina y barra"],["Uniones entre el piso y las paredes, y paredes y techos"],["Estufa (interior, debajo, parrillas, bandejas)"],["Estanterías (entrepaños, bases)"],["Lavaplatos (interior, exterior, puerta, canasta, partes removibles)"],
+    ["Campana de extracción (filtros, exterior, interior)"],["Horno (exterior, debajo)"],["Neveras y congeladores (empaques, exterior)"],["Despensa (interior, exterior, entrepaños)"],["Lockers (interior, exterior, tapas, partes removibles)"],
+    ["Mesas (esquinas y bordes)"],["Licuadoras, microondas, batidora, grameras, impresoras (interior, exterior)"],["Canastas"],["Recipientes de almacenamiento de residuos"],
+    ["§ Área de servicio y administrativa"],["Uniones entre el piso y las paredes, y paredes y techos"],["Mesas, organizadores, sillas (esquinas, bordes, cajones, rieles)"],["Recipientes de almacenamiento de residuos"],["Baños"]]},
+  {id:"AGUA", cod:"MC-F-01", t:"Muestreo de agua – pH y cloro", quien:{zona:"Aseo, agua y temperatura"}, tipo:"agua"},
+  {id:"PNC", cod:"PNC-F-01", t:"Producto no conforme – baja de productos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, cols:[
+    {k:"des", t:"Descripción del PNC", req:1},{k:"can", t:"Cantidad", req:1},{k:"dis", t:"Disposición", op:["Desecho","Reproceso","Devolución al proveedor","Otro"], req:1},{k:"acc", t:"Acciones tomadas / comentarios"},{k:"aut", t:"Autorizado por", req:1},{k:"obs", t:"Observaciones"}]},
+  {id:"RECEP", cod:"PP-F-01", t:"Recepción de materia prima e insumos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, cols:[
+    {k:"pro", t:"Producto", req:1},{k:"can", t:"Cantidad", req:1},{k:"prv", t:"Proveedor", req:1},{k:"lot", t:"Lote"},{k:"ven", t:"Fecha de vencimiento", fecha:1},{k:"tem", t:"Temperatura (°C)", num:1},
+    {k:"emp", t:"Empaque", op:["Conforme","No conforme"], req:1},{k:"cos", t:"Color · olor · sabor", op:["Conforme","No conforme","No aplica"], req:1},{k:"obs", t:"Observaciones"}]},
+  {id:"TEMPREF", cod:"PLD-F-01", t:"Temperaturas de equipos de refrigeración", quien:{zona:"Aseo, agua y temperatura"}, tipo:"frio", veces:["Apertura","Cierre"]},
+  {id:"TEMPCAL", cod:"PLD-F-01", t:"Temperaturas en procesos calientes", quien:{area:"Comida de sal"}, tipo:"tabla", evento:true, nota:"T° de cocción mínima 70 °C (160 °F), tomada en el centro del alimento.", cols:[
+    {k:"ali", t:"Alimento", req:1},{k:"tem", t:"Temperatura (°C)", num:1, req:1, min:70},{k:"hor", t:"Hora", hora:1}]},
+];
+const PLAN_DIAS = {D:[1,2,3,4,5,6], LJ:[1,4], MV:[2,5], M:[2], W:[3], L:[1], S:[1,2,3,4,5,6], X:[1,2,3,4,5,6]};
+const PLAN_OPC = {S:"(semanal)", X:"(1 vez al mes)"};
+let PLAN_HOY = null, PLAN_HOY_T = 0;   // registros firmados hoy (del servidor): [{planilla, persona, hora, extra}]
+// ---- ¿quién es? (sesión con código) ----
+function planYo(){
+  const u = typeof usrYo === "function" ? usrYo() : null; if(!u) return null;
+  const n = aseoNorm(u.nom), p = (PERSONAL || []).find(x => aseoNorm(x.n) === n);
+  const area = p && p.a ? p.a : (typeof aseoAreaDe === "function" ? aseoAreaDe(u) : "") || ((u.acc || []).includes("Logistica") ? "Logistica" : "");
+  const zona = p && typeof p.p === "number" ? aseoZona(p.p - 1) : null;
+  return {nom: u.nom, area, zona, aseo: !!(p && p.p === "Fijo" && !p.a), admin: /gerente/i.test(String(u.puesto || "")) || pedNorm(u.nom) === "alban"};
+}
+function planEsMia(pl, y){
+  if(!y) return false; const q = pl.quien;
+  if(q.area) return y.area === q.area;
+  if(q.areas) return q.areas.includes(y.area);
+  if(q.aseo) return y.aseo;
+  if(q.zona) return y.zona === q.zona;
+  return false;
+}
+function planResponsables(pl){
+  const q = pl.quien, P = PERSONAL || [];
+  if(q.area) return P.filter(p => p.a === q.area).map(p => p.n);
+  if(q.areas) return P.filter(p => q.areas.includes(p.a)).map(p => p.n);
+  if(q.aseo) return P.filter(p => p.p === "Fijo" && !p.a).map(p => p.n);
+  if(q.zona) return P.filter(p => typeof p.p === "number" && aseoZona(p.p - 1) === q.zona).map(p => p.n);
+  return [];
+}
+function planHoyDow(){ return new Date(hoyISO() + "T12:00:00").getDay(); }
+function planFirmadas(id){ return (PLAN_HOY || []).filter(r => r.planilla === id); }
+async function planCargarHoy(forzar){
+  if(!PLAN_API) return null;
+  if(!forzar && PLAN_HOY && Date.now() - PLAN_HOY_T < 60000) return PLAN_HOY;
+  try{
+    const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({tipo: "planillas_hoy"})});
+    const j = await r.json(); if(j && j.ok){ PLAN_HOY = j.registros || []; PLAN_HOY_T = Date.now(); }
+  }catch(e){ if(!PLAN_HOY) PLAN_HOY = null; }
+  return PLAN_HOY;
+}
+// ---- sección en Sanidad ----
+function planSeccionHTML(){ return `<div id="plan-sec" style="margin-top:16px;"></div>`; }
+async function planPintarSeccion(){
+  const el = document.getElementById("plan-sec"); if(!el) return;
+  const y = planYo(), dow = planHoyDow();
+  if(!y){ el.innerHTML = `<div style="background:#FFF4D6;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;font-size:0.92rem;">📋 Para llenar y firmar las planillas, entra con tu código personal.</div>`; return; }
+  const lista = PLANILLAS.filter(pl => y.admin || planEsMia(pl, y));
+  el.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">📋 ${y.admin ? "Planillas de hoy (todas)" : "Mis planillas de hoy"}</div>
+    <div style="font-size:0.85rem;color:${C.inkSoft};">Llénala y fírmala con el dedo. Queda guardada con tu nombre, la fecha y la hora, y no se puede cambiar.</div>
+    <div class="plan-lst" style="display:grid;gap:8px;margin-top:10px;"><div style="color:${C.inkSoft};font-size:0.9rem;">Cargando…</div></div>
+    ${y.admin ? `<button type="button" class="plan-pdf" style="margin-top:12px;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#fff;border:1.5px solid ${C.ink};border-radius:12px;padding:10px 14px;cursor:pointer;">📄 PDF de la quincena</button>` : ""}`;
+  if(y.admin) el.querySelector(".plan-pdf").onclick = () => planPdfQuincena();
+  await planCargarHoy();
+  const lst = el.querySelector(".plan-lst"); if(!lst) return;
+  if(!lista.length){ lst.innerHTML = `<div style="color:${C.inkSoft};font-size:0.9rem;">Hoy no tienes planillas.</div>`; return; }
+  lst.innerHTML = lista.map(pl => {
+    const f = planFirmadas(pl.id), resp = planResponsables(pl);
+    const ok = pl.tipo === "frio" ? pl.veces.every(v => f.some(r => r.extra === v)) : f.length > 0;
+    const est = !PLAN_API ? `<span style="color:${C.inkSoft};">⚙️ falta activar</span>` : PLAN_HOY == null ? `<span style="color:${C.inkSoft};">sin conexión</span>`
+      : ok ? `<span style="color:#2F6DB5;font-weight:700;">✅ ${f.map(r => escH(r.persona) + " " + escH(String(r.hora).slice(0,5)) + (r.extra ? " (" + escH(r.extra) + ")" : "")).join(" · ")}</span>`
+      : f.length ? `<span style="color:#C4791E;font-weight:700;">◐ ${f.map(r => escH(r.extra || "") + " " + escH(String(r.hora).slice(0,5))).join(" · ")} · falta ${escH(pl.veces.filter(v => !f.some(r => r.extra === v)).join(", "))}</span>`
+      : pl.evento ? `<span style="color:${C.inkSoft};">cuando haya · o "sin novedad"</span>` : `<span style="color:#B23A2E;font-weight:700;">⏳ pendiente</span>`;
+    return `<button type="button" data-pl="${pl.id}" style="text-align:left;font-family:'Work Sans',sans-serif;background:#fff;border:1.5px solid ${ok ? "#9DB8DE" : C.line};border-radius:12px;padding:11px 14px;cursor:pointer;display:flex;flex-direction:column;gap:2px;">
+      <span style="font-weight:700;font-size:0.98rem;color:${C.ink};">${escH(pl.t)} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(pl.cod)}</span></span>
+      <span style="font-size:0.82rem;">${est}${y.admin && resp.length ? ` <span style="color:${C.inkSoft};">· ${escH(resp.join(", "))}</span>` : ""}</span></button>`;
+  }).join("");
+  lst.querySelectorAll("[data-pl]").forEach(b => b.onclick = () => planAbrir(PLANILLAS.find(p => p.id === b.dataset.pl)));
+}
+// ---- formulario ----
+function planCampo(c, v){
+  const st = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;width:100%;box-sizing:border-box;color-scheme:light;`;
+  if(c.op) return `<select data-k="${c.k}" style="${st}"><option value="">—</option>${c.op.map(o => `<option${o === v ? " selected" : ""}>${escH(o)}</option>`).join("")}</select>`;
+  if(c.fecha) return `<input type="date" data-k="${c.k}" value="${escH(v || "")}" style="${st}">`;
+  if(c.hora) return `<input type="time" data-k="${c.k}" value="${escH(v || new Date().toTimeString().slice(0,5))}" style="${st}">`;
+  return `<input type="${c.num ? "text" : "text"}" ${c.num ? 'inputmode="decimal"' : ""} data-k="${c.k}" value="${escH(v || "")}" style="${st}">`;
+}
+function planAbrir(pl){
+  if(!pl) return;
+  const y = planYo(); if(!y){ alert("Entra con tu código para firmar."); return; }
+  let ov = document.getElementById("plan-ov"); if(ov) ov.remove();
+  ov = document.createElement("div"); ov.id = "plan-ov";
+  ov.setAttribute("style", "position:fixed;inset:0;z-index:9000;background:rgba(20,16,12,.6);overflow:auto;padding:12px;");
+  const dow = planHoyDow(), hoy = hoyISO(), lab = `display:block;font-size:0.8rem;font-weight:700;color:${C.inkSoft};margin:10px 0 4px;`;
+  const box = `background:${C.paper};border:1px solid ${C.line};border-radius:12px;padding:10px 12px;margin-top:10px;`;
+  let cuerpo = "";
+  if(pl.tipo === "aseo"){
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Marca lo que quedó limpio y desinfectado hoy. Si algo no se hizo, escribe por qué en Observaciones.</div>
+      <div style="margin-top:8px;"><button type="button" class="pl-todo" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer;">✓ Marcar todo</button></div>
+      <div style="${box}">${pl.items.map((it, i) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:${i ? `1px solid ${C.line}` : "none"};cursor:pointer;font-size:0.95rem;">
+        <input type="checkbox" data-i="${i}" style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])}</span>${it[1] ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};">×${it[1]}</span>` : ""}</label>`).join("")}</div>
+      <span style="${lab}">Químicos utilizados</span><div style="display:flex;flex-wrap:wrap;gap:6px;">${PLAN_QUIM.map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;border:1px solid ${C.line};border-radius:10px;padding:6px 9px;font-size:0.85rem;background:#fff;"><input type="checkbox" data-q="${n}">${n}. ${escH(t)}</label>`).join("")}</div>`;
+  } else if(pl.tipo === "check"){
+    const its = pl.items.map((it, i) => ({it, i})).filter(x => x.it[0].startsWith("§") || (PLAN_DIAS[x.it[1]] || []).includes(dow));
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Solo salen las actividades que tocan hoy. Marca las que se hicieron.</div>
+      <div style="margin-top:8px;"><button type="button" class="pl-todo" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer;">✓ Marcar todo</button></div>
+      <div style="${box}">${its.map(({it, i}) => it[0].startsWith("§") ? `<div style="font-weight:800;margin-top:10px;text-transform:uppercase;font-size:0.8rem;letter-spacing:.05em;color:${C.inkSoft};">${escH(it[0].slice(2))}</div>`
+        : `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid ${C.line};cursor:pointer;font-size:0.95rem;"><input type="checkbox" data-i="${i}" ${PLAN_OPC[it[1]] ? 'data-opc="1"' : ""} style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])} ${PLAN_OPC[it[1]] ? `<span style="color:${C.inkSoft};font-size:0.8rem;">${PLAN_OPC[it[1]]}</span>` : ""}</span></label>`).join("")}</div>`;
+  } else if(pl.tipo === "plagas"){
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Inspección de la semana. En cada punto: ¿se encontró plaga?</div>
+      <div style="${box}">${pl.items.map((it, i) => it[0].startsWith("§") ? `<div style="font-weight:800;margin-top:10px;text-transform:uppercase;font-size:0.8rem;letter-spacing:.05em;color:${C.inkSoft};">${escH(it[0].slice(2))}</div>`
+        : `<div style="padding:7px 0;border-top:1px solid ${C.line};"><div style="font-size:0.95rem;">${escH(it[0])}</div>
+          <div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">${["No","Sí"].map(o => `<label style="display:flex;gap:5px;align-items:center;border:1px solid ${C.line};border-radius:9px;padding:5px 10px;background:#fff;font-size:0.88rem;"><input type="radio" name="pg${i}" value="${o}" data-pg="${i}"${o === "No" ? " checked" : ""}>${o === "Sí" ? "🐞 Sí, plaga" : "Sin plaga"}</label>`).join("")}
+          <input type="text" data-pgo="${i}" placeholder="Cuál / acción correctiva" style="flex:1;min-width:160px;font-family:'Work Sans',sans-serif;font-size:0.9rem;padding:6px 9px;border:1px solid ${C.line};border-radius:9px;"></div></div>`).join("")}</div>`;
+  } else if(pl.tipo === "agua"){
+    const punto = (typeof ASEO_AGUA_PUNTO !== "undefined" && ASEO_AGUA_PUNTO[dow]) || "";
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Rangos normales: <b>cloro 0,3 a 2 ppm</b> · <b>pH 6,5 a 9</b>.</div>
+      <div style="${box}"><span style="${lab}">Punto de muestra</span>${planCampo({k:"pun"}, punto)}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><span style="${lab}">pH</span>${planCampo({k:"ph", num:1})}</div><div><span style="${lab}">Cloro (ppm)</span>${planCampo({k:"clo", num:1})}</div></div></div>`;
+  } else if(pl.tipo === "frio"){
+    const f = planFirmadas(pl.id), sig = pl.veces.find(v => !f.some(r => r.extra === v)) || pl.veces[pl.veces.length - 1];
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Neveras: <b>0 a 4 °C</b> · Congeladores: <b>−18 °C o menos</b>. Se toma 2 veces al día.</div>
+      <div style="display:flex;gap:8px;margin-top:10px;">${pl.veces.map(v => `<label style="flex:1;display:flex;gap:6px;align-items:center;justify-content:center;border:1.5px solid ${C.ink};border-radius:10px;padding:9px;background:#fff;font-weight:700;"><input type="radio" name="pl-vez" value="${v}"${v === sig ? " checked" : ""}>${v}</label>`).join("")}</div>
+      <div style="${box}">${PLAN_EQUIPOS_FRIO.map((e, i) => `<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:${i ? `1px solid ${C.line}` : "none"};"><span style="flex:1;font-size:0.95rem;">${escH(e)}</span>
+        <input type="text" inputmode="decimal" data-t="${i}" placeholder="°C" style="width:90px;font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px;border:1.5px solid ${C.line};border-radius:9px;text-align:center;"></div>`).join("")}</div>`;
+  } else if(pl.tipo === "tabla"){
+    cuerpo = `${pl.nota ? `<div style="font-size:0.88rem;font-weight:700;color:#8A5A00;">${escH(pl.nota)}</div>` : ""}
+      <div class="pl-filas"></div>
+      <button type="button" class="pl-mas" style="margin-top:10px;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;border:1.5px dashed ${C.ink};background:#fff;border-radius:10px;padding:9px 14px;cursor:pointer;">➕ Agregar otro</button>
+      ${pl.evento ? `<label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:0.95rem;"><input type="checkbox" class="pl-sn" style="width:20px;height:20px;"> Hoy <b>no hubo</b> (sin novedad)</label>` : ""}`;
+  }
+  ov.innerHTML = `<div style="max-width:720px;margin:0 auto;background:#fff;border-radius:18px;padding:18px 16px 20px;font-family:'Work Sans',sans-serif;color:${C.ink};">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+      <div><div style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">${escH(pl.cod)} · Parisina</div>
+        <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;line-height:1.2;">${escH(pl.t)}</div>
+        <div style="font-size:0.85rem;color:${C.inkSoft};margin-top:2px;">${escH(fmtDay(hoy).dow + " " + fmtDay(hoy).dm)} · ${escH(y.nom)}</div></div>
+      <button type="button" class="pl-x" style="font-size:1.4rem;border:none;background:none;cursor:pointer;color:${C.inkSoft};">✕</button></div>
+    <div class="pl-cuerpo" style="margin-top:10px;">${cuerpo}</div>
+    <span style="${lab}">Observaciones</span><textarea class="pl-obs" rows="2" style="font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;width:100%;box-sizing:border-box;"></textarea>
+    <div style="margin-top:16px;border-top:2px solid ${C.ink};padding-top:12px;">
+      <div style="font-weight:800;">✍️ Firma de ${escH(y.nom)}</div>
+      <div style="font-size:0.82rem;color:${C.inkSoft};">Al firmar confirmo que yo realicé y revisé lo registrado en esta planilla.</div>
+      <canvas class="pl-firma" width="600" height="220" style="margin-top:8px;width:100%;height:150px;border:2px dashed ${C.ink};border-radius:12px;background:#fff;touch-action:none;display:block;box-sizing:border-box;"></canvas>
+      <button type="button" class="pl-borrar" style="margin-top:6px;font-family:'Work Sans',sans-serif;font-size:0.85rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Borrar firma</button>
+    </div>
+    <div class="pl-err" style="margin-top:8px;font-weight:700;color:#B23A2E;min-height:1.2em;"></div>
+    <button type="button" class="pl-env" style="margin-top:6px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.1rem;font-weight:800;background:#2F6DB5;color:#fff;border:none;border-radius:14px;padding:15px;cursor:pointer;">✍️ Firmar y enviar</button>
+  </div>`;
+  document.body.appendChild(ov);
+  const q = s => ov.querySelector(s), qa = s => [...ov.querySelectorAll(s)];
+  q(".pl-x").onclick = () => ov.remove();
+  if(q(".pl-todo")) q(".pl-todo").onclick = () => qa('input[data-i]').forEach(c => { if(!c.dataset.opc) c.checked = true; });
+  // filas de tabla
+  if(pl.tipo === "tabla"){
+    const filas = q(".pl-filas");
+    const fila = () => { const d = document.createElement("div"); d.className = "pl-fila"; d.setAttribute("style", box + "display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;");
+      d.innerHTML = pl.cols.map(c => `<div><span style="${lab}margin-top:0;">${escH(c.t)}${c.req ? " *" : ""}</span>${planCampo(c)}</div>`).join(""); filas.appendChild(d); };
+    fila(); q(".pl-mas").onclick = fila;
+  }
+  // firma
+  const cv = q(".pl-firma"), cx = cv.getContext("2d"); let trazo = 0, dib = false;
+  cx.lineWidth = 3.2; cx.lineCap = "round"; cx.lineJoin = "round"; cx.strokeStyle = "#111";
+  const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) * cv.width / r.width, (e.clientY - r.top) * cv.height / r.height]; };
+  cv.onpointerdown = e => { dib = true; cv.setPointerCapture(e.pointerId); const [x, y2] = pos(e); cx.beginPath(); cx.moveTo(x, y2); };
+  cv.onpointermove = e => { if(!dib) return; const [x, y2] = pos(e); cx.lineTo(x, y2); cx.stroke(); trazo++; };
+  cv.onpointerup = cv.onpointercancel = () => { dib = false; };
+  q(".pl-borrar").onclick = () => { cx.clearRect(0, 0, cv.width, cv.height); trazo = 0; };
+  // enviar
+  q(".pl-env").onclick = async ev => {
+    const err = q(".pl-err"), obs = q(".pl-obs").value.trim(); err.textContent = "";
+    let datos = {}, resumen = "", extra = "";
+    const num = s => { const v = parseFloat(String(s).replace(",", ".")); return isNaN(v) ? null : v; };
+    if(pl.tipo === "aseo" || pl.tipo === "check"){
+      const cb = qa('input[data-i]'), hechos = cb.filter(c => c.checked).map(c => +c.dataset.i), falt = cb.filter(c => !c.checked && !c.dataset.opc).map(c => +c.dataset.i);
+      if(falt.length && !obs){ err.textContent = "⚠️ Faltan " + falt.length + " por marcar: escribe en Observaciones por qué."; return; }
+      datos = {hechos: hechos.map(i => pl.items[i][0]), faltaron: falt.map(i => pl.items[i][0])};
+      if(pl.tipo === "aseo") datos.quimicos = qa('input[data-q]').filter(c => c.checked).map(c => c.dataset.q);
+      resumen = `Hecho ${hechos.length}/${hechos.length + falt.length}` + (falt.length ? ". Faltó: " + datos.faltaron.join("; ") : "") + (datos.quimicos && datos.quimicos.length ? ". Químicos: " + datos.quimicos.join(", ") : "");
+    } else if(pl.tipo === "plagas"){
+      const pts = pl.items.map((it, i) => ({it, i})).filter(x => !x.it[0].startsWith("§")).map(({it, i}) => ({punto: it[0], plaga: (ov.querySelector(`input[name="pg${i}"]:checked`) || {}).value || "No", nota: (q(`[data-pgo="${i}"]`) || {}).value || ""}));
+      const con = pts.filter(p => p.plaga === "Sí");
+      if(con.some(p => !p.nota.trim())){ err.textContent = "⚠️ Donde hay plaga, escribe cuál y la acción correctiva."; return; }
+      const sem = Math.min(4, Math.ceil(new Date(hoy + "T12:00:00").getDate() / 7)); extra = "S" + sem;
+      datos = {semana: extra, puntos: pts}; resumen = con.length ? "Plaga en: " + con.map(p => p.punto + " (" + p.nota + ")").join("; ") : "Sin plagas en " + pts.length + " puntos";
+    } else if(pl.tipo === "agua"){
+      const ph = num(q('[data-k="ph"]').value), clo = num(q('[data-k="clo"]').value), pun = q('[data-k="pun"]').value.trim();
+      if(ph == null || clo == null || !pun){ err.textContent = "⚠️ Escribe el punto, el pH y el cloro."; return; }
+      const fuera = (ph < 6.5 || ph > 9) || (clo < 0.3 || clo > 2);
+      if(fuera && !obs){ err.textContent = "⚠️ Fuera de rango: escribe en Observaciones qué se hizo."; return; }
+      datos = {punto: pun, ph, cloro: clo, fueraDeRango: fuera}; resumen = `${pun}: pH ${ph} · cloro ${clo} ppm` + (fuera ? " · FUERA DE RANGO" : "");
+    } else if(pl.tipo === "frio"){
+      extra = (ov.querySelector('input[name="pl-vez"]:checked') || {}).value || "";
+      const t = PLAN_EQUIPOS_FRIO.map((e, i) => ({equipo: e, temp: num(q(`[data-t="${i}"]`).value)}));
+      if(t.some(x => x.temp == null)){ err.textContent = "⚠️ Falta la temperatura de algún equipo."; return; }
+      const mal = t.filter(x => /congel/i.test(x.equipo) ? x.temp > -18 : (x.temp < 0 || x.temp > 4));
+      if(mal.length && !obs){ err.textContent = "⚠️ " + mal.map(x => x.equipo).join(", ") + " fuera de rango: escribe en Observaciones qué se hizo."; return; }
+      datos = {momento: extra, temperaturas: t}; resumen = extra + ": " + t.map(x => x.equipo.replace("Congelador", "C").replace("Nevera", "N") + " " + x.temp + "°").join(" · ") + (mal.length ? " · FUERA DE RANGO: " + mal.map(x => x.equipo).join(", ") : "");
+    } else if(pl.tipo === "tabla"){
+      const sn = q(".pl-sn") && q(".pl-sn").checked;
+      const filas = qa(".pl-fila").map(f => { const o = {}; pl.cols.forEach(c => { o[c.k] = (f.querySelector(`[data-k="${c.k}"]`) || {}).value || ""; }); return o; })
+        .filter(o => pl.cols.some(c => !c.hora && String(o[c.k]).trim()));
+      if(!sn && !filas.length){ err.textContent = pl.evento ? "⚠️ Llena al menos una fila, o marca \"Hoy no hubo\"." : "⚠️ Llena al menos una fila."; return; }
+      if(!sn){
+        const falta = filas.find(o => pl.cols.some(c => c.req && !String(o[c.k]).trim()));
+        if(falta){ err.textContent = "⚠️ Faltan datos obligatorios (*)."; return; }
+        const bajo = pl.cols.find(c => c.min != null) ? filas.filter(o => { const c = pl.cols.find(c => c.min != null); const v = num(o[c.k]); return v != null && v < c.min; }) : [];
+        if(bajo.length && !obs){ err.textContent = "⚠️ Temperatura por debajo de lo mínimo: escribe en Observaciones qué se hizo."; return; }
+      }
+      datos = sn ? {sinNovedad: true} : {filas}; resumen = sn ? "Sin novedad" : filas.map(o => pl.cols.map(c => o[c.k]).filter(Boolean).join(" · ")).join(" | ");
+    }
+    if(trazo < 8){ err.textContent = "⚠️ Falta tu firma (dibújala en el recuadro)."; return; }
+    // firma: PNG reducido con fondo blanco
+    const fc = document.createElement("canvas"); fc.width = 300; fc.height = 110; const fx = fc.getContext("2d");
+    fx.fillStyle = "#fff"; fx.fillRect(0, 0, 300, 110); fx.drawImage(cv, 0, 0, 300, 110);
+    const firma = fc.toDataURL("image/png");
+    if(!PLAN_API){ err.textContent = "⚙️ Las planillas todavía no están activadas (falta conectar la hoja)."; return; }
+    const b = ev.target; b.disabled = true; b.textContent = "Enviando…";
+    const cuerpoEnv = {tipo: "planilla", planilla: pl.id, codigo: pl.cod, titulo: pl.t, persona: y.nom, area: y.area || (y.aseo ? "Aseo" : ""), extra, datos, resumen, observaciones: obs, firma,
+      equipo: (navigator.userAgent || "").slice(0, 200) + " · " + (lsGet("mi_area") || ""), fechaLocal: hoy, horaLocal: new Date().toTimeString().slice(0, 8)};
+    try{
+      const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(cuerpoEnv)});
+      const j = await r.json();
+      if(!j || !j.ok) throw new Error((j && j.error) || "sin respuesta");
+      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, extra});
+      ov.querySelector("div").innerHTML = `<div style="text-align:center;padding:20px 6px;"><div style="font-size:3rem;">✅</div>
+        <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin-top:6px;">Planilla firmada</div>
+        <div style="margin-top:6px;">${escH(pl.t)}${extra ? " · " + escH(extra) : ""}</div>
+        <div style="margin-top:6px;color:${C.inkSoft};font-size:0.9rem;">${escH(y.nom)} · ${escH(j.fecha)} ${escH(j.hora)} (hora del servidor)</div>
+        <div style="margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};word-break:break-all;">Huella: ${escH(String(j.hash || "").slice(0, 16))}…</div>
+        <button type="button" class="pl-ok" style="margin-top:16px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:12px 22px;cursor:pointer;">Listo</button></div>`;
+      ov.querySelector(".pl-ok").onclick = () => { ov.remove(); planPintarSeccion(); };
+    }catch(e){ b.disabled = false; b.textContent = "✍️ Firmar y enviar"; err.textContent = "No se pudo enviar (" + (e.message || e) + "). Revisa internet e intenta otra vez."; }
+  };
+}
+// ---- PDF de la quincena (Alban) ----
+async function planPdfQuincena(){
+  const hoy = hoyISO(), [Y, M, D] = hoy.split("-").map(Number);
+  const opc = [];
+  const q1 = (y, m) => [`${y}-${String(m).padStart(2,"0")}-01`, `${y}-${String(m).padStart(2,"0")}-15`];
+  const q2 = (y, m) => { const fin = new Date(Date.UTC(y, m, 0)).getUTCDate(); return [`${y}-${String(m).padStart(2,"0")}-16`, `${y}-${String(m).padStart(2,"0")}-${fin}`]; };
+  if(D > 15) opc.push(q2(Y, M), q1(Y, M)); else { opc.push(q1(Y, M)); const pm = M === 1 ? [Y - 1, 12] : [Y, M - 1]; opc.push(q2(pm[0], pm[1])); }
+  const elegida = prompt("¿Qué quincena?\n1 = " + opc[0].join(" a ") + "\n2 = " + opc[1].join(" a "), "1"); if(!elegida) return;
+  const [desde, hasta] = opc[elegida.trim() === "2" ? 1 : 0];
+  let clave = lsGet("plan_clave") || "";
+  if(!clave){ clave = prompt("Clave de Admin para ver las firmas:") || ""; if(!clave) return; }
+  const win = window.open("", "_blank"); if(!win){ alert("Permite las ventanas emergentes para generar el PDF."); return; }
+  win.document.write("<p style='font-family:sans-serif'>Cargando planillas…</p>");
+  let regs = [];
+  try{
+    const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({tipo: "planillas_leer", desde, hasta, clave})});
+    const j = await r.json(); if(!j || !j.ok) throw new Error((j && j.error) || "sin respuesta");
+    regs = j.registros || []; lsSet("plan_clave", clave);
+  }catch(e){ win.document.body.innerHTML = "<p style='font-family:sans-serif;color:#B23A2E'>No se pudo leer: " + escH(e.message || e) + "</p>"; if(/clave/i.test(String(e.message))) lsSet("plan_clave", ""); return; }
+  const esc = s => escH(String(s == null ? "" : s));
+  const bloques = PLANILLAS.map(pl => {
+    const rs = regs.filter(r => r.planilla === pl.id); if(!rs.length) return "";
+    return `<section><div class="hd"><div><div class="cod">${esc(pl.cod)} · Parisina</div><h2>${esc(pl.t)}</h2></div><div class="per">${esc(desde)} a ${esc(hasta)}</div></div>
+      <table><thead><tr><th style="width:15%">Fecha / hora</th><th style="width:13%">Responsable</th><th>Registro</th><th style="width:14%">Observaciones</th><th style="width:17%">Firma</th></tr></thead><tbody>
+      ${rs.map(r => `<tr><td>${esc(r.fecha)}<br>${esc(r.hora)}${r.extra ? "<br><b>" + esc(r.extra) + "</b>" : ""}</td><td>${esc(r.persona)}<br><span class="mut">${esc(r.area)}</span></td><td>${esc(r.resumen)}</td><td>${esc(r.observaciones)}</td>
+        <td>${r.firma ? `<img src="${esc(r.firma)}">` : ""}<div class="hash">${esc(String(r.hash || "").slice(0, 20))}…</div></td></tr>`).join("")}
+      </tbody></table></section>`;
+  }).join("");
+  win.document.open();
+  win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Planillas sanidad ${esc(desde)} a ${esc(hasta)}</title><style>
+    body{font-family:Arial,Helvetica,sans-serif;color:#000;margin:14mm;font-size:9.5pt}
+    h1{font-size:15pt;margin:0 0 2mm} .sub{color:#444;margin-bottom:6mm}
+    section{page-break-after:always;break-after:page} section:last-child{page-break-after:auto}
+    .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #000;padding-bottom:2mm;margin-bottom:3mm}
+    .cod{font-family:monospace;font-size:8pt;color:#444} h2{font-size:12.5pt;margin:1mm 0 0} .per{font-size:9pt}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #555;padding:1.6mm;vertical-align:top;text-align:left}
+    th{background:#eee;font-size:8.5pt} tr{page-break-inside:avoid} img{width:100%;max-width:45mm;height:auto;display:block}
+    .mut{color:#555;font-size:8pt} .hash{font-family:monospace;font-size:6.5pt;color:#666;word-break:break-all}
+    @media print{body{margin:10mm} .np{display:none}}
+  </style></head><body>
+    <div class="np" style="margin-bottom:6mm"><button onclick="print()" style="font-size:14px;padding:8px 14px">🖨️ Guardar como PDF</button></div>
+    <h1>Planillas de sanidad · Parisina</h1><div class="sub">Quincena ${esc(desde)} a ${esc(hasta)} · ${regs.length} registros firmados. Fecha y hora del servidor; cada registro lleva su huella SHA-256 encadenada.</div>
+    ${bloques || "<p>No hay registros en esta quincena.</p>"}
+  </body></html>`);
+  win.document.close();
+}
 // ---- 🔔 Avisos con la pantalla bloqueada (Alban 22 oct) ----
 // En la web (github.io) se registra sw.js: con permiso de notificaciones, el mensaje también sale como notificación del sistema
 // (suena aunque la pantalla esté bloqueada, mientras la página siga abierta y la tablet tenga internet). Además, opción de
