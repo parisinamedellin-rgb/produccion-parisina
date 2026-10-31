@@ -4751,6 +4751,17 @@ function aammdd(iso){ const [y,m,d] = iso.split("-"); return y.slice(2) + m + d;
 function rotLote(cod, iso, cant){ return `${cod}-${aammdd(iso)}-${String(Math.round(Number(cant) || 0)).padStart(2,"0")}`; }
 // "Carne" sola no sirve: hay que decir qué es (Alban)
 const ROT_GENERICAS = new Set(["carne","pollo","res","cerdo","pescado","salsa","relleno","masa","crema","mezcla","producto","preparacion","preparado","varios","cosa","base","salado","dulce","general","otros","otro","cocido","crudo","queso","fruta","verdura","verduras"]);
+// Alban 30 oct: productos parecidos al que se quiere crear (para no duplicar)
+function rotParecidos(nom, catalogo){
+  const STOP = new Set(["para","con","sin","del","los","las","una","uno","por"]);
+  const pal = t => [...new Set(pedNorm(String(t).replace(/\*[A-Z]\*/gi, " ")).split(/[^a-z0-9ñ]+/).filter(w => w.length >= 3 && !STOP.has(w)))];
+  const a = pal(nom); if(!a.length) return [];
+  const na = a.join(" ");
+  return catalogo.map(c => { const b = pal(c.nom), sh = a.filter(w => b.some(x => x === w || (w.length >= 5 && x.length >= 5 && (x.startsWith(w.slice(0, 5)) || w.startsWith(x.slice(0, 5)))))).length;
+      const nb = b.join(" "), sub = na.length >= 5 && nb.length >= 5 && (nb.includes(na) || na.includes(nb));
+      return {c, sc: sub ? 1 : (b.length ? sh / Math.max(a.length, Math.min(b.length, a.length + 1)) : 0)}; })
+    .filter(x => x.sc >= 0.5).sort((x, y) => y.sc - x.sc).slice(0, 4).map(x => x.c);
+}
 function rotNombreValido(n){
   const pal = pedNorm(n).split(/[^a-z0-9ñ]+/).filter(w=>w.length >= 3);
   if(pal.length < 2) return "Escribe qué es exactamente (ej. «Carne molida para lasaña»), no solo «" + (n.trim() || "carne") + "».";
@@ -5093,10 +5104,12 @@ function renderRotular(){
     nv.setAttribute("style", `margin-top:12px;background:${C.paper};border:1.5px dashed ${col.a};border-radius:14px;padding:14px;display:grid;gap:10px;`);
     nv.innerHTML = `<div style="font-weight:700;">➕ Producto nuevo</div>
       <label style="${lab}">Nombre exacto (qué es y para qué)<input class="nn" style="${inp}" value="${logEsc(st.q)}" placeholder="Ej. Carne molida para lasaña"></label>
+      <div class="sim"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <label style="${lab}">Código (para el lote)<input class="nc" style="${inp}" value="${logEsc(rotSigla(st.q))}"></label>
         <label style="${lab}">Días de vida (opcional)<input class="nd" type="number" inputmode="numeric" min="0" style="${inp}"></label>
       </div>
+      <div style="${lab}">¿Dónde se guarda?<div style="display:flex;gap:8px;margin-top:4px;">${[["N","🌡️ Nevera"],["C","❄️ Congelación"]].map(([k,t])=>`<button type="button" data-g="${k}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;padding:11px;border-radius:10px;border:1.5px solid ${col.a};background:#fff;color:${col.a};cursor:pointer;">${t}</button>`).join("")}</div><div class="gx" style="font-size:0.78rem;color:${C.inkSoft};margin-top:4px;"></div></div>
       <label style="${lab}">Creado por (tu nombre)<select class="nb" style="${inp}"><option value="">— Elegir operador —</option>${ROT_OPS.map(n=>`<option${n === RT_RESP ? " selected" : ""}>${logEsc(n)}</option>`).join("")}</select></label>
       <div style="font-size:0.78rem;color:${C.inkSoft};">Queda pendiente de aprobación. Mientras tanto se puede usar.</div>
       <div class="er" style="font-size:0.85rem;font-weight:700;color:#B3261E;"></div>
@@ -5104,18 +5117,30 @@ function renderRotular(){
         <button type="button" class="no" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;border:1px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:10px;padding:11px 14px;cursor:pointer;">Cancelar</button></div>`;
     const nn = nv.querySelector(".nn"), nc = nv.querySelector(".nc"), er = nv.querySelector(".er");
     nn.oninput = ()=>{ nc.value = rotSigla(nn.value); };
+    // Alban 30 oct: elegir Nevera o Congelación; si es Congelación el nombre lleva " *C*" al final
+    nv.querySelectorAll("button[data-g]").forEach(b => b.onclick = () => { nv._g = b.dataset.g;
+      nv.querySelectorAll("button[data-g]").forEach(x => { const on = x === b; x.style.background = on ? col.a : "#fff"; x.style.color = on ? "#fff" : col.a; });
+      nv.querySelector(".gx").textContent = nv._g === "C" ? "Se guardará como: " + (nn.value.trim() || "…") + " *C*" : ""; });
+    const simPintar = () => { const sm = nv.querySelector(".sim"), ps = rotParecidos(nn.value, catalogo); nv._sim = ps; nv._simOk = false;
+      sm.innerHTML = ps.length ? `<div style="background:#FFF4D6;border:1.5px solid #8A5A00;border-radius:10px;padding:10px 12px;color:#5C3D00;font-size:0.88rem;line-height:1.4;"><b>⚠️ ¿No será alguno de estos?</b> Ya existen productos parecidos. Si es uno de ellos, tócalo y úsalo:${ps.map((c, i) => `<button type="button" data-s="${i}" style="display:flex;width:100%;gap:10px;align-items:center;text-align:left;margin-top:6px;border:1px solid #E2C37A;background:#fff;border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:0.92rem;color:#222;"><span style="font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:${col.a};min-width:3.5em;">${logEsc(c.cod)}</span><span style="flex:1;">${logEsc(c.nom)}</span><span style="font-weight:700;color:${col.a};">Usar →</span></button>`).join("")}</div>` : "";
+      sm.querySelectorAll("button[data-s]").forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => { const c = ps[+b.dataset.s]; st.nuevo = false; st.q = ""; st.sel = c; st.vence = c.dias != null && c.dias !== "" ? masDias(st.fecha, Number(c.dias)) : ""; render(); }; }); };
+    nn.oninput = ()=>{ nc.value = rotSigla(nn.value); simPintar(); const gx = nv.querySelector(".gx"); if(gx && nv._g === "C") gx.textContent = "Se guardará como: " + (nn.value.trim() || "…") + " *C*"; };   // Alban 30 oct: aviso de parecidos
+    simPintar();
     nv.querySelector(".no").onclick = ()=>{ st.nuevo = false; render(); };
     nv.querySelector(".ok").onclick = async ()=>{
-      const nom = nn.value.trim().replace(/\s+/g, " "), cod = nc.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""), dias = nv.querySelector(".nd").value;
+      let nom = nn.value.trim().replace(/\s+/g, " ").replace(/\s*\*C\*\s*$/i, ""), cod = nc.value.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""), dias = nv.querySelector(".nd").value;
       const e1 = rotNombreValido(nom);
       if(e1){ er.textContent = "⚠️ " + e1; return; }
+      if(!nv._g){ er.textContent = "⚠️ Elige dónde se guarda: Nevera o Congelación."; return; }
+      if(nv._g === "C") nom = nom + " *C*";   // Alban 30 oct
+      if(nv._sim && nv._sim.length && !nv._simOk){ nv._simOk = true; er.textContent = "⚠️ Hay productos parecidos (en amarillo arriba). Si de verdad es otro producto, toca otra vez ✓ Crear y usar."; return; }
       if(!cod){ er.textContent = "⚠️ Pon un código corto (ej. CML)."; return; }
       if(catalogo.some(c=>pedNorm(c.nom) === pedNorm(nom))){ er.textContent = "⚠️ Ese producto ya existe: búscalo arriba."; return; }
       if(catalogo.some(c=>String(c.cod).toUpperCase() === cod)){ er.textContent = "⚠️ Ese código ya lo tiene otro producto."; return; }
       const por = nv.querySelector(".nb").value;
       if(!por){ er.textContent = "⚠️ Elige tu nombre en \"Creado por\"."; return; }
       RT_RESP = por; try{ localStorage.setItem("rot_resp", por); }catch(x){}
-      const p = {cod, nom, dias: dias === "" ? "" : Number(dias), por, ts: Date.now(), ok: false};
+      const p = {cod, nom, dias: dias === "" ? "" : Number(dias), por, ts: Date.now(), ok: false, guarda: nv._g === "C" ? "Congelación" : "Nevera"};
       await rotGuardarPropio(p);
       st.nuevo = false; st.q = "";
       st.sel = {cod, nom, dias: p.dias === "" ? null : p.dias, fuente:"🕓 por verificar"};
