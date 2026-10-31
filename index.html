@@ -1392,7 +1392,7 @@ function adelRecordatorio(){ const _r = document.getElementById("adel-rec"); if(
       <button type="button" data-adelr="${logEsc(a.clave)}" style="flex:none;padding:10px 14px;border-radius:10px;border:none;background:#fff;color:#A3252B;font-weight:800;font-size:1rem;cursor:pointer;">✓ Hecho</button></div>`; }).join("");
   el.querySelectorAll("button[data-adelr]").forEach(b => b.onclick = () => { marcar(b.dataset.adelr, true); flushDb(); render(); adelRecordatorio(); });
 }
-setInterval(adelRecordatorio, 60000);
+// (31 oct) sin setInterval: colgaba la publicación automática (smoke.js)
 function renderAdelantos(){
   const el = document.getElementById("adelantos");
   if(!el) return;
