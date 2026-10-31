@@ -6349,6 +6349,7 @@ function renderMensajes(){
       <select class="m-yo" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;padding:6px 8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;"><option value="">Nadie de la oficina</option>${msgPers().map(a => `<option value="${escH(a[0])}">${escH(a[1])}</option>`).join("")}</select></label>
     <button type="button" class="m-env" style="margin-top:12px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#B23A2E;color:#fff;border:none;border-radius:14px;padding:14px;cursor:pointer;">📣 Enviar</button>
     <div class="m-ok" style="font-size:0.88rem;margin-top:8px;min-height:1.2em;"></div>
+    ${callSeccionHTML()}
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Enviados (últimas 36 h)</div>
     <div id="msg-estado"><div style="color:${C.inkSoft};font-size:0.88rem;">Cargando…</div></div>`;
   main.appendChild(w);
@@ -6373,6 +6374,7 @@ function renderMensajes(){
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
   w.querySelector(".m-ofi").onclick = () => { w.querySelectorAll(".m-pers input").forEach(c => c.checked = true); const o = w.querySelector('.m-para input[value="Oficina"]'); if(o) o.checked = true; };
   avisosUI(w.querySelector(".m-avisos"));
+  callSeccionBind(w);   // Alban 31 oct: llamadas
   w.querySelector(".m-env").onclick = async ev => {
     const t = txt.value.trim(), para = [...w.querySelectorAll(".m-para input:checked")].map(c => c.value);
     if(!t){ ok.style.color = "#B23A2E"; ok.textContent = "Escribe el mensaje."; return; }
@@ -6392,6 +6394,147 @@ function renderMensajes(){
   };
   if(DB) msgLeer().then(msgPintarEstado).catch(() => {}); else document.getElementById("msg-estado").innerHTML = "";
 }
+// ============================================================
+// 📞 LLAMADAS EN VIVO (Alban 31 oct 2026): hablar de página a página (WebRTC, solo audio).
+// Señal por el guardado web (Apps Script): estado/CALL-<slug destino> = {id, de, deNom, oferta, ts}
+// y la respuesta en estado/CALLR-<slug destino> = {id, respuesta} | {id, rechazo:true} (siempre los mismos documentos). Sin servidor de audio: el audio va directo
+// entre los dos equipos (funciona mejor en el mismo Wi-Fi). Solo suena si la página está abierta.
+// ============================================================
+const CALL_ICE = [{urls: "stun:stun.l.google.com:19302"}, {urls: "stun:stun1.l.google.com:19302"}];
+const CALL = {st: "", pc: null, dc: null, stream: null, id: "", con: "", t0: 0, tim: null, ring: null, poll: null, vistos: {}};
+if(typeof window !== "undefined") window.LLAMADA_ACTIVA = false;
+function callOK(){ return !!(DB && DB.web && typeof RTCPeerConnection !== "undefined" && navigator.mediaDevices && navigator.mediaDevices.getUserMedia); }
+function callMisSlugs(){ return [...new Set(misDestinos().map(k => msgSlug(k)).filter(Boolean))]; }
+async function callGet(p){ try{ const s = await DB.doc("estado/" + p).get(); return (s.exists && s.data()) || {}; }catch(e){ return {}; } }
+async function callSet(p, d){ try{ await DB.doc("estado/" + p).set(d); return true; }catch(e){ return false; } }
+function callEsperarIce(pc){ return new Promise(r => { if(pc.iceGatheringState === "complete") return r(); const f = () => { if(pc.iceGatheringState === "complete"){ pc.removeEventListener("icegatheringstatechange", f); r(); } }; pc.addEventListener("icegatheringstatechange", f); setTimeout(r, 4000); }); }
+async function callPc(){
+  const stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true}, video: false});
+  const pc = new RTCPeerConnection({iceServers: CALL_ICE});
+  stream.getTracks().forEach(t => pc.addTrack(t, stream));
+  pc.ontrack = ev => { let a = document.getElementById("call-audio"); if(!a){ a = document.createElement("audio"); a.id = "call-audio"; a.autoplay = true; a.setAttribute("playsinline", ""); document.body.appendChild(a); } a.srcObject = ev.streams[0]; a.play().catch(() => {}); };
+  pc.onconnectionstatechange = () => { const s = pc.connectionState;
+    if(s === "connected"){ CALL.st = "hablando"; CALL.t0 = Date.now(); callSonar(false); callPintar(); }
+    else if(s === "failed" || s === "closed"){ callFin(s === "failed" ? "Se cortó la llamada" : ""); }
+    else if(s === "disconnected"){ setTimeout(() => { if(CALL.pc === pc && pc.connectionState === "disconnected") callFin("Se cortó la llamada"); }, 6000); } };
+  pc.ondatachannel = ev => callDc(ev.channel);
+  CALL.pc = pc; CALL.stream = stream;
+  return pc;
+}
+function callDc(dc){ CALL.dc = dc; dc.onmessage = ev => { if(ev.data === "bye") callFin("La otra persona colgó"); }; }
+function callSonar(on){ if(CALL.ring){ clearInterval(CALL.ring); CALL.ring = null; } if(on){ try{ pitar(); }catch(e){} CALL.ring = setInterval(() => { try{ pitar(); }catch(e){} }, 2500); } }
+function callNom(k){ return String(msgLabel(k) || k).replace(/^\S+\s/, ""); }
+function callPintar(msg){
+  let ov = document.getElementById("call-ov");
+  if(!CALL.st && !msg){ if(ov) ov.remove(); return; }
+  if(!ov){ ov = document.createElement("div"); ov.id = "call-ov"; document.body.appendChild(ov); }
+  ov.setAttribute("style", "position:fixed;inset:0;z-index:10000;background:rgba(20,16,12,.82);display:flex;align-items:center;justify-content:center;padding:16px;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;");
+  const btn = (cls, txt, bg) => `<button type="button" class="${cls}" style="flex:1;min-width:130px;padding:16px;border:none;border-radius:16px;background:${bg};color:#fff;font-size:1.1rem;font-weight:800;cursor:pointer;">${txt}</button>`;
+  const seg = CALL.t0 ? Math.floor((Date.now() - CALL.t0) / 1000) : 0, reloj = Math.floor(seg / 60) + ":" + String(seg % 60).padStart(2, "0");
+  const tit = msg ? msg : CALL.st === "entrante" ? `${escH(CALL.con)} te llama` : CALL.st === "llamando" ? `Llamando a ${escH(CALL.con)}…` : CALL.st === "conectando" ? `Conectando con ${escH(CALL.con)}…` : `🟢 En llamada con ${escH(CALL.con)}`;
+  const sub = msg ? "" : CALL.st === "hablando" ? reloj : CALL.st === "llamando" ? "Esperando que conteste" : "";
+  const bts = msg ? btn("c-ok", "OK", "#6B6257") : CALL.st === "entrante" ? btn("c-si", "✅ Contestar", "#2F6DB5") + btn("c-no", "❌ Rechazar", "#B23A2E") : btn("c-col", "🔴 Colgar", "#B23A2E");
+  ov.innerHTML = `<div style="background:#fff;border-radius:22px;padding:26px 22px;max-width:420px;width:100%;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.4);">
+    <div style="font-size:3rem;${CALL.st === "entrante" || CALL.st === "llamando" ? "animation:callPulso 1s infinite;" : ""}">📞</div>
+    <div style="font-size:1.3rem;font-weight:800;color:#2A241C;margin-top:6px;">${tit}</div>
+    <div class="c-sub" style="font-size:1rem;color:#6B6257;margin-top:6px;min-height:1.2em;">${sub}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">${bts}</div></div>
+    <style>@keyframes callPulso{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}</style>`;
+  const q = s => ov.querySelector(s);
+  if(q(".c-ok")) q(".c-ok").onclick = () => ov.remove();
+  if(q(".c-si")) q(".c-si").onclick = () => callContestar();
+  if(q(".c-no")) q(".c-no").onclick = () => callRechazar();
+  if(q(".c-col")) q(".c-col").onclick = () => callColgar();
+  if(CALL.tim) clearInterval(CALL.tim);
+  if(CALL.st === "hablando") CALL.tim = setInterval(() => { const s = Math.floor((Date.now() - CALL.t0) / 1000), e = document.querySelector("#call-ov .c-sub"); if(e) e.textContent = Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }, 1000);
+}
+async function callLlamar(k){
+  if(CALL.st) return;
+  const yo = msgYoKey(), slug = msgSlug(k);
+  if(!slug) return;
+  CALL.st = "llamando"; CALL.con = callNom(k); CALL.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); window.LLAMADA_ACTIVA = true;
+  callPintar();
+  try{
+    const pc = await callPc();
+    callDc(pc.createDataChannel("c"));
+    await pc.setLocalDescription(await pc.createOffer());
+    await callEsperarIce(pc);
+    if(CALL.st !== "llamando") return;
+    await callSet("CALL-" + slug, {id: CALL.id, de: yo, deNom: (typeof msgYoNombre === "function" && msgYoNombre()) || "Alguien", oferta: pc.localDescription.sdp, ts: Date.now()});
+    const id = CALL.id, t0 = Date.now();
+    const esperar = async () => {
+      if(CALL.id !== id || CALL.st !== "llamando") return;
+      const r0 = await callGet("CALLR-" + slug), r = r0.id === id ? r0 : {};
+      if(CALL.id !== id || CALL.st !== "llamando") return;
+      if(r.rechazo){ callSet("CALL-" + slug, {}); callFin(CALL.con + " no puede contestar ahora"); return; }
+      if(r.respuesta){ CALL.st = "conectando"; callPintar(); try{ await pc.setRemoteDescription({type: "answer", sdp: r.respuesta}); }catch(e){ callFin("No se pudo conectar"); } return; }
+      if(Date.now() - t0 > 45000){ callSet("CALL-" + slug, {}); callFin(CALL.con + " no contesta"); return; }
+      setTimeout(esperar, 2000);
+    };
+    CALL.slug = slug; setTimeout(esperar, 2500);
+  }catch(e){ callFin(e && e.name === "NotAllowedError" ? "Hay que permitir el micrófono para llamar" : "No se pudo llamar: " + (e && e.message || e)); }
+}
+async function callContestar(){
+  const of = CALL.oferta, id = CALL.id; if(!of) return;
+  CALL.st = "conectando"; callSonar(false); callPintar();
+  try{
+    const pc = await callPc();
+    await pc.setRemoteDescription({type: "offer", sdp: of});
+    await pc.setLocalDescription(await pc.createAnswer());
+    await callEsperarIce(pc);
+    await callSet("CALLR-" + CALL.slug, {id, respuesta: pc.localDescription.sdp, ts: Date.now()});
+    if(CALL.slug) callSet("CALL-" + CALL.slug, {});
+    setTimeout(() => { if(CALL.id === id && CALL.st === "conectando") callFin("No se pudo conectar (revisen el Wi-Fi)"); }, 25000);
+  }catch(e){ callSet("CALLR-" + CALL.slug, {id, rechazo: true}); callFin(e && e.name === "NotAllowedError" ? "Hay que permitir el micrófono para contestar" : "No se pudo contestar"); }
+}
+function callRechazar(){ const id = CALL.id; callSet("CALLR-" + CALL.slug, {id, rechazo: true}); if(CALL.slug) callSet("CALL-" + CALL.slug, {}); callFin(""); }
+function callColgar(){
+  try{ if(CALL.dc && CALL.dc.readyState === "open") CALL.dc.send("bye"); }catch(e){}
+  if(CALL.st === "llamando" && CALL.slug) callSet("CALL-" + CALL.slug, {});
+  callFin("");
+}
+function callFin(msg){
+  callSonar(false);
+  if(CALL.tim){ clearInterval(CALL.tim); CALL.tim = null; }
+  try{ if(CALL.pc) CALL.pc.close(); }catch(e){}
+  try{ if(CALL.stream) CALL.stream.getTracks().forEach(t => t.stop()); }catch(e){}
+  const a = document.getElementById("call-audio"); if(a){ a.srcObject = null; a.remove(); }
+  Object.assign(CALL, {st: "", pc: null, dc: null, stream: null, con: "", t0: 0, oferta: "", slug: ""});
+  window.LLAMADA_ACTIVA = false;
+  callPintar(msg || "");
+  const tok = CALL.fid = (CALL.fid || 0) + 1;
+  if(msg) setTimeout(() => { if(!CALL.st && CALL.fid === tok){ const ov = document.getElementById("call-ov"); if(ov) ov.remove(); } }, 6000);
+}
+// Revisa si alguien llama a este equipo (cada 4 s)
+async function callRevisar(){
+  if(!callOK() || CALL.st || (typeof usrNecesitaLogin === "function" && usrNecesitaLogin())) return;
+  for(const slug of callMisSlugs()){
+    const d = await callGet("CALL-" + slug);
+    if(!d.id || !d.oferta || CALL.vistos[d.id] || Date.now() - (d.ts || 0) > 50000 || d.de === msgYoKey()) continue;
+    if(CALL.st) return;
+    CALL.vistos[d.id] = 1;
+    Object.assign(CALL, {st: "entrante", id: d.id, con: d.deNom || callNom(d.de), oferta: d.oferta, slug});
+    window.LLAMADA_ACTIVA = true;
+    callSonar(true); callPintar();
+    if(document.hidden && typeof notificar === "function") notificar("📞 " + CALL.con + " te llama", "Abre la página para contestar");
+    // si quien llama cuelga antes, se quita
+    const id = d.id, mirar = async () => { if(CALL.id !== id || CALL.st !== "entrante") return; const x = await callGet("CALL-" + slug);
+      if(CALL.id !== id || CALL.st !== "entrante") return;
+      if(x.id !== id || Date.now() - (d.ts || 0) > 50000){ callFin("Llamada perdida de " + CALL.con); return; } setTimeout(mirar, 3000); };
+    setTimeout(mirar, 3000);
+    return;
+  }
+}
+// Sección "📞 Llamar" dentro de Mensajes
+function callSeccionHTML(){
+  if(!callOK()) return `<div style="margin-top:18px;font-size:0.86rem;color:${C.inkSoft};">📞 Las llamadas funcionan en la web, con micrófono.</div>`;
+  const yo = msgYoKey(), lista = msgDest().filter(a => a[0] !== yo && a[0] !== "Oficina");
+  return `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;margin-top:22px;">📞 Llamar</div>
+    <div style="font-size:0.85rem;color:${C.inkSoft};">Hablar en vivo. Le suena a la persona o al área si tiene la página abierta.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${lista.map(a => `<button type="button" class="c-call" data-k="${escH(a[0])}" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#fff;border:1.5px solid #2F6DB5;color:#2F6DB5;border-radius:12px;padding:10px 14px;cursor:pointer;">📞 ${escH(callNom(a[0]))}</button>`).join("")}</div>
+    ${yo ? "" : `<div style="font-size:0.8rem;color:#B23A2E;margin-top:6px;">Para que te puedan llamar a ti, este equipo debe tener área o persona (arriba).</div>`}`;
+}
+function callSeccionBind(w){ w.querySelectorAll(".c-call").forEach(b => b.onclick = () => { audioListo(); callLlamar(b.dataset.k); }); }
 // ---- 🔔 Avisos con la pantalla bloqueada (Alban 22 oct) ----
 // En la web (github.io) se registra sw.js: con permiso de notificaciones, el mensaje también sale como notificación del sistema
 // (suena aunque la pantalla esté bloqueada, mientras la página siga abierta y la tablet tenga internet). Además, opción de
@@ -6428,6 +6571,7 @@ if(typeof location !== "undefined" && /^https?:$/.test(location.protocol || "") 
   document.addEventListener("visibilitychange", () => { if(!document.hidden) wakeOn(); });
   bootSW();
   setTimeout(msgRevisar, 4000);
+  setInterval(callRevisar, 5000);   // Alban 31 oct: llamadas entrantes (dentro del arranque: no corre en smoke)
   setInterval(() => { if(!document.hidden) msgRevisar(); }, 20000);
   document.addEventListener("visibilitychange", () => { if(!document.hidden) msgRevisar(); });
 }
@@ -6446,7 +6590,7 @@ bootDb();
   let pendiente = false;
   const escribiendo = ()=>{ const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox"; };
   const recargar = ()=>{
-    if(escribiendo()){ pendiente = true; return; }
+    if(escribiendo() || window.LLAMADA_ACTIVA){ pendiente = true; return; }   // no recargar en plena llamada
     try{ sessionStorage.setItem("auto_recarga", String(Date.now())); }catch(e){}
     location.reload();
   };
