@@ -1161,7 +1161,7 @@ const FAMS = [
   {key:"Comida de sal", label:"Comida de sal", emoji:"🐷", subs:["Comida de sal"]},
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Topping","Tortas"], nota:"Dulcería · Topping & Cremas · Tortas"},   // Alban 10 oct
   {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS"], nota:"Stock · Fórmulas"},   // Alban 5 oct: sin Producción ni De una vez
-  {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ENTREGAS","ROTULOS","CLIENTE","REFRIG","CAJAESP"], nota:"Pedidos · Ruta · Rótulos del día · Cliente · Rótulo · Cajas especiales"}   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
+  {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ROTULOS"], nota:"Pedidos · Rótulos del día"}   /* Alban 31 oct: Ruta oculta; Cliente, Rótulo y Cajas especiales van dentro de Rótulos del día */   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
   {key:"Marzzana", label:"La Marzzana", emoji:"🍕", subs:["Marzzana"], modos:["FORMULAS"], nota:"Fórmulas"},
   {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","SELLO"], nota:"Planta · Consumidor final · Sello"}   /* Alban 22 oct: Cliente, Refrigerio y Cajas especiales pasan a Logística */   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
 ];
@@ -1535,8 +1535,8 @@ function renderCats(){
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulos del día"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
-    const on = key === modo;
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulo"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
+    const on = key === modo || (key === "ROTULOS" && navFam === "Logistica" && ["CLIENTE","REFRIG","CAJAESP"].includes(modo));
     const btn = document.createElement("button");
     btn.textContent = label;
     btn.setAttribute("style", `flex:1 1 0;min-width:0;font-family:'Work Sans',sans-serif;font-size:0.8rem;line-height:1.25;font-weight:700;padding:11px 4px;border:none;${i ? "border-left:1.5px solid " + col.a + ";" : ""}background:${on ? col.a : "transparent"};color:${on ? "#fff" : col.a};cursor:pointer;`);
@@ -1544,6 +1544,17 @@ function renderCats(){
     tabs.appendChild(btn);
   });
   el.appendChild(tabs);
+  // Alban 31 oct: Logística › Rótulos del día agrupa Del día · Cliente · Varios productos · Cajas especiales
+  if(navFam === "Logistica" && ["ROTULOS","CLIENTE","REFRIG","CAJAESP"].includes(modo)){
+    const row = document.createElement("div");
+    row.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
+    [["ROTULOS","dia","🏷️ Del día"],["CLIENTE","","👤 Cliente"],["REFRIG","","📦 Productos"],["CAJAESP","","🎁 Cajas especiales"],["ROTULOS","sello","🔒 Sello y consumo inmediato"]].forEach(([k, sub, t])=>{
+      const on = k === modo && (k !== "ROTULOS" || sub === ROT_SUB);
+      const b = document.createElement("button"); b.textContent = t;
+      b.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;padding:9px 14px;border-radius:100px;border:1.5px solid ${col.a};background:${on ? col.a : C.paper};color:${on ? "#fff" : col.a};cursor:pointer;`);
+      b.onclick = ()=>{ if(sub) ROT_SUB = sub; irA(k); }; row.appendChild(b); });
+    el.appendChild(row);
+  }
   // Fila 3: áreas dentro de la categoría (solo en Producción y si hay más de una)
   const subs = f.subs ? f.subs : ["ALL", ...GROUP_ORDER];
   if(modo === "PROD" && subs.length > 1 && (!f.modos || f.modos.includes("PROD"))){
@@ -3539,19 +3550,18 @@ function logRotulos(iso){
 // ---- Sello de seguridad genérico (Alban 13 oct): mismo tamaño que el rótulo, en blanco y negro (impresora térmica) ----
 let SELLO_N = 30;   // Alban 13 oct: por defecto 30 sellos
 function selloHTML(w, h, iso){
-  const escudo = `<svg viewBox="0 0 48 56" style="height:${Math.min(h * 0.62, w * 0.24)}mm;flex:none;"><path d="M24 2 L44 9 V26 C44 40 35 49 24 54 C13 49 4 40 4 26 V9 Z" fill="#000"/><path d="M24 7 L39 12.5 V26 C39 37 32 44.5 24 48.6 C16 44.5 9 37 9 26 V12.5 Z" fill="#fff"/><path d="M15.5 27.5 L21.5 33.5 L33 21" fill="none" stroke="#000" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-  return `<div class="rot sello" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:2mm;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;">
-    <div style="width:100%;height:100%;box-sizing:border-box;border:0.9mm solid #000;border-radius:2.2mm;padding:1mm;">
-      <div style="width:100%;height:100%;box-sizing:border-box;border:0.35mm dashed #000;border-radius:1.4mm;display:flex;align-items:center;justify-content:center;gap:4mm;padding:0 4mm;
-        background:repeating-linear-gradient(135deg,#fff 0 1.6mm,#f1f1f1 1.6mm 2mm);">
-        ${escudo}
-        <div style="text-align:center;line-height:1.08;">
-          <div style="font-size:${Math.min(h * 0.075, w * 0.045)}mm;letter-spacing:.6mm;font-weight:700;">★ ★ ★</div>
-          <div style="font-size:${Math.min(h * 0.17, w * 0.085)}mm;font-weight:900;letter-spacing:.3mm;">SELLO DE</div>
-          <div style="font-size:${Math.min(h * 0.17, w * 0.085)}mm;font-weight:900;letter-spacing:.3mm;">SEGURIDAD</div>
-          <div style="margin:1.2mm auto 0;border-top:0.35mm solid #000;width:80%;"></div>
-          <div style="font-size:${Math.min(h * 0.075, w * 0.042)}mm;font-weight:700;margin-top:1mm;letter-spacing:.2mm;">PRODUCTO SELLADO</div>
-          <div style="font-size:${Math.min(h * 0.062, w * 0.036)}mm;margin-top:.6mm;">No consumir si el sello está roto</div>
+  // Alban 31 oct: diseño nuevo "Cinta de garantía" (opción B). Arranca debajo de la franja que la impresora no imprime (ROT_MARGEN_SUP_MM).
+  const top = typeof ROT_MARGEN_SUP_MM !== "undefined" ? ROT_MARGEN_SUP_MM : 3, iw = w - 4, ih = h - top - 2, k = Math.min(iw / 100, ih / 62);
+  const st = pos => `<div style="position:absolute;left:0;right:0;${pos}:0;height:${6 * k}mm;background:repeating-linear-gradient(135deg,#000 0 ${2.4 * k}mm,#fff ${2.4 * k}mm ${4.8 * k}mm);-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>`;
+  return `<div class="rot sello" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:${top}mm 2mm 2mm;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;">
+    <div style="position:relative;width:100%;height:100%;box-sizing:border-box;border:${2.2 * k}mm solid #000;overflow:hidden;">
+      ${st("top")}${st("bottom")}
+      <div style="position:absolute;left:${4 * k}mm;right:${4 * k}mm;top:${6 * k}mm;bottom:${6 * k}mm;display:flex;align-items:center;justify-content:center;gap:${5 * k}mm;">
+        <svg viewBox="0 0 48 48" style="height:${24 * k}mm;flex:none;"><circle cx="24" cy="24" r="22" fill="#000"/><circle cx="24" cy="24" r="17.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="3 2.2"/><path d="M14 25 L21 32 L35 17" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div style="text-align:center;line-height:1.05;">
+          <div style="font-size:${12 * k}mm;font-weight:900;letter-spacing:${0.8 * k}mm;">SELLADO</div>
+          <div style="font-size:${3.6 * k}mm;font-weight:700;letter-spacing:${0.3 * k}mm;margin-top:${1.5 * k}mm;">GARANTÍA DE INOCUIDAD</div>
+          <div style="font-size:${3.1 * k}mm;margin-top:${0.8 * k}mm;">Si el sello está roto, no lo consumas</div>
         </div>
       </div>
     </div>
@@ -3755,6 +3765,7 @@ function logImprimir(lista, iso){
   area.querySelectorAll(".rot").forEach(rotFit);
   setTimeout(()=>window.print(), 50);
 }
+let ROT_SUB = "dia";   // Alban 31 oct: Logística › Rótulo: "dia" = rótulos del día · "sello" = sello de seguridad + consumo inmediato
 function renderRotulos(main, col){
   const iso = activeDate, lista = logRotulos(iso), {w, h} = logTam();
   const porProd = {};
@@ -3763,10 +3774,14 @@ function renderRotulos(main, col){
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Rótulos del día</h2>
 `;
+  if(ROT_SUB === "sello") head.querySelector("h2").textContent = "🔒 Sello de seguridad y consumo inmediato";
   main.appendChild(head);
-  // Alban 13 oct: sello de seguridad genérico (sin logo de Parisina), del mismo tamaño que los rótulos
-  main.appendChild(selloBloqueEl(w, h, iso, col));
-  main.appendChild(consumoInmEl(col));   // Alban 22 oct: debajo del sello, la etiqueta CONSUMO INMEDIATO
+  if(ROT_SUB === "sello"){   // Alban 31 oct: subcategoría aparte
+    // Alban 13 oct: sello de seguridad genérico (sin logo de Parisina), del mismo tamaño que los rótulos
+    main.appendChild(selloBloqueEl(w, h, iso, col));
+    main.appendChild(consumoInmEl(col));   // Alban 22 oct: la etiqueta CONSUMO INMEDIATO
+    return;
+  }
   const top = document.createElement("div");
   top.setAttribute("style", `margin-top:14px;background:${col.a};color:#fff;border-radius:16px;padding:16px;`);
   top.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">🏷️ Para este día necesitas ${lista.length} ${lista.length === 1 ? "rótulo" : "rótulos"}</div>
