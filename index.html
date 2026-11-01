@@ -6039,6 +6039,8 @@ function msgMostrar(pend, area){
   notificar("📣 Mensaje para " + msgLabel(area).replace(/^\S+\s/, ""), pend.map(m => m.txt + (m.de ? " — " + m.de : "")).join("\n"));
   MSG_PIT = setInterval(pitar, 12000);
 }
+// Alban 31 oct: los avisos automáticos de pedidos ("📦 Pedidos web") que llegan antes de las 7:00 a.m. no suenan (al empezar el día llegaban muchos)
+function msgMadrugada(m){ if(!/pedidos web/i.test(String(m.de || ""))) return false; try{ return (+new Intl.DateTimeFormat("en-US", {timeZone: "America/Bogota", hour: "numeric", hour12: false}).format(new Date(m.ts))) % 24 < 7; }catch(e){ return false; } }
 async function msgRevisar(){
   if(!DB) return;
   try{
@@ -6046,7 +6048,7 @@ async function msgRevisar(){
     let mostro = false;
     for(const area of misDestinos()){   // área de la tablet y/o persona de la oficina
       await msgLeerVistos(area);
-      const pend = MSG.lista.filter(m => (m.para || []).includes(area) && !misDestinos().includes(m.deK) && !(MSG_V[area] || {})[m.id] && Date.now() - m.ts < 36*3600e3);
+      const pend = MSG.lista.filter(m => (m.para || []).includes(area) && !misDestinos().includes(m.deK) && !(MSG_V[area] || {})[m.id] && Date.now() - m.ts < 36*3600e3 && !msgMadrugada(m));
       if(pend.length){ msgMostrar(pend, area); mostro = true; break; }
     }
     if(!mostro) msgCerrarCapa();
@@ -6349,7 +6351,7 @@ function renderMensajes(){
     <div style="font-size:0.88rem;color:${C.inkSoft};">Sale en la tablet del área (o en el equipo de la persona) con alerta y sonido, hasta que toquen "Ya lo leí". Se puede responder.</div>
     ${!DB ? `<div style="margin-top:12px;font-size:0.86rem;border:1.5px solid #C4791E;background:#FFF4D6;color:#8A5A00;border-radius:12px;padding:10px 14px;">Desde aquí no se puede enviar: ábrelo en la web.</div>` : ""}
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;">
-      ${["⚠️ Llegó un pedido nuevo: ","🔥 Urgente: ","❌ Pedido cancelado: ","✏️ Cambio en un pedido: ","📞 Pasar por la oficina"].map(t => `<button type="button" class="m-chip" data-t="${escH(t)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;background:${C.paper};border:1px solid ${C.line};border-radius:100px;padding:7px 12px;cursor:pointer;">${escH(t.replace(/: $/, ""))}</button>`).join("")}
+      ${["⚠️ Llegó un pedido nuevo: ","🔥 Urgente: ","❌ Pedido cancelado: ","✏️ Cambio en un pedido: ","📞 Pasar por la oficina","🔄 IMPORTANTE: reactualizar la página (Ctrl + Shift + R o deslizar hacia abajo)"].map(t => `<button type="button" class="m-chip" data-t="${escH(t)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;background:${C.paper};border:1px solid ${C.line};border-radius:100px;padding:7px 12px;cursor:pointer;">${escH(t.replace(/: $/, ""))}</button>`).join("")}
     </div>
     <textarea class="m-txt" rows="3" placeholder="Escribe el mensaje… (ej: Llegó un pedido de 20 croissants para las 10 a.m.)" style="${inp}margin-top:10px;resize:vertical;"></textarea>
     <div style="font-size:0.8rem;font-weight:600;color:${C.inkSoft};margin-top:12px;text-transform:uppercase;letter-spacing:.05em;">¿Para quién?</div>
@@ -6391,7 +6393,7 @@ function renderMensajes(){
   yoSel.onchange = () => { lsSet("mi_persona", yoSel.value); if(!dek.value && yoSel.value) dek.value = yoSel.value; msgPintarEstado().catch(() => {}); };
   w.querySelector(".m-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
   if(MSG_EMBED) w.querySelector(".m-vol").style.display = "none";
-  w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina)/, ""); txt.focus(); });
+  w.querySelectorAll(".m-chip").forEach(b => b.onclick = () => { txt.value = b.dataset.t + txt.value.replace(/^(⚠️ Llegó un pedido nuevo: |🔥 Urgente: |❌ Pedido cancelado: |✏️ Cambio en un pedido: |📞 Pasar por la oficina|🔄 IMPORTANTE: reactualizar la página \(Ctrl \+ Shift \+ R o deslizar hacia abajo\))/, ""); txt.focus(); });
   w.querySelector(".m-todas").onclick = () => w.querySelectorAll(".m-para input").forEach(c => c.checked = true);
   w.querySelector(".m-ofi").onclick = () => { w.querySelectorAll(".m-pers input").forEach(c => { if((msgPers().find(p => p[0] === c.value) || [])[3]) c.checked = true; }); const o = w.querySelector('.m-para input[value="Oficina"]'); if(o) o.checked = true; };
   avisosUI(w.querySelector(".m-avisos"));
