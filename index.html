@@ -1160,8 +1160,8 @@ const FAMS = [
   {key:"Panaderia", label:"Panadería", emoji:"🥐", subs:["Panaderia"]},
   {key:"Comida de sal", label:"Comida de sal", emoji:"🐷", subs:["Comida de sal"]},
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Topping","Tortas"], nota:"Dulcería · Topping & Cremas · Tortas"},   // Alban 10 oct
-  {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS"], nota:"Stock · Fórmulas"},   // Alban 5 oct: sin Producción ni De una vez
-  {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ROTULOS"], nota:"Pedidos · Rótulos del día"}   /* Alban 31 oct: Ruta oculta; Cliente, Rótulo y Cajas especiales van dentro de Rótulos del día */   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
+  {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS","SANIDAD"], nota:"Stock · Fórmulas · Sanidad"},   // Alban 5 oct: sin Producción ni De una vez
+  {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ROTULOS","SANIDAD"], nota:"Pedidos · Rótulo · Sanidad"}   /* Alban 31 oct: Ruta oculta; Cliente, Rótulo y Cajas especiales van dentro de Rótulos del día */   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
   {key:"Marzzana", label:"La Marzzana", emoji:"🍕", subs:["Marzzana"], modos:["FORMULAS"], nota:"Fórmulas"},
   {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","SELLO"], nota:"Planta · Consumidor final · Sello"}   /* Alban 22 oct: Cliente, Refrigerio y Cajas especiales pasan a Logística */   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
 ];
@@ -1524,7 +1524,7 @@ function renderCats(){
   el.innerHTML = "";
   el.style.display = "block";
   const f = famObj(), col = PALETTE[navFam] || PALETTE.ALL;
-  const modo = (LOGM.includes(activeCat) || ROTM.includes(activeCat) || activeCat === "EMPAQUE") ? activeCat : activeCat === "STOCK" ? "STOCK" : activeCat === "FORMULAS" ? "FORMULAS" : activeCat === "SEMANA" ? "SEMANA" : "PROD";
+  const modo = (LOGM.includes(activeCat) || ROTM.includes(activeCat) || activeCat === "EMPAQUE") ? activeCat : activeCat === "STOCK" ? "STOCK" : activeCat === "FORMULAS" ? "FORMULAS" : activeCat === "SEMANA" ? "SEMANA" : activeCat === "SANIDAD" ? "SANIDAD" : "PROD";
   // Fila 1: volver + nombre de la categoría
   const top = document.createElement("div");
   top.setAttribute("style", "display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:14px;");
@@ -1535,7 +1535,7 @@ function renderCats(){
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulo"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
+  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulo"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"], ["SANIDAD","🧼 Sanidad"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.forEach(([key,label],i)=>{
     const on = key === modo || (key === "ROTULOS" && navFam === "Logistica" && ["CLIENTE","REFRIG","CAJAESP"].includes(modo));
     const btn = document.createElement("button");
     btn.textContent = label;
@@ -2128,7 +2128,7 @@ function renderHome(){
     msgB.onclick = ()=>{ activeCat = "MSG"; render(); window.scrollTo(0,0); };
     grid.appendChild(msgB); }
   // Alban 24 oct: tarjeta "Sanidad" (tareas de aseo del equipo)
-  { const colS = PALETTE["Comida de sal"];
+  if(!(typeof planYo === "function" && planYo() && planYo().area)) { const colS = PALETTE["Comida de sal"];   // Alban 1 nov: quien tiene área ve Sanidad dentro de su área
     const sB = document.createElement("button");
     sB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colS.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
     sB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🧼</span>
@@ -6191,7 +6191,7 @@ function sanCheckHTML(fam, gente, col){
   }
   const chips = gente.length > 1 ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">${gente.map(p=>`<button type="button" data-q="${escH(p.nom)}" style="font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:600;border-radius:100px;padding:8px 16px;cursor:pointer;border:1.5px solid ${col};background:${p.nom===SAN_QUIEN ? col : "#fff"};color:${p.nom===SAN_QUIEN ? "#fff" : col};">${escH(p.nom)}</button>`).join("")}</div>` : "";
   let h = `<div data-sancheck="1" style="margin-top:14px;background:#fff;border:2.5px solid ${col};border-radius:18px;padding:16px;">
-    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:${col};">✅ Check del turno</div>
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:${col};">✅ Check del turno · tareas de aseo de tu zona</div>
     ${gente.length > 1 ? `<div style="font-size:0.9rem;color:${C.inkSoft};margin-top:2px;">¿Quién hace el check?</div>` : ""}${chips}`;
   const p = gente.find(x => x.nom === SAN_QUIEN);
   if(!p){ return h + `</div>`; }
@@ -6247,9 +6247,13 @@ function sanCheckBind(w, fam, gente){
     else { msg.style.color = "#B23A2E"; msg.textContent = "No se pudo enviar. Revisa el internet e inténtalo otra vez."; }
   };
 }
+const SAN_FAMS = ["Panaderia","Comida de sal","Reposteria","Batido","Logistica"];
 function renderSanidad(){
-  setAccent("ALL"); tintPage("ALL");
-  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const enArea = SAN_FAMS.includes(navFam);   // Alban 1 nov: Sanidad es una pestaña dentro de cada área
+  if(enArea) SAN_AREA = navFam;
+  setAccent(enArea ? navFam : "ALL"); tintPage(enArea ? navFam : "ALL");
+  if(enArea) renderCats();
+  (enArea ? ["days","aviso","adelantos"] : ["days","cats","aviso","adelantos"]).forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
   const main = document.getElementById("main"); main.innerHTML = "";
   const yo = typeof usrYo === "function" ? usrYo() : null;
   const miArea = yo ? (pedNorm(yo.nom).startsWith("arelis") ? "ARELIS" : aseoAreaDe(yo) || (pedNorm(String(yo.puesto||"")).includes("log") ? "Logistica" : null)) : null;
@@ -6265,7 +6269,6 @@ function renderSanidad(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${SAN_AREAS.map(([k,t])=>`<button type="button" data-a="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:600;border-radius:100px;padding:8px 14px;cursor:pointer;border:1.5px solid ${k===fam ? col : C.line};background:${k===fam ? col : C.paper};color:${k===fam ? "#fff" : C.ink};">${t}${k===miArea ? " · mi equipo" : ""}</button>`).join("")}</div>`;
   const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
   const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [] : aseoDelArea(fam);
-  h += planSeccionHTML();   // Alban 31 oct: planillas con firma
   h += sanCheckHTML(fam, genteChk, col);
   if(genteChk.length) h += `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Tareas del equipo esta semana</div>`;
   if(fam === "ARELIS"){
@@ -6288,7 +6291,9 @@ function renderSanidad(){
     }
     if(!gente.length) h += `<div style="margin-top:14px;color:${C.inkSoft};">No hay personas de esta área en la lista.</div>`;
   }
+  h += planSeccionHTML();   // Alban 31 oct: planillas con firma · 1 nov: al final (check → tareas del equipo → planillas)
   w.innerHTML = h; main.appendChild(w);
+  if(enArea){ const v = w.querySelector(".s-vol"); if(v) v.style.display = "none"; const a = w.querySelector("[data-a]"); if(a && a.parentElement) a.parentElement.style.display = "none"; }
   sanCheckBind(w, fam, genteChk);
   planPintarSeccion();
   w.querySelector(".s-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
@@ -6642,7 +6647,7 @@ const PLANILLAS = [
   {id:"AGUA", cod:"MC-F-01", t:"Muestreo de agua – pH y cloro", quien:{zona:"Aseo, agua y temperatura"}, tipo:"agua"},
   {id:"PNC", cod:"PNC-F-01", t:"Producto no conforme – baja de productos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, cols:[
     {k:"des", t:"Descripción del PNC", req:1},{k:"can", t:"Cantidad", req:1},{k:"dis", t:"Disposición", op:["Desecho","Reproceso","Devolución al proveedor","Otro"], req:1},{k:"acc", t:"Acciones tomadas / comentarios"},{k:"aut", t:"Autorizado por", req:1},{k:"obs", t:"Observaciones"}]},
-  {id:"RECEP", cod:"PP-F-01", t:"Recepción de materia prima e insumos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, cols:[
+  {id:"RECEP", cod:"PP-F-01", t:"Recepción de materia prima e insumos", quien:{area:"Logistica"}, tipo:"recep", evento:true, cols:[
     {k:"pro", t:"Producto", req:1},{k:"can", t:"Cantidad", req:1},{k:"prv", t:"Proveedor", req:1},{k:"lot", t:"Lote"},{k:"ven", t:"Fecha de vencimiento", fecha:1},{k:"tem", t:"Temperatura (°C)", num:1},
     {k:"emp", t:"Empaque", op:["Conforme","No conforme"], req:1},{k:"cos", t:"Color · olor · sabor", op:["Conforme","No conforme","No aplica"], req:1},{k:"obs", t:"Observaciones"}]},
   {id:"TEMPREF", cod:"PLD-F-01", t:"Temperaturas de equipos de refrigeración", quien:{zona:"Aseo, agua y temperatura"}, tipo:"frio", veces:["Apertura","Cierre"]},
@@ -6660,7 +6665,13 @@ function planYo(){
   const zona = p && typeof p.p === "number" ? aseoZona(p.p - 1) : null;
   return {nom: u.nom, area, zona, aseo: !!(p && p.p === "Fijo" && !p.a), admin: /gerente/i.test(String(u.puesto || "")) || pedNorm(u.nom) === "alban"};
 }
+// Alban 1 nov: cada persona ve TODAS las planillas de su área (las de sus compañeros también, ej. el puesto de agua y temperatura de la semana)
 function planEsMia(pl, y){
+  if(!y) return false;
+  if(planEsMia1(pl, y)) return true;
+  return !!y.area && (PERSONAL || []).some(p => p.a === y.area && planEsMia1(pl, {area: p.a, zona: typeof p.p === "number" ? aseoZona(p.p - 1) : null, aseo: false}));
+}
+function planEsMia1(pl, y){
   if(!y) return false; const q = pl.quien;
   if(q.area) return y.area === q.area;
   if(q.areas) return q.areas.includes(y.area);
@@ -6694,7 +6705,7 @@ async function planPintarSeccion(){
   const y = planYo(), dow = planHoyDow();
   if(!y){ el.innerHTML = `<div style="background:#FFF4D6;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;font-size:0.92rem;">📋 Para llenar y firmar las planillas, entra con tu código personal.</div>`; return; }
   const lista = PLANILLAS.filter(pl => y.admin || planEsMia(pl, y));
-  el.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">📋 ${y.admin ? "Planillas de hoy (todas)" : "Mis planillas de hoy"}</div>
+  el.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">📋 ${y.admin ? "Planillas de hoy (todas)" : "Planillas de hoy"}</div>
     <div style="font-size:0.85rem;color:${C.inkSoft};">Llénala y fírmala con el dedo. Queda guardada con tu nombre, la fecha y la hora, y no se puede cambiar.</div>
     <div class="plan-lst" style="display:grid;gap:8px;margin-top:10px;"><div style="color:${C.inkSoft};font-size:0.9rem;">Cargando…</div></div>
     ${y.admin ? `<button type="button" class="plan-pdf" style="margin-top:12px;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#fff;border:1.5px solid ${C.ink};border-radius:12px;padding:10px 14px;cursor:pointer;">📄 PDF de la quincena</button>` : ""}`;
@@ -6715,6 +6726,14 @@ async function planPintarSeccion(){
   }).join("");
   lst.querySelectorAll("[data-pl]").forEach(b => b.onclick = () => planAbrir(PLANILLAS.find(p => p.id === b.dataset.pl)));
 }
+// ---- Recepción: base de proveedores y sus productos (Alban 1 nov) ----
+let PLAN_PROV = {lista: []};
+async function planCargarProv(){ try{ if(DB){ const s = await DB.doc("estado/PROVEEDORES").get(); const d = (s.exists && s.data()) || {}; if(Array.isArray(d.lista)) PLAN_PROV = {lista: d.lista}; } }catch(e){} return PLAN_PROV; }
+async function planGuardarProv(){ try{ if(DB) await DB.doc("estado/PROVEEDORES").set({lista: PLAN_PROV.lista}); }catch(e){ alert("No se pudo guardar. Revisa internet."); } }
+function planFotoComprimir(file){ return new Promise((res, rej) => { const img = new Image(), url = URL.createObjectURL(file);
+  img.onload = () => { const k = Math.min(1, 1400 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL("image/jpeg", 0.65)); };
+  img.onerror = rej; img.src = url; }); }
 // ---- formulario ----
 function planCampo(c, v){
   const st = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;width:100%;box-sizing:border-box;color-scheme:light;`;
@@ -6761,6 +6780,12 @@ function planAbrir(pl){
       <div style="display:flex;gap:8px;margin-top:10px;">${pl.veces.map(v => `<label style="flex:1;display:flex;gap:6px;align-items:center;justify-content:center;border:1.5px solid ${C.ink};border-radius:10px;padding:9px;background:#fff;font-weight:700;"><input type="radio" name="pl-vez" value="${v}"${v === sig ? " checked" : ""}>${v}</label>`).join("")}</div>
       <div style="${box}">${PLAN_EQUIPOS_FRIO.map((e, i) => `<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:${i ? `1px solid ${C.line}` : "none"};"><span style="flex:1;font-size:0.95rem;">${escH(e)}</span>
         <input type="text" inputmode="decimal" data-t="${i}" placeholder="°C" style="width:90px;font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px;border:1.5px solid ${C.line};border-radius:9px;text-align:center;"></div>`).join("")}</div>`;
+  } else if(pl.tipo === "recep"){
+    cuerpo = `<div class="pl-rec"><div style="color:${C.inkSoft};font-size:0.9rem;">Cargando proveedores…</div></div>
+      <span style="${lab}">📷 Foto de la factura (respaldo)</span>
+      <input type="file" accept="image/*" capture="environment" class="pl-foto" style="font-size:0.95rem;max-width:100%;">
+      <img class="pl-fprev" alt="" style="display:none;margin-top:8px;max-width:100%;max-height:240px;border-radius:10px;border:1px solid ${C.line};">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:0.95rem;"><input type="checkbox" class="pl-sn" style="width:20px;height:20px;"> Hoy <b>no hubo</b> recepción (sin novedad)</label>`;
   } else if(pl.tipo === "tabla"){
     cuerpo = `${pl.nota ? `<div style="font-size:0.88rem;font-weight:700;color:#8A5A00;">${escH(pl.nota)}</div>` : ""}
       <div class="pl-filas"></div>
@@ -6794,6 +6819,40 @@ function planAbrir(pl){
     const fila = () => { const d = document.createElement("div"); d.className = "pl-fila"; d.setAttribute("style", box + "display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;");
       d.innerHTML = pl.cols.map(c => `<div><span style="${lab}margin-top:0;">${escH(c.t)}${c.req ? " *" : ""}</span>${planCampo(c)}</div>`).join(""); filas.appendChild(d); };
     fila(); q(".pl-mas").onclick = fila;
+  }
+  // recepción: proveedores y sus productos de siempre (base compartida estado/PROVEEDORES) + foto de la factura
+  if(pl.tipo === "recep"){
+    const rec = q(".pl-rec");
+    const st = `font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:7px 8px;border:1.5px solid ${C.line};border-radius:9px;background:#fff;box-sizing:border-box;width:100%;color-scheme:light;`;
+    const bt = `flex:none;font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px dashed ${C.ink};background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;`;
+    ov._vals = {};
+    const guardarVals = () => rec.querySelectorAll(".pl-rp").forEach(d => { const o = ov._vals[d.dataset.n] = {}; d.querySelectorAll("[data-r]").forEach(x => o[x.dataset.r] = x.value); });
+    const pintar = () => {
+      guardarVals();
+      const L = PLAN_PROV.lista, sel = ov._prov ? L.find(x => x.id === ov._prov) : null;
+      rec.innerHTML = `<span style="${lab}margin-top:0;">Proveedor</span>
+        <div style="display:flex;gap:8px;"><select class="pl-prov" style="${st}flex:1;"><option value="">— Elegir proveedor —</option>${L.map(x => `<option value="${escH(x.id)}"${sel && sel.id === x.id ? " selected" : ""}>${escH(x.nom)}</option>`).join("")}</select>
+        <button type="button" class="pl-nprov" style="${bt}">➕ Nuevo</button></div>
+        ${sel ? `<div style="font-size:0.85rem;color:${C.inkSoft};margin-top:8px;">Pon la cantidad solo en lo que llegó. C-O-S = color, olor y sabor · ✓ conforme · ✗ no conforme.</div>
+          ${sel.prods.map(pr => `<div class="pl-rp" data-n="${escH(pr)}" style="${box}">
+            <div style="font-weight:700;">${escH(pr)}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;margin-top:6px;">
+              <input data-r="can" placeholder="Cantidad *" style="${st}"><input data-r="lot" placeholder="Lote" style="${st}">
+              <input type="date" data-r="ven" title="Fecha de vencimiento" style="${st}"><input data-r="tem" inputmode="decimal" placeholder="T° (°C)" style="${st}">
+              <select data-r="emp" style="${st}"><option>Empaque ✓</option><option>Empaque ✗</option></select>
+              <select data-r="cos" style="${st}"><option>C-O-S ✓</option><option>C-O-S ✗</option><option>C-O-S N/A</option></select>
+            </div></div>`).join("")}
+          <button type="button" class="pl-nprod" style="${bt}margin-top:10px;">➕ Producto nuevo de ${escH(sel.nom)}</button>` : ""}`;
+      rec.querySelectorAll(".pl-rp").forEach(d => { const o = ov._vals[d.dataset.n] || {}; d.querySelectorAll("[data-r]").forEach(x => { if(o[x.dataset.r] != null) x.value = o[x.dataset.r]; }); });
+      rec.querySelector(".pl-prov").onchange = e => { guardarVals(); ov._prov = e.target.value; pintar(); };
+      rec.querySelector(".pl-nprov").onclick = async () => { const n = (prompt("Nombre del proveedor nuevo:") || "").trim(); if(!n) return;
+        const id = "P" + Date.now().toString(36); PLAN_PROV.lista.push({id, nom: n, prods: []}); ov._prov = id; await planGuardarProv(); pintar(); };
+      const np = rec.querySelector(".pl-nprod");
+      if(np) np.onclick = async () => { const n = (prompt("Nombre del producto (ej. Mantequilla x 500 g):") || "").trim(); if(!n || sel.prods.includes(n)) return; guardarVals(); sel.prods.push(n); await planGuardarProv(); pintar(); };
+    };
+    planCargarProv().then(pintar);
+    q(".pl-foto").onchange = async e => { const f = e.target.files && e.target.files[0]; if(!f) return;
+      try{ ov._foto = await planFotoComprimir(f); const im = q(".pl-fprev"); im.src = ov._foto; im.style.display = "block"; }catch(x){ alert("No se pudo leer la foto."); } };
   }
   // firma
   const cv = q(".pl-firma"), cx = cv.getContext("2d"); let trazo = 0, dib = false;
@@ -6833,6 +6892,17 @@ function planAbrir(pl){
       const mal = t.filter(x => /congel/i.test(x.equipo) ? x.temp > -18 : (x.temp < 0 || x.temp > 4));
       if(mal.length && !obs){ err.textContent = "⚠️ " + mal.map(x => x.equipo).join(", ") + " fuera de rango: escribe en Observaciones qué se hizo."; return; }
       datos = {momento: extra, temperaturas: t}; resumen = extra + ": " + t.map(x => x.equipo.replace("Congelador", "C").replace("Nevera", "N") + " " + x.temp + "°").join(" · ") + (mal.length ? " · FUERA DE RANGO: " + mal.map(x => x.equipo).join(", ") : "");
+    } else if(pl.tipo === "recep"){
+      const sn = q(".pl-sn") && q(".pl-sn").checked;
+      const sel = ov._prov ? PLAN_PROV.lista.find(x => x.id === ov._prov) : null;
+      const filas = sel ? qa(".pl-rp").map(d => { const o = {pro: d.dataset.n, prv: sel.nom}; d.querySelectorAll("[data-r]").forEach(x => o[x.dataset.r] = x.value.trim()); return o; }).filter(o => o.can) : [];
+      if(!sn && !sel){ err.textContent = "⚠️ Elige el proveedor, o marca \"Hoy no hubo recepción\"."; return; }
+      if(!sn && !filas.length){ err.textContent = "⚠️ Pon la cantidad de lo que llegó."; return; }
+      if(!sn && !ov._foto){ err.textContent = "⚠️ Toma la foto de la factura."; return; }
+      const nc = filas.filter(o => /✗/.test(o.emp + " " + o.cos));
+      if(nc.length && !obs){ err.textContent = "⚠️ Hay algo NO conforme: escribe en Observaciones qué se hizo."; return; }
+      extra = sn ? "" : sel.nom; datos = sn ? {sinNovedad: true} : {proveedor: sel.nom, filas};
+      resumen = sn ? "Sin novedad" : sel.nom + ": " + filas.map(o => [o.pro, o.can, o.lot && "lote " + o.lot, o.ven && "vence " + o.ven, o.tem && o.tem + " °C", o.emp, o.cos].filter(Boolean).join(" · ")).join(" | ");
     } else if(pl.tipo === "tabla"){
       const sn = q(".pl-sn") && q(".pl-sn").checked;
       const filas = qa(".pl-fila").map(f => { const o = {}; pl.cols.forEach(c => { o[c.k] = (f.querySelector(`[data-k="${c.k}"]`) || {}).value || ""; }); return o; })
@@ -6853,7 +6923,7 @@ function planAbrir(pl){
     const firma = fc.toDataURL("image/png");
     if(!PLAN_API){ err.textContent = "⚙️ Las planillas todavía no están activadas (falta conectar la hoja)."; return; }
     const b = ev.target; b.disabled = true; b.textContent = "Enviando…";
-    const cuerpoEnv = {tipo: "planilla", planilla: pl.id, codigo: pl.cod, titulo: pl.t, persona: y.nom, area: y.area || (y.aseo ? "Aseo" : ""), extra, datos, resumen, observaciones: obs, firma,
+    const cuerpoEnv = {tipo: "planilla", planilla: pl.id, codigo: pl.cod, titulo: pl.t, persona: y.nom, area: y.area || (y.aseo ? "Aseo" : ""), extra, datos, resumen, observaciones: obs, firma, foto: ov._foto || "",
       equipo: (navigator.userAgent || "").slice(0, 200) + " · " + (lsGet("mi_area") || ""), fechaLocal: hoy, horaLocal: new Date().toTimeString().slice(0, 8)};
     try{
       const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(cuerpoEnv)});
@@ -6894,7 +6964,7 @@ async function planPdfQuincena(){
     const rs = regs.filter(r => r.planilla === pl.id); if(!rs.length) return "";
     return `<section><div class="hd"><div><div class="cod">${esc(pl.cod)} · Parisina</div><h2>${esc(pl.t)}</h2></div><div class="per">${esc(desde)} a ${esc(hasta)}</div></div>
       <table><thead><tr><th style="width:15%">Fecha / hora</th><th style="width:13%">Responsable</th><th>Registro</th><th style="width:14%">Observaciones</th><th style="width:17%">Firma</th></tr></thead><tbody>
-      ${rs.map(r => `<tr><td>${esc(r.fecha)}<br>${esc(r.hora)}${r.extra ? "<br><b>" + esc(r.extra) + "</b>" : ""}</td><td>${esc(r.persona)}<br><span class="mut">${esc(r.area)}</span></td><td>${esc(r.resumen)}</td><td>${esc(r.observaciones)}</td>
+      ${rs.map(r => `<tr><td>${esc(r.fecha)}<br>${esc(r.hora)}${r.extra ? "<br><b>" + esc(r.extra) + "</b>" : ""}</td><td>${esc(r.persona)}<br><span class="mut">${esc(r.area)}</span></td><td>${esc(r.resumen)}</td><td>${esc(r.observaciones)}${r.foto ? `<br><a href="${esc(r.foto)}">📷 foto</a>` : ""}</td>
         <td>${r.firma ? `<img src="${esc(r.firma)}">` : ""}<div class="hash">${esc(String(r.hash || "").slice(0, 20))}…</div></td></tr>`).join("")}
       </tbody></table></section>`;
   }).join("");
