@@ -6174,16 +6174,39 @@ function sanLista(tit, arr, col){ if(!arr || !arr.length) return "";
 const SAN_API = "https://script.google.com/macros/s/AKfycbxPbu7vUJZGhxCADVsi6U06V_qxU3yOEs0CvGWnvf0ErIU1ami7cWCswsjICoHmsKlg/exec";
 let SAN_QUIEN = null;
 function sanLs(k, v){ try{ if(v === undefined){ return JSON.parse(localStorage.getItem(k) || "null"); } localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+// Alban 1 nov: las planillas de la persona van DENTRO del check (como una tarea más). Devuelve [{pl, vez}] (frío: una por toma).
+function sanPlanDe(p, fam){
+  if(typeof PLANILLAS === "undefined" || typeof planEsMia1 !== "function") return [];
+  const yP = fam === "ARELIS" ? {area:"", zona:null, aseo:true} : {area: fam, zona: p.zona || null, aseo:false};
+  const out = [];
+  PLANILLAS.forEach(pl => { if(!planEsMia1(pl, yP)) return; if(pl.tipo === "frio" && pl.veces) pl.veces.forEach(v => out.push({pl, vez: v})); else out.push({pl, vez: ""}); });
+  return out;
+}
 function sanTareasDe(p, fam){
   // devuelve {zona, d:[diarias], s:[semanales]}
+  const PLR = sanPlanDe(p, fam), tiene = fn => PLR.some(x => fn(x.pl));
+  // Las tareas que en realidad son "llenar una planilla" se quitan del texto: la planilla aparece como tarea y se chulea sola al firmarla
+  const esPlan = t => /planilla de aseo/i.test(t) ? tiene(pl => pl.tipo === "aseo") : /desinfecci[oó]n de alimentos/i.test(t) ? tiene(pl => pl.id === "DESINF")
+    : /pH y cloro|Registrar el color/i.test(t) ? tiene(pl => pl.id === "AGUA") : /Registrar temperaturas/i.test(t) ? tiene(pl => pl.id === "TEMPREF") : /Rellenar las planillas/i.test(t) ? PLR.length > 0 : false;
   if(fam === "ARELIS"){ const hoyD = new Date(hoyISO() + "T12:00:00").getDay();
-    return {zona:"Aseo planta (turno tarde)", d: ASEO_TARDE.concat(hoyD === 3 ? ["Limpiar el horno de esta semana: horno " + aseoHornoArelis()] : []), s:[]}; }
+    return {zona:"Aseo planta (turno tarde)", d: ASEO_TARDE.concat(hoyD === 3 ? ["Limpiar el horno de esta semana: horno " + aseoHornoArelis()] : []).filter(t => !esPlan(t)), s:[], pl: PLR}; }
+  if(fam === "Logistica") return {zona:"Despacho", d:[], s:[], pl: PLR};
   const t = ASEO_TAREAS[p.zona] || {d:[], s:[]};
   const ex = aseoExtras(fam);
-  return {zona: p.zona, d: (t.d || []).concat(ASEO_COMUN), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : [])};
+  return {zona: p.zona, d: (t.d || []).concat(ASEO_COMUN).filter(t => !esPlan(t)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
+}
+function sanPlanEstado(w){
+  w.querySelectorAll("[data-plr]").forEach(b => {
+    const pl = PLANILLAS.find(x => x.id === b.dataset.plr), vez = b.dataset.vez; if(!pl) return;
+    const f = planFirmadas(pl.id).filter(r => !vez || r.extra === vez), ico = b.querySelector(".plr-ico"), est = b.querySelector(".plr-est"), col = ico.dataset.c;
+    if(!PLAN_API){ est.textContent = "⚙️ falta activar"; return; }
+    if(PLAN_HOY == null){ est.textContent = "sin conexión · toca para abrir"; return; }
+    if(f.length){ ico.textContent = "✓"; ico.style.background = col; ico.style.color = "#fff"; est.style.color = "#2F6DB5"; est.textContent = "✅ firmada · " + f.map(r => r.persona + " " + String(r.hora).slice(0,5)).join(" · "); }
+    else { ico.textContent = ""; ico.style.background = "#fff"; est.style.color = pl.evento ? C.inkSoft : "#B23A2E"; est.textContent = pl.evento ? "cuando haya · o \"sin novedad\" · toca para abrir" : "⏳ pendiente · toca para llenar y firmar"; }
+  });
 }
 function sanCheckHTML(fam, gente, col){
-  if(fam === "Logistica" || !gente.length) return "";
+  if(!gente.length) return "";
   const yo = typeof usrYo === "function" ? usrYo() : null;
   if(!SAN_QUIEN || !gente.some(p => p.nom === SAN_QUIEN)){
     const mio = yo ? gente.find(p => aseoNorm(p.nom) === aseoNorm(yo.nom)) : null;
@@ -6201,15 +6224,19 @@ function sanCheckHTML(fam, gente, col){
   const box = (key, txt, on, extra) => `<label style="display:flex;gap:12px;align-items:flex-start;padding:9px 2px;cursor:pointer;font-size:1rem;line-height:1.4;border-top:1px solid ${C.line};">
       <input type="checkbox" data-k="${key}" ${on ? "checked" : ""} style="width:24px;height:24px;flex:0 0 24px;margin:0;accent-color:${col};">
       <span>${escH(txt)}${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;
-  if(fam !== "ARELIS"){
+  if(fam !== "ARELIS" && fam !== "Logistica"){
     h += `<div style="margin-top:12px;background:#FBF3DA;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;">
       <div style="font-weight:700;">Inicio de semana — ${escH(T.zona)}</div>
       <div style="font-size:0.88rem;color:${C.inkSoft};">¿Cómo encontraste tu zona al recibirla? (califica la semana anterior)</div>
       <div style="display:flex;gap:10px;margin-top:10px;">${[["limpia","✓ Limpia"],["sucia","✗ Sucia"]].map(([k,t])=>`<button type="button" data-ini="${k}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;border-radius:100px;padding:12px;cursor:pointer;border:2px solid ${col};background:${ini && ini.e===k ? col : "#fff"};color:${ini && ini.e===k ? "#fff" : col};">${t}</button>`).join("")}</div>
       ${ini ? `<div style="font-size:0.8rem;color:${C.inkSoft};margin-top:6px;">Marcado el ${escH(ini.f)}.</div>` : ""}</div>`;
   }
-  h += `<div style="font-weight:700;margin-top:14px;color:${col};">${escH(T.zona)} — tareas de hoy</div>`
+  if(T.d.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">${escH(T.zona)} — tareas de hoy</div>`
     + T.d.map((t, i) => box("d" + i, t, dHechas[i])).join("");
+  if(T.pl && T.pl.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">📋 Planillas de hoy — se llenan aquí y se firman con el dedo</div>`
+    + T.pl.map(x => `<button type="button" data-plr="${x.pl.id}" data-vez="${escH(x.vez)}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:none;border-top:1px solid ${C.line};padding:9px 2px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:1rem;line-height:1.4;color:${C.ink};">
+      <span class="plr-ico" data-c="${col}" style="width:24px;height:24px;flex:0 0 24px;box-sizing:border-box;border:2px solid ${col};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:700;background:#fff;"></span>
+      <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("");
   if(T.s.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">Semanales (una vez por semana)</div>`
     + T.s.map((t, i) => box("s" + i, t, !!sHechas[i], sHechas[i] ? "· hecha el " + sHechas[i].slice(8) + "/" + sHechas[i].slice(5,7) : "")).join("");
   h += `<button type="button" class="san-env" style="margin-top:16px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;border:none;border-radius:100px;padding:15px;cursor:pointer;background:${col};color:#fff;">✓ Enviar check del turno</button>
@@ -6228,6 +6255,8 @@ function sanCheckBind(w, fam, gente){
     if(k[0] === "d"){ const o = sanLs(kD) || {}; if(c.checked) o[i] = 1; else delete o[i]; sanLs(kD, o); }
     else { const o = sanLs(kS) || {}; if(c.checked) o[i] = hoy; else delete o[i]; sanLs(kS, o); }
   });
+  el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ()=>{ PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
+  sanPlanEstado(el); if(typeof planCargarHoy === "function") planCargarHoy().then(()=>{ if(document.body.contains(el)) sanPlanEstado(el); });
   const btn = el.querySelector(".san-env"), msg = el.querySelector(".san-msg");
   btn.onclick = async ()=>{
     const dH = sanLs(kD) || {}, sH = sanLs(kS) || {}, ini = sanLs(kI);
@@ -6236,7 +6265,8 @@ function sanCheckBind(w, fam, gente){
       zona: T.zona, completo: nD === T.d.length, diarias: nD + "/" + T.d.length,
       semanales: T.s.map((t, i) => t + " → " + (sH[i] ? "hecha el " + sH[i] : "PENDIENTE")).join(" | "),
       inicio: ini ? ini.e + " (" + ini.f + ")" : "",
-      falto: T.d.filter((t, i) => !dH[i]).join(" | ")};
+      falto: T.d.filter((t, i) => !dH[i]).join(" | "),
+      planillas: (T.pl || []).map(x => x.pl.t + (x.vez ? " " + x.vez : "") + " → " + (planFirmadas(x.pl.id).some(r => !x.vez || r.extra === x.vez) ? "firmada" : "PENDIENTE")).join(" | ")};
     if(nD < T.d.length && !confirm("Faltan " + (T.d.length - nD) + " tareas de hoy sin marcar. ¿Enviar así?")) return;
     btn.disabled = true; btn.style.opacity = "0.6"; msg.style.color = C.ink; msg.textContent = "Enviando…";
     let ok = false;
@@ -6268,10 +6298,11 @@ function renderSanidad(){
     <div style="font-size:0.88rem;color:${C.inkSoft};">Semana ${aseoW() + 1} · ${f(lun)} – ${f(sab)}. Las semanales se reportan el sábado.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${SAN_AREAS.map(([k,t])=>`<button type="button" data-a="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:600;border-radius:100px;padding:8px 14px;cursor:pointer;border:1.5px solid ${k===fam ? col : C.line};background:${k===fam ? col : C.paper};color:${k===fam ? "#fff" : C.ink};">${t}${k===miArea ? " · mi equipo" : ""}</button>`).join("")}</div>`;
   const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
-  const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [] : aseoDelArea(fam);
+  const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [{nom:"Juan Pablo", zona:null}] : aseoDelArea(fam);
   h += sanCheckHTML(fam, genteChk, col);
-  if(genteChk.length) h += `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Tareas del equipo esta semana</div>`;
-  if(fam === "ARELIS"){
+  const SAN_EQUIPO = false;   // Alban 1 nov: "Tareas del equipo esta semana" oculto (todo va en el check de cada persona)
+  if(SAN_EQUIPO && genteChk.length) h += `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Tareas del equipo esta semana</div>`;
+  if(!SAN_EQUIPO){ /* oculto */ } else if(fam === "ARELIS"){
     h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">Arelis → Aseo planta (turno tarde)</div>
       ${sanLista("Cada día", ASEO_TARDE, col)}
       ${sanLista("Miércoles" + (hoyD === 3 ? " (hoy)" : ""), ["Limpiar el horno de esta semana: horno " + aseoHornoArelis() + " (rota 1, 2, 3, 4, 5, 6, eléctrico)"], col)}`, col);
@@ -6656,7 +6687,7 @@ const PLANILLAS = [
 ];
 const PLAN_DIAS = {D:[1,2,3,4,5,6], LJ:[1,4], MV:[2,5], M:[2], W:[3], L:[1], S:[1,2,3,4,5,6], X:[1,2,3,4,5,6]};
 const PLAN_OPC = {S:"(semanal)", X:"(1 vez al mes)"};
-let PLAN_HOY = null, PLAN_HOY_T = 0;   // registros firmados hoy (del servidor): [{planilla, persona, hora, extra}]
+let PLAN_HOY = null, PLAN_HOY_T = 0, PLAN_VEZ_PRE = null;   // registros firmados hoy (del servidor): [{planilla, persona, hora, extra}]
 // ---- ¿quién es? (sesión con código) ----
 function planYo(){
   const u = typeof usrYo === "function" ? usrYo() : null; if(!u) return null;
@@ -6703,6 +6734,7 @@ function planSeccionHTML(){ return `<div id="plan-sec" style="margin-top:16px;">
 async function planPintarSeccion(){
   const el = document.getElementById("plan-sec"); if(!el) return;
   const y = planYo(), dow = planHoyDow();
+  if(!y || !y.admin){ el.innerHTML = ""; return; }   // Alban 1 nov: el operador ve sus planillas dentro del check; esta lista completa es solo para Alban
   if(!y){ el.innerHTML = `<div style="background:#FFF4D6;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;font-size:0.92rem;">📋 Para llenar y firmar las planillas, entra con tu código personal.</div>`; return; }
   const lista = PLANILLAS.filter(pl => y.admin || planEsMia(pl, y));
   el.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">📋 ${y.admin ? "Planillas de hoy (todas)" : "Planillas de hoy"}</div>
@@ -6775,7 +6807,8 @@ function planAbrir(pl){
       <div style="${box}"><span style="${lab}">Punto de muestra</span>${planCampo({k:"pun"}, punto)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><span style="${lab}">pH</span>${planCampo({k:"ph", num:1})}</div><div><span style="${lab}">Cloro (ppm)</span>${planCampo({k:"clo", num:1})}</div></div></div>`;
   } else if(pl.tipo === "frio"){
-    const f = planFirmadas(pl.id), sig = pl.veces.find(v => !f.some(r => r.extra === v)) || pl.veces[pl.veces.length - 1];
+    const f = planFirmadas(pl.id), sig = (PLAN_VEZ_PRE && pl.veces.includes(PLAN_VEZ_PRE)) ? PLAN_VEZ_PRE : (pl.veces.find(v => !f.some(r => r.extra === v)) || pl.veces[pl.veces.length - 1]);
+    PLAN_VEZ_PRE = null;
     cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Neveras: <b>0 a 4 °C</b> · Congeladores: <b>−18 °C o menos</b>. Se toma 2 veces al día.</div>
       <div style="display:flex;gap:8px;margin-top:10px;">${pl.veces.map(v => `<label style="flex:1;display:flex;gap:6px;align-items:center;justify-content:center;border:1.5px solid ${C.ink};border-radius:10px;padding:9px;background:#fff;font-weight:700;"><input type="radio" name="pl-vez" value="${v}"${v === sig ? " checked" : ""}>${v}</label>`).join("")}</div>
       <div style="${box}">${PLAN_EQUIPOS_FRIO.map((e, i) => `<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:${i ? `1px solid ${C.line}` : "none"};"><span style="flex:1;font-size:0.95rem;">${escH(e)}</span>
@@ -6936,7 +6969,7 @@ function planAbrir(pl){
         <div style="margin-top:6px;color:${C.inkSoft};font-size:0.9rem;">${escH(y.nom)} · ${escH(j.fecha)} ${escH(j.hora)} (hora del servidor)</div>
         <div style="margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};word-break:break-all;">Huella: ${escH(String(j.hash || "").slice(0, 16))}…</div>
         <button type="button" class="pl-ok" style="margin-top:16px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:12px 22px;cursor:pointer;">Listo</button></div>`;
-      ov.querySelector(".pl-ok").onclick = () => { ov.remove(); planPintarSeccion(); };
+      ov.querySelector(".pl-ok").onclick = () => { ov.remove(); planPintarSeccion(); const ck = document.querySelector("[data-sancheck]"); if(ck && typeof sanPlanEstado === "function") sanPlanEstado(ck); };
     }catch(e){ b.disabled = false; b.textContent = "✍️ Firmar y enviar"; err.textContent = "No se pudo enviar (" + (e.message || e) + "). Revisa internet e intenta otra vez."; }
   };
 }
