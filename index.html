@@ -6701,7 +6701,11 @@ const PLANILLAS = [
     ["§ Cuarto de empaques"],["Paredes y piso","D"],["Ninguna bolsa queda abierta ni en contacto con el piso","D"]]},
   // Alban 3 nov: es para TODOS y todos los días; alimento de lista (o "Otro" y se escribe). Los campos quedan vacíos: ellos los llenan (guía: Suma Eden 1 ml/L; blandas y huevo 1 min; duras, hojas y vegetales 5 min; sin enjuague)
   {id:"DESINF", cod:"PLD-P-01", t:"Desinfección de alimentos", quien:{todos:true}, tipo:"tabla", cols:[
-    {k:"ali", t:"Alimento", op:["Huevo","Fruta de cáscara blanda","Fruta de cáscara dura / hojas","Vegetales","Otro"], otro:1, req:1},{k:"qui", t:"Producto químico", op:["Suma Eden","Otro"], req:1},{k:"con", t:"Concentración", req:1},{k:"tie", t:"Tiempo de desinfección (min)", num:1, req:1},{k:"enj", t:"Enjuague", op:["Sí","No"], req:1}]},
+    {k:"ali", t:"Alimento", op:["Huevo","Fruta de cáscara blanda","Fruta de cáscara dura / hojas","Vegetales","Otro"], otro:1, req:1},{k:"qui", t:"Producto químico", op:["Suma Eden","Otro"], req:1},{k:"con", t:"Concentración", req:1},{k:"tie", t:"Tiempo de desinfección (min)", num:1, req:1},{k:"enj", t:"Enjuague", op:["Sí","No"], req:1}],
+    // Alban 3 nov: al elegir el alimento se llena solo (producto, concentración, tiempo, enjuague) para que el operador no escriba nada
+    auto: (v, d) => { const T = {"Huevo":1, "Fruta de cáscara blanda":1, "Fruta de cáscara dura / hojas":5, "Vegetales":5};
+      const set = (k, val) => { const e = d.querySelector(`[data-k="${k}"]`); if(e) e.value = val; };
+      if(v in T){ set("qui", "Suma Eden"); set("con", "1 ml por litro de agua"); set("tie", T[v]); set("enj", "No"); } else { set("qui", ""); set("con", ""); set("tie", ""); set("enj", ""); } }},
   {id:"PLAGAS", cod:"PCIP-F-01", t:"Inspección de presencia de plagas", quien:{aseo:true}, tipo:"plagas", semanal:true, items:[
     ["§ Área de cocina y barra"],["Uniones entre el piso y las paredes, y paredes y techos"],["Estufa (interior, debajo, parrillas, bandejas)"],["Estanterías (entrepaños, bases)"],["Lavaplatos (interior, exterior, puerta, canasta, partes removibles)"],
     ["Campana de extracción (filtros, exterior, interior)"],["Horno (exterior, debajo)"],["Neveras y congeladores (empaques, exterior)"],["Despensa (interior, exterior, entrepaños)"],["Lockers (interior, exterior, tapas, partes removibles)"],
