@@ -21,8 +21,7 @@
   <main id="main" style="padding-top:8px;"></main>
 
   <footer style="margin-top:40px;padding-top:16px;border-top:1px solid #E4DBC9;font-size:0.78rem;color:#6B6255;line-height:1.5;">
-    Reporte de trabajo — reemplaza la hoja impresa. Cantidades calculadas desde los pedidos ingresados a esa fecha; pueden cambiar si entran pedidos nuevos.<br>
-    Pendiente por definir contigo: archivo fuente definitivo, hora de corte diaria y cómo se va a compartir con el equipo. Por ahora esto es la estructura por categoría para revisar y <span id="afinar-adm">afinar</span>.
+    <span id="afinar-adm">Parisina</span>
   </footer>
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 </div>
@@ -1181,7 +1180,7 @@ function syncNav(){
 function irA(cat){ activeCat = cat; render(); window.scrollTo(0,0); }
 function entrarFam(f){ if(f.key === "Panaderia") activeDate = dates.find(d => d === TODAY_ISO) || dates[0]; navFam = f.key; navSub = f.subs ? f.subs[0] : "ALL"; irA(f.modos ? f.modos[0] : navSub);
   if(f.key !== "ALL" && f.key !== "Marzzana" && f.key !== "Rotular"){ try{ localStorage.setItem("mi_area", f.key); }catch(e){} }   // 22 oct: Rotular lo ven todos, no cambia el área de la tablet   // Alban 21 oct: la tablet recuerda su área (mensajes)
-  if(typeof saludoAlEntrar === "function") saludoAlEntrar(f.key); }   // Alban 21 oct: saludo 1 vez al día
+  if(typeof avisoImportante === "function") avisoImportante(()=>{ if(typeof saludoAlEntrar === "function") saludoAlEntrar(f.key); }); else if(typeof saludoAlEntrar === "function") saludoAlEntrar(f.key); }   // Alban 2 nov: aviso obligatorio primero · 21 oct: saludo 1 vez al día
 
 // ---- Estado de chulos: se guarda en la base del artefacto (capability "db") ----
 // Un documento por fecha: estado/<YYYY-MM-DD> = { items: { "<clave>": true } }
@@ -2020,7 +2019,7 @@ function renderLogin(){
     try{ localStorage.setItem("usuario_cod", c); }catch(x){}
     activeCat = "HOME"; render(); window.scrollTo(0,0);
     const a = (u.acc || []).find(x=>x !== "ALL" && x !== "Rotular") || "ALL";
-    saludoAlEntrar(a, true);
+    avisoImportante(()=>saludoAlEntrar(a, true));
   };
   main.appendChild(box);
   const adm = document.createElement("div");
@@ -2090,8 +2089,7 @@ function renderHome(){
   main.innerHTML = "";
   const h = document.createElement("div");
   h.setAttribute("style", "margin-top:26px;");
-  h.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:0 0 4px;">¿Cuál es tu área?</h2>
-    <div style="font-size:0.9rem;color:${C.inkSoft};">Elige tu categoría para ver tu producción, tu stock y tus fórmulas.</div>`;
+  h.innerHTML = ``;   // Alban 2 nov: sin "¿Cuál es tu área?"
   main.appendChild(bannerPublicado());   // Alban 7 oct: hora de publicación en grande
   try{ if(typeof location !== "undefined" && /github\.io$/.test(location.hostname)){ const av = document.createElement("div"); av.className = "m-avisos"; avisosUI(av); if(av.style.display !== "none") main.appendChild(av); } }catch(e){}   // Alban 31 oct: aviso obligatorio también en la portada
   main.appendChild(h);
@@ -5952,6 +5950,35 @@ function saludoAlEntrar(fam, forzar){
     ${conCompra ? compraViernesHTML() : ""}
     <button type="button" style="margin-top:20px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:13px 28px;cursor:pointer;">¡Vamos! 💪</button>`, col);
   o.querySelector("button").onclick = () => o.remove();
+}
+
+// ---- ⚠️ Aviso importante obligatorio (Alban 2 nov): distinto del saludo. Sale en grande, una sola vez por persona
+// (por versión del aviso), y la persona confirma "lo leí y lo voy a hacer". Queda guardado quién confirmó en estado/AVISO_LEIDO.
+const AVISO_IMP = {v: "2026-11-03", solo: ["2026-11-03"], titulo: "Antes de empezar a trabajar", puntos: [
+  "🧽 Lava <b>BIEN</b> tus mesones, entrepaños y estanterías. Al terminar, <b>bota tu esponja</b>.",
+  "🍲 <b>Comida de sal:</b> deja las ollas lo más que puedas <b>en bolsas</b>.",
+  "🔥 La grasa se quita con <b>agua caliente</b> y con el otro producto que están usando."]};
+function avisoImpKey(){ const yo = typeof usrYo === "function" ? usrYo() : null; return "avimp_" + AVISO_IMP.v + "_" + (yo ? yo.nom : (lsGet("mi_area") || "tablet")); }
+function avisoImportante(luego){
+  if(AVISO_IMP.solo && !AVISO_IMP.solo.includes(hoyISO())){ if(luego) luego(); return; }   // Alban 2 nov: este aviso es solo para el martes 3
+  const k = avisoImpKey(); if(lsGet(k) === "ok"){ if(luego) luego(); return; }
+  if(document.getElementById("aviso-imp")){ return; }
+  const yo = typeof usrYo === "function" ? usrYo() : null, col = "#B23A2E";
+  const o = capaModal(`<div style="font-size:3rem;line-height:1;">⚠️</div>
+    <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.7rem;margin-top:8px;color:${col};">AVISO IMPORTANTE</div>
+    <div style="font-weight:700;font-size:1.05rem;color:${C.inkSoft};margin-top:2px;">${escH(AVISO_IMP.titulo)}${yo ? " · " + escH(yo.nom) : ""}</div>
+    <div style="text-align:left;margin-top:16px;display:grid;gap:12px;">${AVISO_IMP.puntos.map(t => `<div style="font-size:1.2rem;line-height:1.45;background:#FFF1EE;border:1.5px solid ${col};border-radius:14px;padding:12px 14px;">${t}</div>`).join("")}</div>
+    <label style="display:flex;gap:12px;align-items:center;text-align:left;margin-top:18px;font-size:1.08rem;font-weight:700;cursor:pointer;"><input type="checkbox" style="width:26px;height:26px;flex:none;accent-color:${col};">Lo leí y lo voy a hacer</label>
+    <button type="button" disabled style="margin-top:14px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.1rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:14px;cursor:pointer;opacity:.45;">✓ Confirmar y empezar</button>`, col);
+  o.id = "aviso-imp";
+  const chk = o.querySelector("input"), btn = o.querySelector("button");
+  chk.onchange = ()=>{ btn.disabled = !chk.checked; btn.style.opacity = chk.checked ? "1" : ".45"; };
+  btn.onclick = async ()=>{
+    lsSet(k, "ok"); o.remove();
+    try{ if(DB && yo){ const ref = DB.doc("estado/AVISO_LEIDO"); const sn = await ref.get(); const d = (sn.exists && sn.data()) || {};
+      d[AVISO_IMP.v + " | " + yo.nom] = new Date().toLocaleString("es-CO", {dateStyle: "short", timeStyle: "short"}); await ref.set(d); } }catch(e){}
+    if(luego) luego();
+  };
 }
 
 // ---- 📣 Mensajes ----
