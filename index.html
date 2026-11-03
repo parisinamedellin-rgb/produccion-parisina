@@ -6229,7 +6229,7 @@ function sanTareasDe(p, fam){
 function sanPlanEstado(w){
   w.querySelectorAll("[data-plr]").forEach(b => {
     const pl = PLANILLAS.find(x => x.id === b.dataset.plr), vez = b.dataset.vez; if(!pl) return;
-    const f = planFirmadas(pl.id).filter(r => !vez || r.extra === vez), ico = b.querySelector(".plr-ico"), est = b.querySelector(".plr-est"), col = ico.dataset.c;
+    const f = planFirmadas(pl.id, b.dataset.area).filter(r => !vez || r.extra === vez), ico = b.querySelector(".plr-ico"), est = b.querySelector(".plr-est"), col = ico.dataset.c;
     if(!PLAN_API){ est.textContent = "⚙️ falta activar"; return; }
     if(PLAN_HOY == null){ est.textContent = "sin conexión · toca para abrir"; return; }
     if(f.length){ ico.textContent = "✓"; ico.style.background = col; ico.style.color = "#fff"; est.style.color = "#2F6DB5"; est.textContent = "✅ firmada · " + f.map(r => r.persona + " " + String(r.hora).slice(0,5)).join(" · "); }
@@ -6265,7 +6265,7 @@ function sanCheckHTML(fam, gente, col){
   if(T.d.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">${escH(T.zona)} — tareas de hoy</div>`
     + T.d.map((t, i) => box("d" + i, t, dHechas[i])).join("");
   if(T.pl && T.pl.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">📋 Planillas de hoy — se llenan aquí y se firman con el dedo</div>`
-    + T.pl.map(x => `<button type="button" data-plr="${x.pl.id}" data-vez="${escH(x.vez)}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:none;border-top:1px solid ${C.line};padding:9px 2px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:1rem;line-height:1.4;color:${C.ink};">
+    + T.pl.map(x => `<button type="button" data-plr="${x.pl.id}" data-vez="${escH(x.vez)}" data-area="${escH(sanAreaKey(fam))}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:none;border-top:1px solid ${C.line};padding:9px 2px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:1rem;line-height:1.4;color:${C.ink};">
       <span class="plr-ico" data-c="${col}" style="width:24px;height:24px;flex:0 0 24px;box-sizing:border-box;border:2px solid ${col};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:700;background:#fff;"></span>
       <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("");
   if(T.s.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">Semanales (una vez por semana)</div>`
@@ -6297,7 +6297,7 @@ function sanCheckBind(w, fam, gente){
       semanales: T.s.map((t, i) => t + " → " + (sH[i] ? "hecha el " + sH[i] : "PENDIENTE")).join(" | "),
       inicio: ini ? ini.e + " (" + ini.f + ")" : "",
       falto: T.d.filter((t, i) => !dH[i]).join(" | "),
-      planillas: (T.pl || []).map(x => x.pl.t + (x.vez ? " " + x.vez : "") + " → " + (planFirmadas(x.pl.id).some(r => !x.vez || r.extra === x.vez) ? "firmada" : "PENDIENTE")).join(" | ")};
+      planillas: (T.pl || []).map(x => x.pl.t + (x.vez ? " " + x.vez : "") + " → " + (planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez) ? "firmada" : "PENDIENTE")).join(" | ")};
     if(nD < T.d.length && !confirm("Faltan " + (T.d.length - nD) + " tareas de hoy sin marcar. ¿Enviar así?")) return;
     btn.disabled = true; btn.style.opacity = "0.6"; msg.style.color = C.ink; msg.textContent = "Enviando…";
     let ok = false;
@@ -6306,7 +6306,7 @@ function sanCheckBind(w, fam, gente){
     btn.disabled = false; btn.style.opacity = "1";
     if(ok){ const hh = new Date().toLocaleTimeString("es-CO", {hour:"numeric", minute:"2-digit"}); sanLs(kE, hh); msg.style.color = "#2F6DB5"; msg.textContent = "✓ Check enviado (" + hh + "). ¡Gracias, " + p.nom + "!";
       // Alban 3 nov: avisar al Reloj si quedó todo listo (tareas del día + planillas firmadas) o qué falta
-      try{ const faltaPl = (T.pl || []).filter(x => !planFirmadas(x.pl.id).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
+      try{ const faltaPl = (T.pl || []).filter(x => !planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
         const faltaT = T.d.filter((t, i) => !dH[i]);
         const listo = !faltaPl.length && !faltaT.length;
         const cuerpo = JSON.stringify({tipo:"cierre", persona: p.nom, area: datos.area, listo, diarias: datos.diarias, falta: faltaPl.concat(faltaT.length ? ["Tareas sin marcar: " + faltaT.length] : []).join(" | ")});
@@ -6767,7 +6767,10 @@ function planResponsables(pl){
   return [];
 }
 function planHoyDow(){ return new Date(hoyISO() + "T12:00:00").getDay(); }
-function planFirmadas(id){ return (PLAN_HOY || []).filter(r => r.planilla === id); }
+// Alban 3 nov: una planilla del área queda lista cuando la firma UNA persona del área. Desinfección de alimentos: una por área (no una para toda la planta).
+const PLAN_POR_AREA = ["DESINF"];
+function planFirmadas(id, area){ let l = (PLAN_HOY || []).filter(r => r.planilla === id); if(area && PLAN_POR_AREA.includes(id)) l = l.filter(r => String(r.area || "") === area); return l; }
+const sanAreaKey = fam => fam === "ARELIS" ? "Aseo" : fam;
 async function planCargarHoy(forzar){
   if(!PLAN_API) return null;
   if(!forzar && PLAN_HOY && Date.now() - PLAN_HOY_T < 60000) return PLAN_HOY;
@@ -6901,7 +6904,7 @@ function planAbrir(pl){
     cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Marca lo que quedó limpio y desinfectado hoy. Si algo no se hizo, escribe por qué en Observaciones.</div>
       <div style="margin-top:8px;"><button type="button" class="pl-todo" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer;">✓ Marcar todo</button></div>
       <div style="${box}">${pl.items.map((it, i) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:${i ? `1px solid ${C.line}` : "none"};cursor:pointer;font-size:0.95rem;">
-        <input type="checkbox" data-i="${i}" style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])}</span>${it[1] ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};">×${it[1]}</span>` : ""}</label>`).join("")}</div>
+        <input type="checkbox" data-i="${i}"${/^(Nevera|Congelador) #/.test(it[0]) ? ' data-opc="1"' : ""} style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])}${/^(Nevera|Congelador) #/.test(it[0]) ? ` <span style="font-size:0.78rem;font-weight:700;color:#8A5A00;background:#FBF3DA;border-radius:6px;padding:1px 6px;">semanal</span>` : ""}</span>${it[1] ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};">×${it[1]}</span>` : ""}</label>`).join("")}</div>
       <span style="${lab}">Químicos utilizados <button type="button" class="pl-quim" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;border:1px solid ${C.line};background:#fff;border-radius:8px;padding:3px 8px;cursor:pointer;margin-left:6px;">🧪 ¿cómo se usa?</button></span><div style="display:flex;flex-wrap:wrap;gap:6px;">${PLAN_QUIM.map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;border:1px solid ${C.line};border-radius:10px;padding:6px 9px;font-size:0.85rem;background:#fff;"><input type="checkbox" data-q="${n}">${n}. ${escH(t)}</label>`).join("")}</div>`;
   } else if(pl.tipo === "check"){
     const its = pl.items.map((it, i) => ({it, i})).filter(x => x.it[0].startsWith("§") || (PLAN_DIAS[x.it[1]] || []).includes(dow));
@@ -7081,7 +7084,7 @@ function planAbrir(pl){
       const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(cuerpoEnv)});
       const j = await r.json();
       if(!j || !j.ok) throw new Error((j && j.error) || "sin respuesta");
-      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, extra});
+      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, extra, area: y.area || (y.aseo ? "Aseo" : "")});
       ov.querySelector("div").innerHTML = `<div style="text-align:center;padding:20px 6px;"><div style="font-size:3rem;">✅</div>
         <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin-top:6px;">Planilla firmada</div>
         <div style="margin-top:6px;">${escH(pl.t)}${extra ? " · " + escH(extra) : ""}</div>
