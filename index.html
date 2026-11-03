@@ -6199,6 +6199,8 @@ function sanLista(tit, arr, col){ if(!arr || !arr.length) return "";
 // ✅ CHECK DE SANIDAD (Alban 27 oct 2026): como en el portal RRHH, el operador marca sus tareas y "Enviar check del turno".
 // Llega a la hoja "Datos Personales - Ingreso Parisina", pestaña "Checks aseo" (Apps Script "Ingreso Parisina", doPost tipo check_aseo).
 const SAN_API = "https://script.google.com/macros/s/AKfycbxPbu7vUJZGhxCADVsi6U06V_qxU3yOEs0CvGWnvf0ErIU1ami7cWCswsjICoHmsKlg/exec";
+// Alban 3 nov: el Reloj (laparisina.co/reloj) solo deja marcar "fin del turno" si la persona envió el check con todo listo. Al enviar el check se le avisa.
+const RELOJ_API = "https://script.google.com/macros/s/AKfycbxGia4TVs3-ohE5qoI4cnxmn2-rtldHRhc6lntshtzI8w4_-Sp6gu_8Myt1xJHIJ5ar/exec";
 let SAN_QUIEN = null;
 function sanLs(k, v){ try{ if(v === undefined){ return JSON.parse(localStorage.getItem(k) || "null"); } localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
 // Alban 1 nov: las planillas de la persona van DENTRO del check (como una tarea más). Devuelve [{pl, vez}] (frío: una por toma).
@@ -6302,7 +6304,15 @@ function sanCheckBind(w, fam, gente){
     try{ const r = await fetch(SAN_API, {method:"POST", body: JSON.stringify(datos)}); const j = await r.json(); ok = !!(j && j.ok); }
     catch(e){ try{ await fetch(SAN_API, {method:"POST", mode:"no-cors", body: JSON.stringify(datos)}); ok = true; }catch(e2){ ok = false; } }
     btn.disabled = false; btn.style.opacity = "1";
-    if(ok){ const hh = new Date().toLocaleTimeString("es-CO", {hour:"numeric", minute:"2-digit"}); sanLs(kE, hh); msg.style.color = "#2F6DB5"; msg.textContent = "✓ Check enviado (" + hh + "). ¡Gracias, " + p.nom + "!"; }
+    if(ok){ const hh = new Date().toLocaleTimeString("es-CO", {hour:"numeric", minute:"2-digit"}); sanLs(kE, hh); msg.style.color = "#2F6DB5"; msg.textContent = "✓ Check enviado (" + hh + "). ¡Gracias, " + p.nom + "!";
+      // Alban 3 nov: avisar al Reloj si quedó todo listo (tareas del día + planillas firmadas) o qué falta
+      try{ const faltaPl = (T.pl || []).filter(x => !planFirmadas(x.pl.id).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
+        const faltaT = T.d.filter((t, i) => !dH[i]);
+        const listo = !faltaPl.length && !faltaT.length;
+        const cuerpo = JSON.stringify({tipo:"cierre", persona: p.nom, area: datos.area, listo, diarias: datos.diarias, falta: faltaPl.concat(faltaT.length ? ["Tareas sin marcar: " + faltaT.length] : []).join(" | ")});
+        fetch(RELOJ_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: cuerpo}).catch(()=>fetch(RELOJ_API, {method:"POST", mode:"no-cors", body: cuerpo})).catch(()=>{});
+        if(!listo) msg.textContent += " Ojo: te falta " + (faltaPl.length ? faltaPl.length + " planilla(s)" : "") + (faltaPl.length && faltaT.length ? " y " : "") + (faltaT.length ? faltaT.length + " tarea(s)" : "") + " para poder cerrar el turno en el Reloj.";
+      }catch(e){} }
     else { msg.style.color = "#B23A2E"; msg.textContent = "No se pudo enviar. Revisa el internet e inténtalo otra vez."; }
   };
 }
