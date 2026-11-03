@@ -6033,13 +6033,14 @@ function msgMostrar(pend, area){
   MSG_IDS = ids;
   const col = (PALETTE[area] || PALETTE.ALL).a;
   const lista = pend.map(m => `<div style="text-align:left;background:#FFF4D6;border:1.5px solid #C4791E;border-radius:14px;padding:14px 16px;margin-top:12px;">
-      <div style="font-size:1.25rem;font-weight:700;line-height:1.4;white-space:pre-wrap;">${escH(m.txt)}</div>
+      <div style="font-size:1.25rem;font-weight:700;line-height:1.4;white-space:pre-wrap;">${escH(m.txt)}</div>${vozBtnHTML(m, true)}
       <div style="font-size:0.8rem;color:#6B6255;margin-top:6px;">${msgHora(m.ts)} · <b>De:</b> ${escH(m.de || "—")} → <b>Para:</b> ${escH((m.para || []).map(msgLabel).join(", "))}</div>
       ${m.deK ? `<div class="mr-box" data-id="${escH(m.id)}" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">${["👍 OK","✅ Listo","🙏 Gracias","⏳ Dame un momento"].map(r => `<button type="button" class="mrq" data-id="${escH(m.id)}" data-r="${escH(r)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#fff;color:#8A5A00;border:1.5px solid #C4791E;border-radius:12px;padding:11px 14px;cursor:pointer;">${escH(r)}</button>`).join("")}<button type="button" class="mr" data-id="${escH(m.id)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#FFF4D6;color:#8A5A00;border:1.5px dashed #C4791E;border-radius:12px;padding:11px 14px;cursor:pointer;">✏️ Escribir</button></div>` : ""}</div>`).join("");
   MSG_CAPA = capaModal(`<div style="font-size:3rem;line-height:1;">📣</div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin-top:8px;color:#B23A2E;">¡Ojo! Mensaje para ${escH(msgLabel(area))}</div>
     ${lista}
     <button type="button" class="mv" style="margin-top:20px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:14px;padding:15px;cursor:pointer;">✅ Ya lo leí</button>`, "#B23A2E");
+  try{ vozBind(MSG_CAPA); }catch(e){}   // Alban 3 nov: notas de voz
   const marcarVistos = async ()=>{
     await msgLeerVistos(area);
     const v = Object.assign({}, MSG_V[area] || {});
@@ -6097,11 +6098,76 @@ async function msgRevisar(){
     if(activeCat === "MSG") await msgPintarEstado();
   }catch(e){ console.warn("Mensajes:", e); }
 }
-async function msgEnviar(txt, para, de, deK, re){
+// ---- 🎤 Notas de voz (Alban 3 nov): se graban aquí, el audio va a Drive (Apps Script "Planillas sanidad", PLAN_API)
+// y el mensaje lleva {audio:{id, dur}}. Al mostrarlo se descarga y se toca ▶️ para escuchar.
+const VOZ_MAX_S = 90, VOZ_CACHE = {};
+function vozMime(){ const c = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"]; try{ for(const m of c) if(window.MediaRecorder && MediaRecorder.isTypeSupported(m)) return m; }catch(e){} return ""; }
+function vozDataURL(blob){ return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); }); }
+async function vozSubir(blob, de){
+  if(!PLAN_API) throw new Error("sin servidor");
+  const data = await vozDataURL(blob);
+  const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({tipo: "audio", data, de})});
+  const j = await r.json(); if(!j || !j.ok) throw new Error((j && j.error) || "no se pudo subir"); return j.id;
+}
+function vozCargar(id){
+  if(!VOZ_CACHE[id]) VOZ_CACHE[id] = fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({tipo: "audio_leer", id})})
+    .then(r => r.json()).then(j => { if(!j || !j.ok) throw new Error("no"); return "data:" + (j.mime || "audio/webm") + ";base64," + j.data; })
+    .catch(e => { delete VOZ_CACHE[id]; throw e; });
+  return VOZ_CACHE[id];
+}
+function vozDur(s){ s = Math.round(s || 0); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+function vozBtnHTML(m, grande){ if(!m || !m.audio || !m.audio.id) return "";
+  return `<button type="button" class="voz-play" data-voz="${escH(m.audio.id)}" style="margin-top:8px;display:inline-flex;align-items:center;gap:10px;font-family:'Work Sans',sans-serif;font-size:${grande ? "1.15rem" : "0.95rem"};font-weight:700;background:#fff;color:#B23A2E;border:2px solid #B23A2E;border-radius:100px;padding:${grande ? "12px 22px" : "8px 16px"};cursor:pointer;">▶️ Escuchar nota de voz <span style="font-weight:500;color:${C.inkSoft};">${vozDur(m.audio.dur)}</span></button>`; }
+// Conecta los botones ▶️ dentro de el: descarga el audio de una vez (así en el celular suena al primer toque)
+function vozBind(el){
+  el.querySelectorAll(".voz-play").forEach(b => {
+    const id = b.dataset.voz; let au = null;
+    vozCargar(id).then(src => { au = new Audio(src); au.onended = () => { b.firstChild.textContent = "▶️ Escuchar nota de voz "; }; }).catch(() => {});
+    b.onclick = async () => {
+      try{
+        if(!au){ b.firstChild.textContent = "⏳ Cargando… "; const src = await vozCargar(id); au = new Audio(src); au.onended = () => { b.firstChild.textContent = "▶️ Escuchar nota de voz "; }; }
+        if(!au.paused){ au.pause(); au.currentTime = 0; b.firstChild.textContent = "▶️ Escuchar nota de voz "; return; }
+        await au.play(); b.firstChild.textContent = "⏹️ Detener ";
+      }catch(e){ b.firstChild.textContent = "⚠️ No se pudo reproducir · toca otra vez "; }
+    };
+  });
+}
+// Grabador en la caja de Mensajes. onListo(blob, segundos) cuando la persona termina.
+function vozGrabadorBind(box, onCambio){
+  let rec = null, chunks = [], t0 = 0, tic = null, stream = null;
+  const st = box.querySelector(".voz-st"), btn = box.querySelector(".voz-rec"), prev = box.querySelector(".voz-prev"), del = box.querySelector(".voz-del");
+  box._voz = null;
+  const parar = () => { try{ if(rec && rec.state !== "inactive") rec.stop(); }catch(e){} };
+  const limpiar = () => { box._voz = null; window.VOZ_GRABANDO = false; prev.innerHTML = ""; prev.style.display = "none"; del.style.display = "none"; btn.style.display = ""; st.textContent = ""; onCambio && onCambio(); };
+  del.onclick = limpiar;
+  btn.onclick = async () => {
+    if(rec && rec.state === "recording"){ parar(); return; }
+    if(!window.MediaRecorder || !navigator.mediaDevices){ st.textContent = "Este equipo no puede grabar audio."; return; }
+    try{ stream = await navigator.mediaDevices.getUserMedia({audio: true}); }
+    catch(e){ st.textContent = MSG_EMBED ? "🎤 Aquí no hay permiso de micrófono. Abre Mensajes directo (botón 📣 Mensaje a cocina) para grabar." : "🎤 Hay que permitir el micrófono para grabar."; return; }
+    const mime = vozMime(); chunks = [];
+    try{ rec = new MediaRecorder(stream, mime ? {mimeType: mime, audioBitsPerSecond: 32000} : undefined); }catch(e){ rec = new MediaRecorder(stream); }
+    rec.ondataavailable = ev => { if(ev.data && ev.data.size) chunks.push(ev.data); };
+    rec.onstop = () => {
+      clearInterval(tic); try{ stream.getTracks().forEach(t => t.stop()); }catch(e){}
+      const dur = (Date.now() - t0) / 1000, blob = new Blob(chunks, {type: (rec.mimeType || mime || "audio/webm")});
+      btn.textContent = "🎤 Grabar nota de voz"; btn.style.background = "#fff"; btn.style.color = "#B23A2E";
+      if(dur < 1 || !blob.size){ st.textContent = "Muy corta. Vuelve a grabar."; window.VOZ_GRABANDO = false; return; }
+      box._voz = {blob, dur}; btn.style.display = "none"; del.style.display = "";
+      const url = URL.createObjectURL(blob); prev.style.display = ""; prev.innerHTML = `<audio controls src="${url}" style="width:100%;max-width:360px;"></audio>`;
+      st.textContent = "✅ Nota de voz lista (" + vozDur(dur) + "). Elige para quién y toca 📣 Enviar."; onCambio && onCambio();
+    };
+    rec.start(1000); t0 = Date.now(); window.VOZ_GRABANDO = true;
+    btn.textContent = "⏹️ Parar (0:00)"; btn.style.background = "#B23A2E"; btn.style.color = "#fff"; st.textContent = "🔴 Grabando… habla cerca del micrófono.";
+    tic = setInterval(() => { const s = (Date.now() - t0) / 1000; btn.textContent = "⏹️ Parar (" + vozDur(s) + ")"; if(s >= VOZ_MAX_S) parar(); }, 500);
+  };
+  return limpiar;
+}
+async function msgEnviar(txt, para, de, deK, re, extra){
   await msgLeer();
   const lim = Date.now() - 3*864e5;
   const lista = MSG.lista.filter(m => m.ts > lim).slice(-60);
-  lista.push(Object.assign({id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts: Date.now(), txt, para, de}, deK ? {deK} : {}, re ? {re} : {}));
+  lista.push(Object.assign({id: Date.now().toString(36) + Math.random().toString(36).slice(2,6), ts: Date.now(), txt, para, de}, deK ? {deK} : {}, re ? {re} : {}, extra || {}));
   await DB.doc("estado/MSG").set({lista});
   MSG = {lista};
 }
@@ -6113,10 +6179,11 @@ async function msgPintarEstado(){
   if(!recientes.length){ box.innerHTML = `<div style="color:${C.inkSoft};font-style:italic;font-size:0.88rem;">Sin mensajes recientes.</div>`; return; }
   const mios = new Set(misDestinos());
   box.innerHTML = recientes.map(m => `<div style="background:${(m.para || []).some(a => mios.has(a)) ? "#FFF4D6" : C.paper};border:1px solid ${C.line};border-radius:14px;padding:12px 14px;margin-top:10px;">
-      <div style="font-weight:600;white-space:pre-wrap;">${escH(m.txt)}</div>
+      <div style="font-weight:600;white-space:pre-wrap;">${escH(m.txt)}</div>${vozBtnHTML(m)}
       <div style="font-size:0.76rem;color:${C.inkSoft};margin-top:4px;">${msgHora(m.ts)} · De: <b>${escH(m.de || "—")}</b></div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${(m.para || []).map(a => { const v = (MSG_V[a] || {})[m.id];
         return `<span style="font-size:0.78rem;border-radius:100px;padding:3px 10px;${v ? "background:#E3EDF9;color:#2F6DB5;" : "background:#FBEBD8;color:#C4791E;"}">${escH(msgLabel(a))} · ${v ? "✅ visto " + msgHora(v) : "⏳ sin ver"}</span>`; }).join("")}</div></div>`).join("");
+  try{ vozBind(box); }catch(e){}   // Alban 3 nov: notas de voz
 }
 // ============================================================
 // 🧮 CALCULADORA (Alban 24 oct 2026) — para todos, desde la portada
@@ -6445,6 +6512,12 @@ function renderMensajes(){
       ${["⚠️ Llegó un pedido nuevo: ","🔥 Urgente: ","❌ Pedido cancelado: ","✏️ Cambio en un pedido: ","📞 Pasar por la oficina","🔄 IMPORTANTE: reactualizar la página (Ctrl + Shift + R o deslizar hacia abajo)"].map(t => `<button type="button" class="m-chip" data-t="${escH(t)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;background:${C.paper};border:1px solid ${C.line};border-radius:100px;padding:7px 12px;cursor:pointer;">${escH(t.replace(/: $/, ""))}</button>`).join("")}
     </div>
     <textarea class="m-txt" rows="3" placeholder="Escribe el mensaje… (ej: Llegó un pedido de 20 croissants para las 10 a.m.)" style="${inp}margin-top:10px;resize:vertical;"></textarea>
+    <div class="m-voz" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <button type="button" class="voz-rec" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#fff;color:#B23A2E;border:2px solid #B23A2E;border-radius:100px;padding:10px 18px;cursor:pointer;">🎤 Grabar nota de voz</button>
+      <div class="voz-prev" style="display:none;flex:1;min-width:200px;"></div>
+      <button type="button" class="voz-del" style="display:none;font-family:'Work Sans',sans-serif;font-size:0.9rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">🗑️ Borrar y volver a grabar</button>
+      <div class="voz-st" style="width:100%;font-size:0.85rem;color:${C.inkSoft};"></div>
+    </div>
     <div style="font-size:0.8rem;font-weight:600;color:${C.inkSoft};margin-top:12px;text-transform:uppercase;letter-spacing:.05em;">¿Para quién?</div>
     <div class="m-para" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
       ${MSG_AREAS.map(a => `<label style="display:flex;align-items:center;gap:6px;background:${C.paper};border:1.5px solid ${(PALETTE[a[0]] || PALETTE.ALL).a};border-radius:12px;padding:9px 12px;cursor:pointer;font-size:0.92rem;"><input type="checkbox" value="${escH(a[0])}" style="width:18px;height:18px;">${escH(a[1])}</label>`).join("")}
@@ -6489,9 +6562,11 @@ function renderMensajes(){
   w.querySelector(".m-ofi").onclick = () => { w.querySelectorAll(".m-pers input").forEach(c => { if((msgPers().find(p => p[0] === c.value) || [])[3]) c.checked = true; }); const o = w.querySelector('.m-para input[value="Oficina"]'); if(o) o.checked = true; };
   avisosUI(w.querySelector(".m-avisos"));
   callSeccionBind(w);   // Alban 31 oct: llamadas
+  const vozBox = w.querySelector(".m-voz"), vozLimpiar = vozGrabadorBind(vozBox);   // Alban 3 nov: notas de voz
   w.querySelector(".m-env").onclick = async ev => {
-    const t = txt.value.trim(), para = [...w.querySelectorAll(".m-para input:checked")].map(c => c.value);
-    if(!t){ ok.style.color = "#B23A2E"; ok.textContent = "Escribe el mensaje."; return; }
+    const voz = vozBox._voz;
+    const t = txt.value.trim() || (voz ? "🎤 Nota de voz (" + vozDur(voz.dur) + ")" : ""), para = [...w.querySelectorAll(".m-para input:checked")].map(c => c.value);
+    if(!t){ ok.style.color = "#B23A2E"; ok.textContent = "Escribe el mensaje o graba una nota de voz."; return; }
     if(!para.length){ ok.style.color = "#B23A2E"; ok.textContent = "Elige para quién."; return; }
     if(!dek.value){ ok.style.color = "#B23A2E"; ok.textContent = "Elige quién envía (así te pueden responder)."; return; }
     if(!DB){ ok.style.color = "#B23A2E"; ok.textContent = "Desde aquí no se puede enviar."; return; }
@@ -6499,8 +6574,10 @@ function renderMensajes(){
     try{
       lsSet("msg_de", de.value.trim()); lsSet("msg_dek", dek.value);
       const lab = msgLabel(dek.value).replace(/^\S+\s/, ""), nom = de.value.trim();
-      await msgEnviar(t, para, nom && pedNorm(nom) !== pedNorm(lab) ? nom + " (" + lab + ")" : lab, dek.value);
-      txt.value = ""; w.querySelectorAll(".m-para input").forEach(c => c.checked = false);
+      let extra = null;
+      if(voz){ ok.textContent = "Subiendo la nota de voz…"; const id = await vozSubir(voz.blob, nom || lab); extra = {audio: {id, dur: Math.round(voz.dur)}}; ok.textContent = "Enviando…"; }
+      await msgEnviar(t, para, nom && pedNorm(nom) !== pedNorm(lab) ? nom + " (" + lab + ")" : lab, dek.value, null, extra);
+      txt.value = ""; w.querySelectorAll(".m-para input").forEach(c => c.checked = false); if(voz) vozLimpiar();
       ok.style.color = "#2F6DB5"; ok.textContent = "✅ Enviado";
       msgPintarEstado().catch(() => {});
     }catch(e){ ok.style.color = "#B23A2E"; ok.textContent = "No se pudo enviar. Revisa internet e intenta otra vez."; }
@@ -7199,7 +7276,7 @@ bootDb();
   let pendiente = false;
   const escribiendo = ()=>{ const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox"; };
   const recargar = ()=>{
-    if(escribiendo() || window.LLAMADA_ACTIVA){ pendiente = true; return; }   // no recargar en plena llamada
+    if(escribiendo() || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
     try{ sessionStorage.setItem("auto_recarga", String(Date.now())); }catch(e){}
     location.reload();
   };
