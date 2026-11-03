@@ -5824,7 +5824,7 @@ const ASEO_ROTA = (()=>{ const r = Array(7).fill(null); let ok = false;
   (PERSONAL || []).forEach(p=>{ if(typeof p.p === "number" && p.p >= 1 && p.p <= 7){ r[p.p - 1] = p.n; ok = true; } });
   return ok ? r : ASEO_ROTA_DEF; })();
 const ASEO_ALIAS = {camila:["maria"]};   // en Personas aparece como "María" (Maria Camila)
-const ASEO_ZONAS = ["Hornos","Zona de bultos","Neveras","Cuarto de neveras","Aseo, agua y temperatura","Cuarto de hornos","Cuarto de empaques"];
+const ASEO_ZONAS = ["Hornos","Zona de bultos","Neveras","Cuarto de neveras","Cuarto de aseo, agua y temperatura","Cuarto de hornos","Cuarto de empaques"];
 // Tareas por zona — detalle de Alban (24 oct 2026). d = cada día · s = semanales (se reportan el sábado)
 const ASEO_TAREAS = {
   "Hornos": {d:["Verificar que no queden productos sobre, debajo ni dentro de los hornos o del carrito","Organizar las latas por tamaño y voltearlas","Verificar que no queden moldes visibles","Limpiar completamente la parte externa de los hornos, incluyendo puertas (interior y exterior)","Limpiar la parte superior de los hornos (usar escalera)","Limpiar las cortinas","Desengrasar y desinfectar el carrito y las rejillas debajo del horno"],
@@ -5834,7 +5834,7 @@ const ASEO_TAREAS = {
   "Neveras": {d:["Desengrasar y desinfectar superficies externas e internas superiores de los equipos de refrigeración, incluyendo empaques con cepillo adecuado"],
     s:["Desinfectar los filtros","Limpieza profunda de la bandeja de condensación"]},
   "Cuarto de neveras": {d:["Barrer y trapear el piso","Limpiar paredes, tomas eléctricas y la puerta del clóset","Mover todas las neveras (excepto la N.º 1) y limpiar alrededor","Organizar las cocas"], s:[]},
-  "Aseo, agua y temperatura": {d:["Desengrasar y desinfectar recogedores, escobas y baldes","Desengrasar y desinfectar las pocetas, sin restos de basura ni espuma","Limpiar estanterías, paredes, puertas, ventanas y pisos","Dejar los implementos limpios, secos y organizados","Verificar que la puerta del cuarto de aseo quede cerrada","Medir pH y cloro del agua en el punto del día (rota: Baño · Lavamanos principal · Repostería · Comida de sal · Batido · Cuarto de aseo)","Registrar el color según la tabla (primero el agua, luego las pastillas)","Vaciar y desinfectar el recipiente de la muestra y guardarlo en su estuche","Registrar temperaturas en la apertura de la planta","Registrar temperaturas al cierre de la planta","Verificar que nada obstruya o cubra los termómetros"], s:[]},
+  "Cuarto de aseo, agua y temperatura": {d:["Desengrasar y desinfectar recogedores, escobas y baldes","Desengrasar y desinfectar las pocetas, sin restos de basura ni espuma","Limpiar estanterías, paredes, puertas, ventanas y pisos","Dejar los implementos limpios, secos y organizados","Verificar que la puerta del cuarto de aseo quede cerrada","Medir pH y cloro del agua en el punto del día (rota: Baño · Lavamanos principal · Repostería · Comida de sal · Batido · Cuarto de aseo)","Registrar el color según la tabla (primero el agua, luego las pastillas)","Vaciar y desinfectar el recipiente de la muestra y guardarlo en su estuche","Registrar temperaturas en la apertura de la planta","Registrar temperaturas al cierre de la planta","Verificar que nada obstruya o cubra los termómetros"], s:[]},
   "Cuarto de hornos": {d:["Limpiar piso","Limpiar paredes","Limpiar corredor"],
     s:["Limpieza profunda de esquinas entre paredes y piso, dentro y fuera del corredor","Desplazar los hornos para limpieza profunda (desconectar tubos de evacuación, desenchufar con cuidado, NO desconectar la manguera de gas)"]},
   "Cuarto de empaques": {d:["Desengrasar y desinfectar el piso y las cortinas","Verificar que todos los productos estén tapados en canastas o estanterías","Limpiar la superficie de las canastas","Verificar que no haya bolsas abiertas ni en contacto con el piso","Dejar el área completamente organizada","La última canasta de cada columna debe estar tapada","La primera canasta de cada columna debe estar vacía","Canastas de huevos tapadas, no expuestas"],
@@ -6220,7 +6220,9 @@ function sanTareasDe(p, fam){
   if(fam === "Logistica") return {zona:"Despacho", d:[], s:[], pl: PLR};
   const t = ASEO_TAREAS[p.zona] || {d:[], s:[]};
   const ex = aseoExtras(fam);
-  return {zona: p.zona, d: (t.d || []).concat(ASEO_COMUN).filter(t => !esPlan(t)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
+  // Alban 3 nov: cada tarea empieza con el lugar ("Cuarto de aseo – …", "Agua – …", "Temperatura – …", "Hornos – …")
+  const pre = (z, x) => (z === "Cuarto de aseo, agua y temperatura" ? (/pH|cloro|color seg|recipiente de la muestra/i.test(x) ? "Agua" : /temperatura|term[oó]metro/i.test(x) ? "Temperatura" : "Cuarto de aseo") : z) + " – " + x;
+  return {zona: p.zona, d: (t.d || []).filter(t => !esPlan(t)).map(x => pre(p.zona, x)).concat(ASEO_COMUN.filter(t => !esPlan(t)).map(x => "Área común – " + x)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
 }
 function sanPlanEstado(w){
   w.querySelectorAll("[data-plr]").forEach(b => {
@@ -6250,7 +6252,7 @@ function sanCheckHTML(fam, gente, col){
   const dHechas = sanLs(kD) || {}, sHechas = sanLs(kS) || {}, ini = sanLs(kI), env = sanLs(kE);
   const box = (key, txt, on, extra) => `<label style="display:flex;gap:12px;align-items:flex-start;padding:9px 2px;cursor:pointer;font-size:1rem;line-height:1.4;border-top:1px solid ${C.line};">
       <input type="checkbox" data-k="${key}" ${on ? "checked" : ""} style="width:24px;height:24px;flex:0 0 24px;margin:0;accent-color:${col};">
-      <span>${escH(txt)}${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;
+      <span>${(m => m ? `<i style="color:${C.inkSoft};">${escH(m[1])}</i> – ${escH(m[2])}` : escH(txt))(/^(.+?) – (.+)$/.exec(txt))}${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;   // Alban 3 nov: el lugar en cursiva
   if(fam !== "ARELIS" && fam !== "Logistica"){
     h += `<div style="margin-top:12px;background:#FBF3DA;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;">
       <div style="font-weight:700;">Inicio de semana — ${escH(T.zona)}</div>
@@ -6327,6 +6329,7 @@ function renderSanidad(){
   const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
   const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [{nom:"Juan Pablo", zona:null}] : aseoDelArea(fam);
   h += sanCheckHTML(fam, genteChk, col);
+  if(typeof quimSeccionHTML === "function") h += quimSeccionHTML(col);   // Alban 3 nov: químicos, cómo se usan
   const SAN_EQUIPO = false;   // Alban 1 nov: "Tareas del equipo esta semana" oculto (todo va en el check de cada persona)
   if(SAN_EQUIPO && genteChk.length) h += `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin-top:22px;">Tareas del equipo esta semana</div>`;
   if(!SAN_EQUIPO){ /* oculto */ } else if(fam === "ARELIS"){
@@ -6340,7 +6343,7 @@ function renderSanidad(){
       const t = p.zona ? (ASEO_TAREAS[p.zona] || {}) : {};
       h += card(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">${escH(p.nom)}${p.zona ? ` → <span style="color:${col};">${escH(p.zona)}</span>` : ` · área fija`}</div>
         ${p.zona ? sanLista("Cada día", t.d, col) + (t.s && t.s.length ? sanLista("Semanales", t.s, col) : `<div style="margin-top:10px;font-weight:700;color:${col};">Semanales: ninguna</div>`)
-          + (p.zona === "Aseo, agua y temperatura" && agua ? `<div style="margin-top:8px;font-size:0.9rem;">💧 Punto del agua hoy: <b>${agua}</b></div>` : "")
+          + (p.zona === "Cuarto de aseo, agua y temperatura" && agua ? `<div style="margin-top:8px;font-size:0.9rem;">💧 Punto del agua hoy: <b>${agua}</b></div>` : "")
           : `<div style="margin-top:6px;color:${C.inkSoft};">Logística (área fija): sin lista de tareas.</div>`}`, col);
     });
     if(fam !== "Logistica"){ const ex = aseoExtras(fam);
@@ -6649,7 +6652,8 @@ function callSeccionBind(w){ w.querySelectorAll(".c-call").forEach(b => b.onclic
 // ============================================================
 // URL del Apps Script "Planillas sanidad" (web app). Vacío = todavía no está activado.
 const PLAN_API = "https://script.google.com/macros/s/AKfycbwoMqguxKxvNB5T3EZ5XetV_sUBX2iQ-WhG234nEBg8X6aj_b74U293tTwjYbYCcnjN/exec";
-const PLAN_QUIM = [["1","Aerowash Plus (jabón multiusos)"],["2","Suma Grill (desengrasante)"],["3","Suma Sanitaizer (amonio cuaternario)"],["4","Suma Eden (frutas y verduras)"],["5","Break Up Chlor (pisos y paredes)"],["6","Soft Care Plus Foam (jabón de manos)"],["7","Soft Care Des-E H5 (alcohol gel)"]];
+// Alban 3 nov: lista alineada con las fichas de químicos (sin Aerowash ni Soft Care Plus Foam; Break Up Chlor → Hipoclorito 15 %)
+const PLAN_QUIM = [["1","Detergente industrial pH neutro (multiusos)"],["2","Suma Grill (desengrasante)"],["3","Suma Sanitizer (desinfectante)"],["4","Suma Eden (frutas, verduras y huevos)"],["5","Hipoclorito de sodio 15 % (desinfectar)"],["6","Detergente ácido industrial (desengrasar)"]];
 const PLAN_EQUIPOS_FRIO = ["Nevera #1","Nevera #4","Nevera #8","Nevera #11","Congelador #2","Congelador #3","Congelador #5","Congelador #6","Congelador #7","Congelador #9","Congelador #10"];
 const PLANILLAS = [
   {id:"ASEO_BAT", cod:"PLD-F-02", t:"Control de aseo – Batido", quien:{area:"Batido"}, tipo:"aseo", items:[
@@ -6695,20 +6699,21 @@ const PLANILLAS = [
     ["§ Temperatura"],["Planilla de temperaturas llena (2 veces al día)","D"],
     ["§ Neveras"],["Superficie externa","D"],["Empaques","D"],["Filtro y bandeja de agua","S"],
     ["§ Cuarto de empaques"],["Paredes y piso","D"],["Ninguna bolsa queda abierta ni en contacto con el piso","D"]]},
-  {id:"DESINF", cod:"PLD-P-01", t:"Desinfección de alimentos", quien:{areas:["Batido","Comida de sal","Reposteria"]}, tipo:"tabla", evento:true, cols:[
-    {k:"ali", t:"Alimento", req:1},{k:"qui", t:"Producto químico", op:["Suma Eden","Otro"], req:1},{k:"tie", t:"Tiempo de desinfección (min)", num:1, req:1},{k:"enj", t:"Enjuague", op:["Sí","No"], req:1}]},
+  // Alban 3 nov: es para TODOS y todos los días; alimento de lista (o "Otro" y se escribe). Los campos quedan vacíos: ellos los llenan (guía: Suma Eden 1 ml/L; blandas y huevo 1 min; duras, hojas y vegetales 5 min; sin enjuague)
+  {id:"DESINF", cod:"PLD-P-01", t:"Desinfección de alimentos", quien:{todos:true}, tipo:"tabla", cols:[
+    {k:"ali", t:"Alimento", op:["Huevo","Fruta de cáscara blanda","Fruta de cáscara dura / hojas","Vegetales","Otro"], otro:1, req:1},{k:"qui", t:"Producto químico", op:["Suma Eden","Otro"], req:1},{k:"con", t:"Concentración", req:1},{k:"tie", t:"Tiempo de desinfección (min)", num:1, req:1},{k:"enj", t:"Enjuague", op:["Sí","No"], req:1}]},
   {id:"PLAGAS", cod:"PCIP-F-01", t:"Inspección de presencia de plagas", quien:{aseo:true}, tipo:"plagas", semanal:true, items:[
     ["§ Área de cocina y barra"],["Uniones entre el piso y las paredes, y paredes y techos"],["Estufa (interior, debajo, parrillas, bandejas)"],["Estanterías (entrepaños, bases)"],["Lavaplatos (interior, exterior, puerta, canasta, partes removibles)"],
     ["Campana de extracción (filtros, exterior, interior)"],["Horno (exterior, debajo)"],["Neveras y congeladores (empaques, exterior)"],["Despensa (interior, exterior, entrepaños)"],["Lockers (interior, exterior, tapas, partes removibles)"],
     ["Mesas (esquinas y bordes)"],["Licuadoras, microondas, batidora, grameras, impresoras (interior, exterior)"],["Canastas"],["Recipientes de almacenamiento de residuos"],
     ["§ Área de servicio y administrativa"],["Uniones entre el piso y las paredes, y paredes y techos"],["Mesas, organizadores, sillas (esquinas, bordes, cajones, rieles)"],["Recipientes de almacenamiento de residuos"],["Baños"]]},
-  {id:"AGUA", cod:"MC-F-01", t:"Muestreo de agua – pH y cloro", quien:{zona:"Aseo, agua y temperatura"}, tipo:"agua"},
+  {id:"AGUA", cod:"MC-F-01", t:"Muestreo de agua – pH y cloro", quien:{zona:"Cuarto de aseo, agua y temperatura"}, tipo:"agua"},
   {id:"PNC", cod:"PNC-F-01", t:"Producto no conforme – baja de productos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, cols:[
     {k:"des", t:"Descripción del PNC", req:1},{k:"can", t:"Cantidad", req:1},{k:"dis", t:"Disposición", op:["Desecho","Reproceso","Devolución al proveedor","Otro"], req:1},{k:"acc", t:"Acciones tomadas / comentarios"},{k:"aut", t:"Autorizado por", req:1},{k:"obs", t:"Observaciones"}]},
   {id:"RECEP", cod:"PP-F-01", t:"Recepción de materia prima e insumos", quien:{area:"Logistica"}, tipo:"recep", evento:true, cols:[
     {k:"pro", t:"Producto", req:1},{k:"can", t:"Cantidad", req:1},{k:"prv", t:"Proveedor", req:1},{k:"lot", t:"Lote"},{k:"ven", t:"Fecha de vencimiento", fecha:1},{k:"tem", t:"Temperatura (°C)", num:1},
     {k:"emp", t:"Empaque", op:["Conforme","No conforme"], req:1},{k:"cos", t:"Color · olor · sabor", op:["Conforme","No conforme","No aplica"], req:1},{k:"obs", t:"Observaciones"}]},
-  {id:"TEMPREF", cod:"PLD-F-01", t:"Temperaturas de equipos de refrigeración", quien:{zona:"Aseo, agua y temperatura"}, tipo:"frio", veces:["Apertura","Cierre"]},
+  {id:"TEMPREF", cod:"PLD-F-01", t:"Temperaturas de equipos de refrigeración", quien:{zona:"Cuarto de aseo, agua y temperatura"}, tipo:"frio", veces:["Apertura","Cierre"]},
   {id:"TEMPCAL", cod:"PLD-F-01", t:"Temperaturas en procesos calientes", quien:{area:"Comida de sal"}, tipo:"tabla", evento:true, nota:"T° de cocción mínima 70 °C (160 °F), tomada en el centro del alimento.", cols:[
     {k:"ali", t:"Alimento", req:1},{k:"tem", t:"Temperatura (°C)", num:1, req:1, min:70},{k:"hor", t:"Hora", hora:1}]},
 ];
@@ -6731,6 +6736,7 @@ function planEsMia(pl, y){
 }
 function planEsMia1(pl, y){
   if(!y) return false; const q = pl.quien;
+  if(q.todos) return true;   // Alban 3 nov: desinfección de alimentos es para todos
   if(q.area) return y.area === q.area;
   if(q.areas) return q.areas.includes(y.area);
   if(q.aseo) return y.aseo;
@@ -6739,6 +6745,7 @@ function planEsMia1(pl, y){
 }
 function planResponsables(pl){
   const q = pl.quien, P = PERSONAL || [];
+  if(q.todos) return P.map(p => p.n);
   if(q.area) return P.filter(p => p.a === q.area).map(p => p.n);
   if(q.areas) return P.filter(p => q.areas.includes(p.a)).map(p => p.n);
   if(q.aseo) return P.filter(p => p.p === "Fijo" && !p.a).map(p => p.n);
@@ -6755,6 +6762,60 @@ async function planCargarHoy(forzar){
     const j = await r.json(); if(j && j.ok){ PLAN_HOY = j.registros || []; PLAN_HOY_T = Date.now(); }
   }catch(e){ if(!PLAN_HOY) PLAN_HOY = null; }
   return PLAN_HOY;
+}
+// ---- 🧪 Productos químicos: cómo se usa cada uno (Alban 3 nov, de las fichas de limpieza y desinfección) ----
+const QUIM_INFO = [
+  {n:"Suma Eden", f:"Antibacterial orgánico · frutas, verduras y huevos", col:"#5B6FD6", filas:[
+    ["Frutas y cáscaras blandas · huevos","1 ml / L agua","Inmersión – directo","1 minuto"],
+    ["Hojas, fruta de cáscara dura, vegetales","1 ml / L agua","Inmersión – directo","5 minutos"]],
+    rec:"No requiere enjuague. No dejar fuera del contenedor más de 8 horas. Lavar el producto antes de usar el Suma Eden. El pH debe ser menor a 3."},
+  {n:"Suma Sanitizer", f:"Desinfectante · pisos, paredes, utensilios, equipos de cocina, áreas de producción y ambiente", col:"#5B6FD6", filas:[
+    ["Pisos, paredes, utensilios, equipos, áreas y ambiente","2 – 5 ml / L agua","Inmersión – aspersión","Dejar actuar mínimo 10 minutos"]],
+    rec:"No requiere enjuague en esta concentración. Si se va a trabajar sobre la superficie después de los 10 minutos, se enjuaga; al finalizar el turno, no se enjuaga."},
+  {n:"Suma Grill", f:"Desengrasante · hornos, estufas y zonas con mucha grasa", col:"#C94A3C", filas:[
+    ["Hornos y planchas","300 – 500 ml / L agua","Inmersión – aspersión – directo","15 minutos"],
+    ["Freidora","300 – 500 ml / L agua","Inmersión – aspersión – directo","15 – 30 minutos"],
+    ["Filtros y campanas","300 – 500 ml / L agua","Inmersión – aspersión – directo","16 – 60 minutos"]],
+    rec:"Enjuagar con agua caliente. Usar con temperatura menor a 60 °C. Usar siempre guantes, tapabocas y gafas de protección."},
+  {n:"Detergente ácido industrial", f:"Desengrasar · hornos, estufas y zonas con mucha grasa", col:"#C94A3C", filas:[
+    ["Hornos","30 ml / L agua","Directo","15 minutos"],
+    ["Filtros y campanas","30 ml / L agua","Directo","16 – 60 minutos"]],
+    rec:"Enjuagar con agua. Usar con temperatura menor a 30 °C. Siempre con guantes largos, gafas, tapabocas y delantal: protege ojos y cara de salpicaduras."},
+  {n:"Hipoclorito de sodio 15 %", f:"Desinfectar · blanqueador, muy corrosivo e irritante", col:"#5B6FD6", filas:[
+    ["Traperos, limpiones y pocetas","1,4 ml / L agua","Inmersión","1 minuto · estregar, dejar actuar y enjuagar (o dejar en remojo)"],
+    ["Pisos, paredes y baños","2 ml / L agua","Inmersión","1 minuto · estregar, dejar actuar y enjuagar"],
+    ["Material altamente contaminado","10 ml / L agua","Inmersión","20 minutos (remojo máximo 60 min) · estregar y enjuagar con abundante agua"],
+    ["Canecas de basura","35 ml / L agua","Inmersión","30 minutos (remojo máximo 90 min) · estregar y enjuagar con abundante agua"]],
+    rec:"Usar guantes, gafas, delantal y cubrebocas. Nunca mezclar con otros productos."},
+  {n:"Detergente industrial pH neutro (multiusos)", f:"Desengrasar · grasa y suciedad en general", col:"#B9A000", filas:[
+    ["Pisos","15 ml / L agua","Aplicar (cepillo o atomizador)","2 minutos · trapear, luego lavar la trapeadora"],
+    ["Lavado de juntas","50 ml / L agua","Atomizador","2 minutos · agregar 50 ml de vinagre a la mezcla, pasar cepillo y retirar"],
+    ["Loza, cubiertos, ollas, mesones y utensilios","50 ml / L agua","Cremera + esponja húmeda","2 minutos · enjuagar con abundante agua"],
+    ["Baños","50 ml / L agua","Atomizador","2 minutos · esponja húmeda y paño húmedo"],
+    ["Remojo de ropa con mugre y grasa pesada","100 ml / L agua","Inmersión","1 a 2 horas · luego el lavado habitual"],
+    ["Grasa pesada: tapete de silicona","100 ml / L agua","Cremera + esponja","2 minutos · enjuagar con abundante agua"]],
+    rec:"Usar guantes, sin contacto directo con la piel. No mezclar con blanqueadores ni oxidantes. Guardar lejos del calor, en lugar fresco y a la sombra. Preparar solo lo que se va a gastar en la semana."}
+];
+const QUIM_PROC = [
+  {n:"🧹 Limpieza del piso", pasos:["Barrer con la escoba llegando a todas las esquinas y rincones. Mover los equipos para barrer toda la zona.","Señalizar la zona. Remojar el piso con agua y aplicar el Detergente multiusos con dispensador tipo cremera.","Dejar actuar 2 minutos.","Enjuagar y luego, con el atomizador de Suma Sanitizer, aplicar por toda el área en zigzag.","Lavar la trapeadora con hipoclorito y dejar limpios los demás utensilios en el Cuarto de aseo."]},
+  {n:"🥚 Lavado y desinfección de huevos", pasos:["Inspeccionar: si el cascarón tiene grieta o rotura, se descarta de inmediato.","Si queda suciedad pegada, lavar con cepillo y agua.","Sumergir en Suma Eden (1 ml/L) y dejar actuar 1 minuto. No es necesario enjuagar."]}
+];
+function quimSeccionHTML(col){
+  const c = col || C.ink;
+  const prod = QUIM_INFO.map(q => `<details style="background:#fff;border:1.5px solid ${C.line};border-left:6px solid ${q.col};border-radius:12px;padding:10px 12px;">
+      <summary style="cursor:pointer;font-weight:700;font-size:1.02rem;">${escH(q.n)} <span style="display:block;font-weight:400;font-size:0.82rem;color:${C.inkSoft};">${escH(q.f)}</span></summary>
+      <div style="display:grid;gap:8px;margin-top:10px;">${q.filas.map(f => `<div style="background:${C.paper};border-radius:10px;padding:8px 10px;font-size:0.9rem;line-height:1.4;">
+        <div style="font-weight:700;">${escH(f[0])}</div>
+        <div>🧪 <b>${escH(f[1])}</b> · ${escH(f[2])}</div><div>⏱️ ${escH(f[3])}</div></div>`).join("")}</div>
+      <div style="margin-top:8px;font-size:0.85rem;color:${C.inkSoft};">💡 ${escH(q.rec)}</div></details>`).join("");
+  const proc = QUIM_PROC.map(q => `<details style="background:#fff;border:1.5px solid ${C.line};border-radius:12px;padding:10px 12px;"><summary style="cursor:pointer;font-weight:700;font-size:1.02rem;">${escH(q.n)}</summary>
+      <ol style="margin:8px 0 0;padding-left:20px;font-size:0.92rem;line-height:1.45;">${q.pasos.map(x => `<li style="margin:4px 0;">${escH(x)}</li>`).join("")}</ol></details>`).join("");
+  return `<details data-quim="1" style="margin-top:14px;background:${C.paper};border:2px solid ${c};border-radius:18px;padding:12px 16px;">
+    <summary style="cursor:pointer;font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;color:${c};">🧪 Productos químicos · cómo se usa cada uno</summary>
+    <div style="font-size:0.85rem;color:${C.inkSoft};margin-top:4px;">Concentración, cómo se aplica y cuánto tiempo. Prohibido usar productos químicos no autorizados. Siempre con guantes.</div>
+    <div style="display:grid;gap:8px;margin-top:10px;">${prod}</div>
+    <div style="font-weight:700;margin-top:14px;color:${c};">📘 Procedimientos</div>
+    <div style="display:grid;gap:8px;margin-top:8px;">${proc}</div></details>`;
 }
 // ---- sección en Sanidad ----
 function planSeccionHTML(){ return `<div id="plan-sec" style="margin-top:16px;"></div>`; }
@@ -6796,9 +6857,10 @@ function planFotoComprimir(file){ return new Promise((res, rej) => { const img =
 // ---- formulario ----
 function planCampo(c, v){
   const st = `font-family:'Work Sans',sans-serif;font-size:1rem;padding:9px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;width:100%;box-sizing:border-box;color-scheme:light;`;
+  if(c.op && c.otro) return `<select data-sel="${c.k}" style="${st}"><option value="">—</option>${c.op.map(o => `<option${o === v ? " selected" : ""}>${escH(o)}</option>`).join("")}</select><input type="text" data-k="${c.k}" placeholder="¿Cuál?" value="${escH(v || "")}" style="${st}margin-top:6px;display:none;">`;
   if(c.op) return `<select data-k="${c.k}" style="${st}"><option value="">—</option>${c.op.map(o => `<option${o === v ? " selected" : ""}>${escH(o)}</option>`).join("")}</select>`;
   if(c.fecha) return `<input type="date" data-k="${c.k}" value="${escH(v || "")}" style="${st}">`;
-  if(c.hora) return `<input type="time" data-k="${c.k}" value="${escH(v || new Date().toTimeString().slice(0,5))}" style="${st}">`;
+  if(c.hora) return `<input type="time" data-k="${c.k}" value="${escH(v || "")}" style="${st}">`;   // Alban 3 nov: campos vacíos por defecto
   return `<input type="${c.num ? "text" : "text"}" ${c.num ? 'inputmode="decimal"' : ""} data-k="${c.k}" value="${escH(v || "")}" style="${st}">`;
 }
 function planAbrir(pl){
@@ -6815,7 +6877,7 @@ function planAbrir(pl){
       <div style="margin-top:8px;"><button type="button" class="pl-todo" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer;">✓ Marcar todo</button></div>
       <div style="${box}">${pl.items.map((it, i) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:${i ? `1px solid ${C.line}` : "none"};cursor:pointer;font-size:0.95rem;">
         <input type="checkbox" data-i="${i}" style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])}</span>${it[1] ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};">×${it[1]}</span>` : ""}</label>`).join("")}</div>
-      <span style="${lab}">Químicos utilizados</span><div style="display:flex;flex-wrap:wrap;gap:6px;">${PLAN_QUIM.map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;border:1px solid ${C.line};border-radius:10px;padding:6px 9px;font-size:0.85rem;background:#fff;"><input type="checkbox" data-q="${n}">${n}. ${escH(t)}</label>`).join("")}</div>`;
+      <span style="${lab}">Químicos utilizados <button type="button" class="pl-quim" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;border:1px solid ${C.line};background:#fff;border-radius:8px;padding:3px 8px;cursor:pointer;margin-left:6px;">🧪 ¿cómo se usa?</button></span><div style="display:flex;flex-wrap:wrap;gap:6px;">${PLAN_QUIM.map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;border:1px solid ${C.line};border-radius:10px;padding:6px 9px;font-size:0.85rem;background:#fff;"><input type="checkbox" data-q="${n}">${n}. ${escH(t)}</label>`).join("")}</div>`;
   } else if(pl.tipo === "check"){
     const its = pl.items.map((it, i) => ({it, i})).filter(x => x.it[0].startsWith("§") || (PLAN_DIAS[x.it[1]] || []).includes(dow));
     cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Solo salen las actividades que tocan hoy. Marca las que se hicieron.</div>
@@ -6873,11 +6935,16 @@ function planAbrir(pl){
   const q = s => ov.querySelector(s), qa = s => [...ov.querySelectorAll(s)];
   q(".pl-x").onclick = () => ov.remove();
   if(q(".pl-todo")) q(".pl-todo").onclick = () => qa('input[data-i]').forEach(c => { if(!c.dataset.opc) c.checked = true; });
+  if(q(".pl-quim")) q(".pl-quim").onclick = () => { const m = capaModal(`<div style="text-align:left;">${quimSeccionHTML(C.ink).replace('<details data-quim="1"', '<details open data-quim="1"')}</div><button type="button" style="margin-top:14px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:11px 22px;cursor:pointer;">Cerrar</button>`, C.ink); m.style.zIndex = "9500"; m.querySelector("button:last-child").onclick = () => m.remove(); };
   // filas de tabla
   if(pl.tipo === "tabla"){
     const filas = q(".pl-filas");
     const fila = () => { const d = document.createElement("div"); d.className = "pl-fila"; d.setAttribute("style", box + "display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;");
-      d.innerHTML = pl.cols.map(c => `<div><span style="${lab}margin-top:0;">${escH(c.t)}${c.req ? " *" : ""}</span>${planCampo(c)}</div>`).join(""); filas.appendChild(d); };
+      d.innerHTML = pl.cols.map(c => `<div><span style="${lab}margin-top:0;">${escH(c.t)}${c.req ? " *" : ""}</span>${planCampo(c)}</div>`).join(""); filas.appendChild(d);
+      // Alban 3 nov: lista con "Otro" (se escribe) + prellenado automático (pl.auto)
+      d.querySelectorAll("select[data-sel]").forEach(sel => { const inp = d.querySelector(`input[data-k="${sel.dataset.sel}"]`); sel.onchange = () => {
+        if(sel.value === "Otro"){ inp.style.display = ""; inp.value = ""; inp.focus(); } else { inp.style.display = "none"; inp.value = sel.value; }
+        if(typeof pl.auto === "function") pl.auto(sel.value, d); }; }); };
     fila(); q(".pl-mas").onclick = fila;
   }
   // recepción: proveedores y sus productos de siempre (base compartida estado/PROVEEDORES) + foto de la factura
