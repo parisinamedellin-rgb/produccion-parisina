@@ -6653,7 +6653,7 @@ function callSeccionBind(w){ w.querySelectorAll(".c-call").forEach(b => b.onclic
 // URL del Apps Script "Planillas sanidad" (web app). Vacío = todavía no está activado.
 const PLAN_API = "https://script.google.com/macros/s/AKfycbwoMqguxKxvNB5T3EZ5XetV_sUBX2iQ-WhG234nEBg8X6aj_b74U293tTwjYbYCcnjN/exec";
 // Alban 3 nov: lista alineada con las fichas de químicos (sin Aerowash ni Soft Care Plus Foam; Break Up Chlor → Hipoclorito 15 %)
-const PLAN_QUIM = [["1","Detergente industrial pH neutro (multiusos)"],["2","Suma Grill (desengrasante)"],["3","Suma Sanitizer (desinfectante)"],["4","Suma Eden (frutas, verduras y huevos)"],["5","Hipoclorito de sodio 15 % (desinfectar)"],["6","Detergente ácido industrial (desengrasar)"]];
+const PLAN_QUIM = [["1","Detergente industrial pH neutro (multiusos)"],["2","Suma Grill (desengrasante)"],["3","Suma Sanitizer (desinfectante)"],["4","Suma Eden (frutas, verduras y huevos)"],["5","Hipoclorito de sodio 15 % (desinfectar)"],["6","Detergente ácido industrial (desengrasar)"],["7","Jabón líquido neutro (manos)"]];
 const PLAN_EQUIPOS_FRIO = ["Nevera #1","Nevera #4","Nevera #8","Nevera #11","Congelador #2","Congelador #3","Congelador #5","Congelador #6","Congelador #7","Congelador #9","Congelador #10"];
 const PLANILLAS = [
   {id:"ASEO_BAT", cod:"PLD-F-02", t:"Control de aseo – Batido", quien:{area:"Batido"}, tipo:"aseo", items:[
@@ -6794,7 +6794,10 @@ const QUIM_INFO = [
     ["Baños","50 ml / L agua","Atomizador","2 minutos · esponja húmeda y paño húmedo"],
     ["Remojo de ropa con mugre y grasa pesada","100 ml / L agua","Inmersión","1 a 2 horas · luego el lavado habitual"],
     ["Grasa pesada: tapete de silicona","100 ml / L agua","Cremera + esponja","2 minutos · enjuagar con abundante agua"]],
-    rec:"Usar guantes, sin contacto directo con la piel. No mezclar con blanqueadores ni oxidantes. Guardar lejos del calor, en lugar fresco y a la sombra. Preparar solo lo que se va a gastar en la semana."}
+    rec:"Usar guantes, sin contacto directo con la piel. No mezclar con blanqueadores ni oxidantes. Guardar lejos del calor, en lugar fresco y a la sombra. Preparar solo lo que se va a gastar en la semana."},
+  {n:"Jabón líquido neutro (manos y cuerpo)", f:"Lavado de manos · pH 6–7,5, sin aroma, apto para planta de alimentos (Químicos LM)", col:"#3C8DAD", filas:[
+    ["Manos (antes de empezar, al cambiar de tarea, después del baño)","Puro, sin diluir","Dispensador · frotar 20 segundos","Enjuagar con agua y secar"]],
+    rec:"No mezclar con hipoclorito ni con ácidos. Guardar tapado, en lugar fresco y seco (15–30 °C), lejos del sol. Si cae en los ojos, enjuagar con abundante agua."}
 ];
 const QUIM_PROC = [
   {n:"🧹 Limpieza del piso", pasos:["Barrer con la escoba llegando a todas las esquinas y rincones. Mover los equipos para barrer toda la zona.","Señalizar la zona. Remojar el piso con agua y aplicar el Detergente multiusos con dispensador tipo cremera.","Dejar actuar 2 minutos.","Enjuagar y luego, con el atomizador de Suma Sanitizer, aplicar por toda el área en zigzag.","Lavar la trapeadora con hipoclorito y dejar limpios los demás utensilios en el Cuarto de aseo."]},
