@@ -6484,18 +6484,34 @@ function sanCheckBind(w, fam, gente){
   const T = sanTareasDe(p, fam), w0 = aseoW(), hoy = hoyISO();
   const kD = "san_d_" + p.nom + "_" + hoy, kS = "san_s_" + p.nom + "_" + w0, kI = "san_i_" + p.nom + "_" + w0, kE = "san_e_" + p.nom + "_" + hoy;
   el.querySelectorAll("[data-ini]").forEach(b => b.onclick = ()=>{ sanLs(kI, {e: b.dataset.ini, f: hoy}); renderSanidad(); });
+  // Alban 4 nov: el Reloj se entera solo (sin tener que tocar "Enviar check del turno"): cada vez que cambia lo firmado o lo marcado
+  // se manda el estado actual de ESTA persona (solo si es la que entró con su código en este equipo).
+  const sanAuto = () => { try{
+    const yo = typeof usrYo === "function" ? usrYo() : null;
+    if(!yo || aseoNorm(yo.nom) !== aseoNorm(p.nom) || PLAN_HOY == null || !RELOJ_API) return;
+    const dH = sanLs(kD) || {}, faltaPl = (T.pl || []).filter(x => !x.pl.opcional && !planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
+    const faltaT = T.d.filter((t, i) => !dH[i]), listo = !faltaPl.length && !faltaT.length;
+    const area = fam === "ARELIS" ? "Aseo planta" : ((SAN_AREAS.find(a=>a[0]===fam)||[,fam])[1]).replace(/^\S+\s/, "");
+    const falta = faltaPl.concat(faltaT.length ? ["Tareas sin marcar: " + faltaT.length] : []).join(" | ");
+    const firma = hoy + "|" + listo + "|" + falta, kA = "san_auto_" + p.nom;
+    if(sanLs(kA) === firma) return; sanLs(kA, firma);
+    const cuerpo = JSON.stringify({tipo:"cierre", persona: p.nom, area, listo, diarias: (T.d.length - faltaT.length) + "/" + T.d.length, falta});
+    fetch(RELOJ_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: cuerpo}).catch(()=>fetch(RELOJ_API, {method:"POST", mode:"no-cors", body: cuerpo})).catch(()=>{});
+  }catch(e){} };
+  window.SAN_AUTO = sanAuto;
   el.querySelectorAll("input[data-k]").forEach(c => c.onchange = ()=>{
     const k = c.dataset.k, i = +k.slice(1);
     if(k[0] === "d"){ const o = sanLs(kD) || {}; if(c.checked) o[i] = 1; else delete o[i]; sanLs(kD, o); }
     else { const o = sanLs(kS) || {}; if(c.checked) o[i] = hoy; else delete o[i]; sanLs(kS, o);
       const lb = c.closest("label"), sp = lb && lb.querySelector("span > span"); if(lb) lb.style.opacity = c.checked ? ".6" : ""; if(sp) sp.style.textDecoration = c.checked ? "line-through" : ""; }
+    sanAuto();
   });
   el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ()=>{ PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
   // Alban 4 nov: desde el jueves, aviso si las neveras/congeladores del área no se han limpiado en la semana
   if(planHoyDow() >= 4 && (T.pl || []).some(x => x.pl.tipo === "aseo")) planCargarSemana().then(() => { if(!document.body.contains(el)) return;
     const pend = (T.pl || []).filter(x => x.pl.tipo === "aseo").flatMap(x => planNevPend(x.pl)); const z = el.querySelector(".san-nev");
     if(z && pend.length) z.innerHTML = `<div style="margin-top:12px;background:#FDECEA;border:2px solid #B3261E;border-radius:14px;padding:12px 14px;font-size:0.95rem;"><b style="color:#B3261E;">⚠️ Esta semana no se ha limpiado:</b> ${escH([...new Set(pend)].join(", "))}. Recuerda hacerlo hoy y marcarlo en el Control de aseo.</div>`; });
-  sanPlanEstado(el); if(typeof planCargarHoy === "function") planCargarHoy().then(()=>{ if(document.body.contains(el)) sanPlanEstado(el); });
+  sanPlanEstado(el); if(typeof planCargarHoy === "function") planCargarHoy().then(()=>{ if(document.body.contains(el)){ sanPlanEstado(el); sanAuto(); } });
   const btn = el.querySelector(".san-env"), msg = el.querySelector(".san-msg");
   btn.onclick = async ()=>{
     // Alban 4 nov: antes de enviar, volver a leer del servidor lo firmado hoy (si el compañero ya firmó, cuenta para los dos)
@@ -7352,7 +7368,7 @@ function planAbrir(pl){
         <div style="margin-top:6px;color:${C.inkSoft};font-size:0.9rem;">${escH(y.nom)} · ${escH(j.fecha)} ${escH(j.hora)} (hora del servidor)</div>
         <div style="margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};word-break:break-all;">Huella: ${escH(String(j.hash || "").slice(0, 16))}…</div>
         <button type="button" class="pl-ok" style="margin-top:16px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:12px 22px;cursor:pointer;">Listo</button></div>`;
-      ov.querySelector(".pl-ok").onclick = () => { ov.remove(); planPintarSeccion(); const ck = document.querySelector("[data-sancheck]"); if(ck && typeof sanPlanEstado === "function") sanPlanEstado(ck); };
+      ov.querySelector(".pl-ok").onclick = () => { ov.remove(); planPintarSeccion(); const ck = document.querySelector("[data-sancheck]"); if(ck && typeof sanPlanEstado === "function") sanPlanEstado(ck); if(typeof window.SAN_AUTO === "function") window.SAN_AUTO(); };
     }catch(e){ b.disabled = false; b.textContent = "✍️ Firmar y enviar"; err.textContent = "No se pudo enviar (" + (e.message || e) + "). Revisa internet e intenta otra vez."; }
   };
 }
