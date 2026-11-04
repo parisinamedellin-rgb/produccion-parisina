@@ -1164,7 +1164,7 @@ const FAMS = [
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Topping","Tortas"], nota:"Dulcería · Topping & Cremas · Tortas"},   // Alban 10 oct
   {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS","SANIDAD"], nota:"Stock · Fórmulas · Sanidad"},   // Alban 5 oct: sin Producción ni De una vez
   {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ROTULOS","SANIDAD"], nota:"Pedidos · Rótulo · Sanidad"}   /* Alban 31 oct: Ruta oculta; Cliente, Rótulo y Cajas especiales van dentro de Rótulos del día */   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
-  {key:"Aseo", label:"Control de aseo", emoji:"🧽", subs:[], modos:["SANIDAD"], nota:"Sanidad"},   // Alban 4 nov: categoría de Arelis
+  {key:"Aseo", label:"Control de aseo", emoji:"👩‍🔬", subs:[], modos:["SANIDAD"], nota:"Sanidad"},   // Alban 4 nov: categoría de Arelis
   {key:"Marzzana", label:"La Marzzana", emoji:"🍕", subs:["Marzzana"], modos:["FORMULAS"], nota:"Fórmulas"},
   {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","SELLO"], nota:"Planta · Consumidor final · Sello"}   /* Alban 22 oct: Cliente, Refrigerio y Cajas especiales pasan a Logística */   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
 ];
@@ -1983,7 +1983,7 @@ function admPanel(){
 // (queda en localStorage "usuario_cod"). En Admin se maneja quién entra a qué. Guardado: estado/USUARIOS = {lista:[{id,nom,cod,acc}]}.
 // Mientras nadie tenga código, la página funciona como antes (no pide código).
 // ============================================================
-const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Aseo","🧽 Control de aseo"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
+const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Aseo","👩‍🔬 Control de aseo"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
 const USR_DEF = [
   {id:"u1", nom:"Alban", puesto:"Gerente", msg:true, cod:"", acc:["ALL"]},
   {id:"u2", nom:"Deisy", puesto:"Panadería", cod:"", acc:["ALL"]},
