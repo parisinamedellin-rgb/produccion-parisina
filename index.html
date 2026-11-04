@@ -1160,7 +1160,7 @@ function webDb(url){
 }
 const FAMS = [
   {key:"Panaderia", label:"Panadería", emoji:"🥐", subs:["Panaderia"]},
-  {key:"Comida de sal", label:"Comida de sal", emoji:"🐷", subs:["Comida de sal"]},
+  {key:"Comida de sal", label:"Comida de sal", emoji:"🍽️", subs:["Comida de sal"]},
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Topping","Tortas"], nota:"Dulcería · Topping & Cremas · Tortas"},   // Alban 10 oct
   {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS","SANIDAD"], nota:"Stock · Fórmulas · Sanidad"},   // Alban 5 oct: sin Producción ni De una vez
   {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ROTULOS","SANIDAD"], nota:"Pedidos · Rótulo · Sanidad"}   /* Alban 31 oct: Ruta oculta; Cliente, Rótulo y Cajas especiales van dentro de Rótulos del día */   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
@@ -1983,7 +1983,7 @@ function admPanel(){
 // (queda en localStorage "usuario_cod"). En Admin se maneja quién entra a qué. Guardado: estado/USUARIOS = {lista:[{id,nom,cod,acc}]}.
 // Mientras nadie tenga código, la página funciona como antes (no pide código).
 // ============================================================
-const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Aseo","👩‍🔬 Control de aseo"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
+const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🍽️ Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Aseo","👩‍🔬 Control de aseo"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
 const USR_DEF = [
   {id:"u1", nom:"Alban", puesto:"Gerente", msg:true, cod:"", acc:["ALL"]},
   {id:"u2", nom:"Deisy", puesto:"Panadería", cod:"", acc:["ALL"]},
@@ -6069,7 +6069,7 @@ function avisoImportante(luego){
 }
 
 // ---- 📣 Mensajes ----
-const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🐷 Comida de sal","SAL"], ["Reposteria","🍰 Repostería","REP"], ["Batido","🥣 Batido","BAT"], ["Logistica","🚚 Logística / Rótulos","LOG"], ["Oficina","🏢 Oficina","OFI"]];   // Alban 22 oct: + Oficina
+const MSG_AREAS = [["Panaderia","🥐 Panadería","PAN"], ["Comida de sal","🍽️ Comida de sal","SAL"], ["Reposteria","🍰 Repostería","REP"], ["Batido","🥣 Batido","BAT"], ["Logistica","🚚 Logística / Rótulos","LOG"], ["Oficina","🏢 Oficina","OFI"]];   // Alban 22 oct: + Oficina
 // Alban 22 oct: también a personas de la oficina (no una categoría) y se puede responder
 // Las personas que reciben mensajes directos salen de Admin › Personas (casilla "📣 Mensajes"), con su nombre y puesto.
 function msgPers(){ const L = typeof usrLista === "function" ? usrLista() : [];
@@ -6346,7 +6346,7 @@ function renderCalc(){
 // las tareas detalladas de cada persona de su equipo (zona de la semana + tareas del área).
 // ============================================================
 let SAN_AREA = null;
-const SAN_AREAS = [["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["ARELIS","🧽 Aseo tarde"]];
+const SAN_AREAS = [["Panaderia","🥐 Panadería"],["Comida de sal","🍽️ Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["ARELIS","🧽 Aseo tarde"]];
 function sanLunes(){ const w = aseoW(); const d = new Date(ASEO_W0 + w * 7 * 864e5); return d; }
 function sanLista(tit, arr, col){ if(!arr || !arr.length) return "";
   return `<div style="font-weight:700;margin-top:10px;color:${col};">${tit}</div><ul style="margin:4px 0 0 20px;padding:0;line-height:1.45;">${arr.map(x=>`<li style="margin:3px 0;">${escH(x)}</li>`).join("")}</ul>`; }
