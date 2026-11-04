@@ -163,6 +163,8 @@ function submitFormulaComment(formulaLabel, comentario, nombre){
   document.body.appendChild(f);
   f.submit();
   setTimeout(()=>f.remove(), 1000);
+  // Alban 4 nov: además, correo directo a parisina.medellin (el formulario no avisaba)
+  try{ if(typeof PLAN_API !== "undefined" && PLAN_API) fetch(PLAN_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify({tipo:"propuesta", formula: formulaLabel, texto: comentario, nombre: nombre || ""})}).catch(()=>{}); }catch(e){}
 }
 
 // ---- Propuesta de ajuste (operador -> Alban) ----
@@ -1036,7 +1038,7 @@ const FORMULA_DEFS = [
   },
   {
     id: "Batido red velvet", code: "SE-BIZ-RV", group: "Batido", lote: true,
-    formatos: {"Red velvet 1/4 libra":20,"Red velvet 1/2 libra":10,"Red velvet 1 libra":7,"Red velvet 2 libras":4},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
+    formatos: {"Red velvet 1/4 libra":20,"Red velvet 1/2 libra":10,"Red velvet 1 libra":8,"Red velvet 2 libras":4},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Antes de empezar: engrasar los moldes con desmoldante. Pesar en moldes: ¼ lb 750 g · ½ lb 1.500 g · 1 lb 1.900 g · 2 lb 3.300 g. Horneo en dos etapas: 165 °C arriba / 175 °C abajo 55 min, luego 170 °C arriba / 175 °C abajo 32 min. Enfriar 2 horas antes de desmoldar y cortar. Batido total 15.084 g: rinde 10 de ½ libra u 8 de 1 libra.",
     recipe: { per: 15084, of: "total", steps: [
@@ -2730,7 +2732,7 @@ function batidoStockEl(col){
       </div>
       <div style="text-align:center;">
         <div style="font-size:0.62rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};margin-bottom:2px;">conteo</div>
-        <input type="number" inputmode="numeric" min="0" placeholder="${DB && st.lotes.length ? fmtN(st.stock) : "0"}" ${DB ? "" : "disabled"} value="${BAT_DRAFT[n] !== undefined ? BAT_DRAFT[n] : ""}" style="width:68px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;text-align:center;padding:9px 4px;border:1.5px solid ${C.line};border-radius:10px;background:${DB ? "#fff" : C.bg};color:${C.ink};">
+        <input type="number" inputmode="numeric" min="0" placeholder="" ${DB ? "" : "disabled"} value="${BAT_DRAFT[n] !== undefined ? BAT_DRAFT[n] : ""}" style="width:68px;box-sizing:border-box;font-family:'IBM Plex Mono',monospace;font-size:1.05rem;text-align:center;padding:9px 4px;border:1.5px solid ${C.line};border-radius:10px;background:${DB ? "#fff" : C.bg};color:${C.ink};">
       </div>`;
     const inp = row.querySelector("input");
     inp.oninput = ()=>{ BAT_DRAFT[n] = inp.value; };
@@ -6313,7 +6315,7 @@ function sanTareasDe(p, fam){
   const ex = aseoExtras(fam);
   // Alban 3 nov: cada tarea empieza con el lugar ("Cuarto de aseo – …", "Agua – …", "Temperatura – …", "Hornos – …")
   const pre = (z, x) => (z === "Cuarto de aseo, agua y temperatura" ? (/pH|cloro|color seg|recipiente de la muestra/i.test(x) ? "Agua" : /temperatura|term[oó]metro/i.test(x) ? "Temperatura" : "Cuarto de aseo") : z) + " – " + x;
-  return {zona: p.zona, d: (t.d || []).filter(t => !esPlan(t)).map(x => pre(p.zona, x)).concat(ASEO_COMUN.filter(t => !esPlan(t)).map(x => "Área común – " + x)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
+  return {zona: p.zona, d: (t.d || []).filter(t => !esPlan(t)).map(x => pre(p.zona, x)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
 }
 function sanPlanEstado(w){
   w.querySelectorAll("[data-plr]").forEach(b => {
@@ -6344,7 +6346,7 @@ function sanCheckHTML(fam, gente, col){
   const box = (key, txt, on, extra) => `<label style="display:flex;gap:12px;align-items:flex-start;padding:9px 2px;cursor:pointer;font-size:1rem;line-height:1.4;border-top:1px solid ${C.line};">
       <input type="checkbox" data-k="${key}" ${on ? "checked" : ""} style="width:24px;height:24px;flex:0 0 24px;margin:0;accent-color:${col};">
       <span>${(m => m ? `<i style="color:${C.inkSoft};">${escH(m[1])}</i> – ${escH(m[2])}` : escH(txt))(/^(.+?) – (.+)$/.exec(txt))}${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;   // Alban 3 nov: el lugar en cursiva
-  if(fam !== "ARELIS" && fam !== "Logistica"){
+  if(fam !== "ARELIS" && fam !== "Logistica" && !ini){   // Alban 4 nov: se califica una sola vez por semana; ya marcado no vuelve a salir hasta el lunes
     h += `<div style="margin-top:12px;background:#FBF3DA;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;">
       <div style="font-weight:700;">Inicio de semana — ${escH(T.zona)}</div>
       <div style="font-size:0.88rem;color:${C.inkSoft};">¿Cómo encontraste tu zona al recibirla? (califica la semana anterior)</div>
@@ -6357,6 +6359,7 @@ function sanCheckHTML(fam, gente, col){
     + T.pl.map(x => `<button type="button" data-plr="${x.pl.id}" data-vez="${escH(x.vez)}" data-area="${escH(sanAreaKey(fam))}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:none;border-top:1px solid ${C.line};padding:9px 2px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:1rem;line-height:1.4;color:${C.ink};">
       <span class="plr-ico" data-c="${col}" style="width:24px;height:24px;flex:0 0 24px;box-sizing:border-box;border:2px solid ${col};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:700;background:#fff;"></span>
       <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("");
+  h += `<div class="san-nev"></div>`;
   if(T.s.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">Semanales (una vez por semana)</div>`
     + T.s.map((t, i) => box("s" + i, t, !!sHechas[i], sHechas[i] ? "· hecha el " + sHechas[i].slice(8) + "/" + sHechas[i].slice(5,7) : "")).join("");
   h += `<button type="button" class="san-env" style="margin-top:16px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;border:none;border-radius:100px;padding:15px;cursor:pointer;background:${col};color:#fff;">✓ Enviar check del turno</button>
@@ -6376,9 +6379,16 @@ function sanCheckBind(w, fam, gente){
     else { const o = sanLs(kS) || {}; if(c.checked) o[i] = hoy; else delete o[i]; sanLs(kS, o); }
   });
   el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ()=>{ PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
+  // Alban 4 nov: desde el jueves, aviso si las neveras/congeladores del área no se han limpiado en la semana
+  if(planHoyDow() >= 4 && (T.pl || []).some(x => x.pl.tipo === "aseo")) planCargarSemana().then(() => { if(!document.body.contains(el)) return;
+    const pend = (T.pl || []).filter(x => x.pl.tipo === "aseo").flatMap(x => planNevPend(x.pl)); const z = el.querySelector(".san-nev");
+    if(z && pend.length) z.innerHTML = `<div style="margin-top:12px;background:#FDECEA;border:2px solid #B3261E;border-radius:14px;padding:12px 14px;font-size:0.95rem;"><b style="color:#B3261E;">⚠️ Esta semana no se ha limpiado:</b> ${escH([...new Set(pend)].join(", "))}. Recuerda hacerlo hoy y marcarlo en el Control de aseo.</div>`; });
   sanPlanEstado(el); if(typeof planCargarHoy === "function") planCargarHoy().then(()=>{ if(document.body.contains(el)) sanPlanEstado(el); });
   const btn = el.querySelector(".san-env"), msg = el.querySelector(".san-msg");
   btn.onclick = async ()=>{
+    // Alban 4 nov: antes de enviar, volver a leer del servidor lo firmado hoy (si el compañero ya firmó, cuenta para los dos)
+    btn.disabled = true; msg.style.color = C.ink; msg.textContent = "Revisando planillas…";
+    try{ await planCargarHoy(true); }catch(e){} btn.disabled = false; msg.textContent = ""; sanPlanEstado(el);
     const dH = sanLs(kD) || {}, sH = sanLs(kS) || {}, ini = sanLs(kI);
     const nD = T.d.filter((t, i) => dH[i]).length;
     const datos = {tipo:"check_aseo", semana: w0 + 1, persona: p.nom, area: fam === "ARELIS" ? "Aseo planta" : ((SAN_AREAS.find(a=>a[0]===fam)||[,fam])[1]).replace(/^\S+\s/, ""),
@@ -6828,8 +6838,28 @@ const PLANILLAS = [
     {k:"emp", t:"Empaque", op:["Conforme","No conforme"], req:1},{k:"cos", t:"Color · olor · sabor", op:["Conforme","No conforme","No aplica"], req:1},{k:"obs", t:"Observaciones"}]},
   {id:"TEMPREF", cod:"PLD-F-01", t:"Temperaturas de equipos de refrigeración", quien:{zona:"Cuarto de aseo, agua y temperatura"}, tipo:"frio", veces:["Apertura","Cierre"]},
   {id:"TEMPCAL", cod:"PLD-F-01", t:"Temperaturas en procesos calientes", quien:{area:"Comida de sal"}, tipo:"tabla", evento:true, nota:"T° de cocción mínima 70 °C (160 °F), tomada en el centro del alimento.", cols:[
-    {k:"ali", t:"Alimento", req:1},{k:"tem", t:"Temperatura (°C)", num:1, req:1, min:70},{k:"hor", t:"Hora", hora:1}]},
+    {k:"ali", t:"Alimento", op:["Pollo","Carne molida","Otro"], otro:1, req:1},{k:"tem", t:"Temperatura (°C)", num:1, req:1, min:70},{k:"hor", t:"Hora", hora:1}]},
 ];
+// Alban 4 nov: el control de aseo va por categorías, cada una con su producto. El piso va aparte porque lleva hipoclorito (nunca sobre acero inoxidable).
+const ASEO_CATS = [["ute","🍴 Utensilios y equipos",""],["piso","🧱 Piso","El piso se desinfecta con hipoclorito."],["mes","🪵 Mesones, repisas y paredes","🚫 Nada de hipoclorito: oxida el acero inoxidable."],["lav","🧽 Lavaplatos, jabonera, tomas eléctricos, esponjas y trapos","🚫 Nada de hipoclorito sobre acero inoxidable."],["nev","❄️ Neveras y congeladores (una vez por semana)",""]];
+function aseoCat(n){ n = String(n);
+  if(/^(Nevera|Congelador) #/.test(n)) return "nev";
+  if(/^pisos?$/i.test(n.trim())) return "piso";
+  if(/lavaplatos|jabonera|toma|esponja|trapo|escurridor/i.test(n)) return "lav";
+  if(/mes[oó]n|repisa|pared|estanter/i.test(n)) return "mes";
+  return "ute"; }
+// Neveras y congeladores de la semana (servidor: planillas_semana) → {"Nevera #1": "lun 3"}
+let PLAN_SEM = null, PLAN_SEM_T = 0;
+async function planCargarSemana(){
+  if(!PLAN_API) return null; if(PLAN_SEM && Date.now() - PLAN_SEM_T < 120000) return PLAN_SEM;
+  try{ const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify({tipo: "planillas_semana", desde: sanLunesISO(), hasta: hoyISO()})});
+    const j = await r.json(); if(j && j.ok){ PLAN_SEM = j.registros || []; PLAN_SEM_T = Date.now(); } }catch(e){}
+  return PLAN_SEM; }
+function sanLunesISO(){ const d = new Date(hoyISO() + "T12:00:00"); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.toISOString().slice(0, 10); }
+function planNevHecho(pl, eq){ const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
+  const r = (PLAN_SEM || []).concat(PLAN_HOY || []).find(x => x.planilla === pl.id && (x.hechos || []).includes(eq));
+  return r ? DIAS[new Date(r.fecha + "T12:00:00").getDay()] + " " + +String(r.fecha).slice(8) : ""; }
+function planNevPend(pl){ return (pl.items || []).map(it => it[0]).filter(n => aseoCat(n) === "nev" && !planNevHecho(pl, n)); }
 const PLAN_DIAS = {D:[1,2,3,4,5,6], LJ:[1,4], MV:[2,5], M:[2], W:[3], L:[1], S:[1,2,3,4,5,6], X:[1,2,3,4,5,6]};
 const PLAN_OPC = {S:"(semanal)", X:"(1 vez al mes)"};
 let PLAN_HOY = null, PLAN_HOY_T = 0, PLAN_VEZ_PRE = null;   // registros firmados hoy (del servidor): [{planilla, persona, hora, extra}]
@@ -6884,28 +6914,30 @@ const QUIM_INFO = [
   {n:"Suma Eden", f:"Antibacterial orgánico · frutas, verduras y huevos", col:"#5B6FD6", filas:[
     ["Frutas y cáscaras blandas · huevos","1 ml / L agua","Inmersión – directo","1 minuto"],
     ["Hojas, fruta de cáscara dura, vegetales","1 ml / L agua","Inmersión – directo","5 minutos"]],
-    rec:"No requiere enjuague. No dejar fuera del contenedor más de 8 horas. Lavar el producto antes de usar el Suma Eden. El pH debe ser menor a 3."},
+    rec:"No requiere enjuague. No dejar fuera del contenedor más de 8 horas. Lavar el producto antes de usar el Suma Eden. El pH debe ser menor a 3.", epp:["🧤 Guantes","😷 Tapabocas"]},
   {n:"Suma Sanitizer", f:"Desinfectante · pisos, paredes, utensilios, equipos de cocina, áreas de producción y ambiente", col:"#5B6FD6", filas:[
     ["Pisos, paredes, utensilios, equipos, áreas y ambiente","2 – 5 ml / L agua","Inmersión – aspersión","Dejar actuar mínimo 10 minutos"]],
-    rec:"No requiere enjuague en esta concentración. Si se va a trabajar sobre la superficie después de los 10 minutos, se enjuaga; al finalizar el turno, no se enjuaga."},
+    rec:"No requiere enjuague en esta concentración. Si se va a trabajar sobre la superficie después de los 10 minutos, se enjuaga; al finalizar el turno, no se enjuaga.", epp:["🧤 Guantes","🥽 Gafas","😷 Tapabocas"]},
   {n:"Suma Grill", f:"Desengrasante · hornos, estufas y zonas con mucha grasa", col:"#C94A3C", filas:[
     ["Hornos y planchas","300 – 500 ml / L agua","Inmersión – aspersión – directo","15 minutos"],
     ["Freidora","300 – 500 ml / L agua","Inmersión – aspersión – directo","15 – 30 minutos"],
     ["Filtros y campanas","300 – 500 ml / L agua","Inmersión – aspersión – directo","16 – 60 minutos"]],
-    rec:"Enjuagar con agua caliente. Usar con temperatura menor a 60 °C. Usar siempre guantes, tapabocas y gafas de protección."},
+    rec:"Enjuagar con agua caliente. Usar con temperatura menor a 60 °C. Usar siempre guantes, tapabocas y gafas de protección.",
+    peligro:1, epp:["🧤 Guantes largos de caucho","🥽 Gafas de seguridad","😷 Tapabocas","🦺 Delantal impermeable","👕 Manga larga"]},
   {n:"Detergente ácido industrial", f:"Desengrasar · hornos, estufas y zonas con mucha grasa", col:"#C94A3C", filas:[
     ["Hornos","30 ml / L agua","Directo","15 minutos"],
     ["Filtros y campanas","30 ml / L agua","Directo","16 – 60 minutos"]],
-    rec:"Enjuagar con agua. Usar con temperatura menor a 30 °C. Siempre con guantes largos, gafas, tapabocas y delantal: protege ojos y cara de salpicaduras."},
+    rec:"Enjuagar con agua. Usar con temperatura menor a 30 °C. Siempre con guantes largos, gafas, tapabocas y delantal: protege ojos y cara de salpicaduras.",
+    peligro:1, epp:["🧤 Guantes largos de caucho","🥽 Gafas de seguridad","😷 Tapabocas","🦺 Delantal impermeable","👕 Manga larga"]},
   {n:"Hipoclorito de sodio 15 %", f:"Desinfectar · blanqueador, muy corrosivo e irritante", col:"#5B6FD6", filas:[
-    ["Equipos y material de acero inoxidable","0,7 ml / L agua","Con limpión","1 minuto · aplicar, dejar actuar y retirar con limpión"],
     ["Mesas, traperos, limpiones y pocetas","1,4 ml / L agua","Inmersión","1 minuto · estregar, dejar actuar y enjuagar (o dejar en remojo)"],
     ["Pisos, paredes y baños","2 ml / L agua","Inmersión","1 minuto · estregar, dejar actuar y enjuagar"],
     ["Vajilla y utensilios de cocina","2 ml / L agua","Remojo","1 minuto · estregar con esponja y enjuagar"],
     ["Ropa y uniformes (solo blancos)","3 ml / L agua","Remojo","1 minuto (máximo 30 min) · enjuagar con abundante agua"],
     ["Material altamente contaminado","10 ml / L agua","Inmersión","20 minutos (remojo máximo 60 min) · estregar y enjuagar con abundante agua"],
     ["Canecas de basura","35 ml / L agua","Inmersión","30 minutos (remojo máximo 90 min) · estregar y enjuagar con abundante agua"]],
-    rec:"Usar guantes, gafas, delantal y cubrebocas. Nunca mezclar con otros productos."},
+    rec:"Usar guantes, gafas, delantal y cubrebocas. Nunca mezclar con otros productos. 🚫 NUNCA sobre acero inoxidable (mesones, equipos, utensilios): lo oxida.",
+    epp:["🧤 Guantes de caucho","🥽 Gafas de seguridad","😷 Tapabocas","🦺 Delantal"]},
   {n:"Detergente industrial pH neutro (multiusos)", f:"Desengrasar · grasa y suciedad en general", col:"#B9A000", filas:[
     ["Grasa ligera en superficies","5 ml / L agua","Esponja","30 segundos · estregar y retirar"],
     ["Grasa pesada","50 ml / L agua","Esponja","2 minutos · retirar con agua"],
@@ -6918,10 +6950,10 @@ const QUIM_INFO = [
     ["Remojo de ropa blanca","70 ml en 3 L de agua","Inmersión","1 a 2 horas · luego el lavado habitual"],
     ["Lavadora, carga llena (10 lb)","150 ml","Directo","Lavado habitual"],
     ["Grasa pesada: tapete de silicona","100 ml / L agua","Cremera + esponja","2 minutos · enjuagar con abundante agua"]],
-    rec:"Usar guantes, sin contacto directo con la piel. No mezclar con blanqueadores ni oxidantes. Guardar lejos del calor, en lugar fresco y a la sombra. Preparar solo lo que se va a gastar en la semana."},
+    rec:"Usar guantes, sin contacto directo con la piel. No mezclar con blanqueadores ni oxidantes. Guardar lejos del calor, en lugar fresco y a la sombra. Preparar solo lo que se va a gastar en la semana.", epp:["🧤 Guantes"]},
   {n:"Jabón líquido neutro (manos y cuerpo)", f:"Lavado de manos · pH 6–7,5, sin aroma, apto para planta de alimentos (Químicos LM)", col:"#3C8DAD", filas:[
     ["Manos (antes de empezar, al cambiar de tarea, después del baño)","Puro, sin diluir","Dispensador · frotar 20 segundos","Enjuagar con agua y secar"]],
-    rec:"No mezclar con hipoclorito ni con ácidos. Guardar tapado, en lugar fresco y seco (15–30 °C), lejos del sol. Si cae en los ojos, enjuagar con abundante agua."}
+    rec:"No mezclar con hipoclorito ni con ácidos. Guardar tapado, en lugar fresco y seco (15–30 °C), lejos del sol. Si cae en los ojos, enjuagar con abundante agua.", epp:[]}
 ];
 const QUIM_PROC = [
   {n:"🧹 Limpieza del piso", pasos:["Barrer con la escoba llegando a todas las esquinas y rincones. Mover los equipos para barrer toda la zona.","Señalizar la zona. Remojar el piso con agua y aplicar el Detergente multiusos con dispensador tipo cremera.","Dejar actuar 2 minutos.","Enjuagar y luego, con el atomizador de Suma Sanitizer, aplicar por toda el área en zigzag.","Lavar la trapeadora con hipoclorito y dejar limpios los demás utensilios en el Cuarto de aseo."]},
@@ -6930,7 +6962,10 @@ const QUIM_PROC = [
 function quimSeccionHTML(col){
   const c = col || C.ink;
   const prod = QUIM_INFO.map(q => `<details style="background:#fff;border:1.5px solid ${C.line};border-left:6px solid ${q.col};border-radius:12px;padding:10px 12px;">
-      <summary style="cursor:pointer;font-weight:700;font-size:1.02rem;">${escH(q.n)} <span style="display:block;font-weight:400;font-size:0.82rem;color:${C.inkSoft};">${escH(q.f)}</span></summary>
+      <summary style="cursor:pointer;font-weight:700;font-size:1.02rem;">${escH(q.n)}${q.peligro ? ` <span style="font-size:0.75rem;font-weight:800;color:#fff;background:#B3261E;border-radius:6px;padding:2px 7px;">⚠️ MUY PELIGROSO</span>` : ""} <span style="display:block;font-weight:400;font-size:0.82rem;color:${C.inkSoft};">${escH(q.f)}</span>${q.epp && q.epp.length ? `<span style="display:block;font-weight:600;font-size:0.8rem;color:${q.peligro ? "#B3261E" : C.ink};margin-top:3px;">🦺 ${escH(q.epp.map(e => e.replace(/^\S+\s/, "")).join(" · "))}</span>` : ""}</summary>
+      ${q.epp && q.epp.length ? `<div style="margin-top:10px;background:${q.peligro ? "#FDECEA" : "#FBF3DA"};border:2px solid ${q.peligro ? "#B3261E" : "#C4791E"};border-radius:12px;padding:10px 12px;">
+        <div style="font-weight:800;font-size:0.95rem;color:${q.peligro ? "#B3261E" : "#8A5A00"};">${q.peligro ? "⚠️ Producto muy peligroso (corrosivo): NO se usa sin esta protección" : "🦺 Protección obligatoria"}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${q.epp.map(e => `<span style="background:#fff;border:1.5px solid ${q.peligro ? "#B3261E" : "#C4791E"};border-radius:100px;padding:5px 11px;font-size:0.9rem;font-weight:700;">${escH(e)}</span>`).join("")}</div></div>` : ""}
       <div style="display:grid;gap:8px;margin-top:10px;">${q.filas.map(f => `<div style="background:${C.paper};border-radius:10px;padding:8px 10px;font-size:0.9rem;line-height:1.4;">
         <div style="font-weight:700;">${escH(f[0])}</div>
         <div>🧪 <b>${escH(f[1])}</b> · ${escH(f[2])}</div><div>⏱️ ${escH(f[3])}</div></div>`).join("")}</div>
@@ -6940,6 +6975,7 @@ function quimSeccionHTML(col){
   return `<details data-quim="1" style="margin-top:14px;background:${C.paper};border:2px solid ${c};border-radius:18px;padding:12px 16px;">
     <summary style="cursor:pointer;font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;color:${c};">🧪 Productos químicos · cómo se usa cada uno</summary>
     <div style="font-size:0.85rem;color:${C.inkSoft};margin-top:4px;">Concentración, cómo se aplica y cuánto tiempo. Prohibido usar productos químicos no autorizados. Siempre con guantes.</div>
+    <div style="margin-top:8px;background:#FDECEA;border:2px solid #B3261E;border-radius:12px;padding:10px 12px;font-size:0.92rem;line-height:1.45;"><b style="color:#B3261E;">⚠️ Suma Grill y Detergente ácido industrial son ultra peligrosos.</b> Antes de abrirlos: guantes largos, gafas, tapabocas y delantal. Nunca mezclar químicos entre sí. 🚫 El hipoclorito nunca va sobre acero inoxidable: lo oxida.</div>
     <div style="display:grid;gap:8px;margin-top:10px;">${prod}</div>
     <div style="font-weight:700;margin-top:14px;color:${c};">📘 Procedimientos</div>
     <div style="display:grid;gap:8px;margin-top:8px;">${proc}</div></details>`;
@@ -6991,6 +7027,8 @@ function planCampo(c, v){
   return `<input type="${c.num ? "text" : "text"}" ${c.num ? 'inputmode="decimal"' : ""} data-k="${c.k}" value="${escH(v || "")}" style="${st}">`;
 }
 function planAbrir(pl){
+  // Alban 4 nov: antes de abrir el control de aseo, traer lo de la semana (neveras y congeladores ya hechos)
+  if(pl && pl.tipo === "aseo" && !pl._semTry){ pl._semTry = 1; planCargarSemana().finally(() => { planAbrir(pl); pl._semTry = 0; }); return; }
   if(!pl) return;
   const y = planYo(); if(!y){ alert("Entra con tu código para firmar."); return; }
   let ov = document.getElementById("plan-ov"); if(ov) ov.remove();
@@ -7002,9 +7040,14 @@ function planAbrir(pl){
   if(pl.tipo === "aseo"){
     cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Marca lo que quedó limpio y desinfectado hoy. Si algo no se hizo, escribe por qué en Observaciones.</div>
       <div style="margin-top:8px;"><button type="button" class="pl-todo" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer;">✓ Marcar todo</button></div>
-      <div style="${box}">${pl.items.map((it, i) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:${i ? `1px solid ${C.line}` : "none"};cursor:pointer;font-size:0.95rem;">
-        <input type="checkbox" data-i="${i}"${/^(Nevera|Congelador) #/.test(it[0]) ? ' data-opc="1"' : ""} style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])}${/^(Nevera|Congelador) #/.test(it[0]) ? ` <span style="font-size:0.78rem;font-weight:700;color:#8A5A00;background:#FBF3DA;border-radius:6px;padding:1px 6px;">semanal</span>` : ""}</span>${it[1] ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};">×${it[1]}</span>` : ""}</label>`).join("")}</div>
-      <span style="${lab}">Químicos utilizados <button type="button" class="pl-quim" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;border:1px solid ${C.line};background:#fff;border-radius:8px;padding:3px 8px;cursor:pointer;margin-left:6px;">🧪 ¿cómo se usa?</button></span><div style="display:flex;flex-wrap:wrap;gap:6px;">${PLAN_QUIM.map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;border:1px solid ${C.line};border-radius:10px;padding:6px 9px;font-size:0.85rem;background:#fff;"><input type="checkbox" data-q="${n}">${n}. ${escH(t)}</label>`).join("")}</div>`;
+      <div style="margin-top:6px;"><button type="button" class="pl-quim" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;border:1px solid ${C.line};background:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;">🧪 ¿cómo se usa cada químico?</button></div>
+      ${(() => { const nev = planNevPend(pl); return nev.length && planHoyDow() >= 4 ? `<div style="margin-top:10px;background:#FDECEA;border:2px solid #B3261E;border-radius:12px;padding:10px 12px;font-size:0.92rem;"><b style="color:#B3261E;">⚠️ Ojo: esta semana no se ha limpiado</b> ${escH(nev.join(", "))}. Recuerda hacerlo hoy (jueves, viernes o sábado).</div>` : ""; })()}
+      ${ASEO_CATS.map(([ck, ct, nota]) => { const its = pl.items.map((it, i) => ({it, i})).filter(x => aseoCat(x.it[0]) === ck); if(!its.length) return "";
+        const qs = PLAN_QUIM.filter(([n]) => ck === "piso" ? ["1","3","5"].includes(n) : ck === "nev" ? ["1","3"].includes(n) : ["1","2","3","6"].includes(n));
+        return `<div style="${box}"><div style="font-weight:800;font-size:0.95rem;">${ct}</div>${nota ? `<div style="font-size:0.8rem;color:${ck === "piso" ? "#2F6DB5" : "#B3261E"};font-weight:600;margin-top:2px;">${nota}</div>` : ""}
+          ${its.map(({it, i}) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid ${C.line};cursor:pointer;font-size:0.95rem;">
+          <input type="checkbox" data-i="${i}" data-cat="${ck}"${ck === "nev" ? ' data-opc="1"' : ""}${ck === "nev" && planNevHecho(pl, it[0]) ? " disabled" : ""} style="width:22px;height:22px;flex:none;margin-top:1px;"><span style="flex:1;">${escH(it[0])}${ck === "nev" ? (planNevHecho(pl, it[0]) ? ` <span style="font-size:0.78rem;font-weight:700;color:#2F6DB5;">✓ ya hecho esta semana (${escH(planNevHecho(pl, it[0]))})</span>` : ` <span style="font-size:0.78rem;font-weight:700;color:#8A5A00;background:#FBF3DA;border-radius:6px;padding:1px 6px;">semanal</span>`) : ""}</span>${it[1] ? `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:${C.inkSoft};">×${it[1]}</span>` : ""}</label>`).join("")}
+          <div style="font-size:0.8rem;font-weight:700;color:${C.inkSoft};margin:8px 0 4px;">Producto usado</div><div style="display:flex;flex-wrap:wrap;gap:6px;">${qs.map(([n, t]) => `<label style="display:flex;gap:6px;align-items:center;border:1px solid ${C.line};border-radius:10px;padding:6px 9px;font-size:0.85rem;background:#fff;"><input type="checkbox" data-q="${n}" data-qc="${ck}">${escH(t)}</label>`).join("")}</div></div>`; }).join("")}`;
   } else if(pl.tipo === "check"){
     const its = pl.items.map((it, i) => ({it, i})).filter(x => x.it[0].startsWith("§") || (PLAN_DIAS[x.it[1]] || []).includes(dow));
     cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Solo salen las actividades que tocan hoy. Marca las que se hicieron.</div>
@@ -7125,8 +7168,13 @@ function planAbrir(pl){
       const cb = qa('input[data-i]'), hechos = cb.filter(c => c.checked).map(c => +c.dataset.i), falt = cb.filter(c => !c.checked && !c.dataset.opc).map(c => +c.dataset.i);
       if(falt.length && !obs){ err.textContent = "⚠️ Faltan " + falt.length + " por marcar: escribe en Observaciones por qué."; return; }
       datos = {hechos: hechos.map(i => pl.items[i][0]), faltaron: falt.map(i => pl.items[i][0])};
-      if(pl.tipo === "aseo") datos.quimicos = qa('input[data-q]').filter(c => c.checked).map(c => c.dataset.q);
-      resumen = `Hecho ${hechos.length}/${hechos.length + falt.length}` + (falt.length ? ". Faltó: " + datos.faltaron.join("; ") : "") + (datos.quimicos && datos.quimicos.length ? ". Químicos: " + datos.quimicos.join(", ") : "");
+      if(pl.tipo === "aseo"){
+        // Alban 4 nov: producto por categoría (utensilios · piso · mesones/paredes · lavaplatos/tomas/esponjas · neveras)
+        const porCat = {}; ASEO_CATS.forEach(([ck, ct]) => { const ql = qa(`input[data-qc="${ck}"]`).filter(c => c.checked).map(c => (PLAN_QUIM.find(x => x[0] === c.dataset.q) || [, c.dataset.q])[1]); if(ql.length) porCat[ct.replace(/^\S+\s/, "")] = ql; });
+        const sinQ = ASEO_CATS.filter(([ck]) => cb.some(c => c.checked && !c.disabled && c.dataset.cat === ck) && !qa(`input[data-qc="${ck}"]`).some(c => c.checked));
+        if(sinQ.length){ err.textContent = "⚠️ Marca el producto usado en: " + sinQ.map(x => x[1].replace(/^\S+\s/, "")).join(", ") + "."; return; }
+        datos.quimicos = porCat; }
+      resumen = `Hecho ${hechos.length}/${hechos.length + falt.length}` + (falt.length ? ". Faltó: " + datos.faltaron.join("; ") : "") + (datos.quimicos && Object.keys(datos.quimicos).length ? ". Químicos: " + Object.entries(datos.quimicos).map(([k, v]) => k + ": " + v.join(" + ")).join(" · ") : "");
     } else if(pl.tipo === "plagas"){
       const pts = pl.items.map((it, i) => ({it, i})).filter(x => !x.it[0].startsWith("§")).map(({it, i}) => ({punto: it[0], plaga: (ov.querySelector(`input[name="pg${i}"]:checked`) || {}).value || "No", nota: (q(`[data-pgo="${i}"]`) || {}).value || ""}));
       const con = pts.filter(p => p.plaga === "Sí");
@@ -7183,7 +7231,7 @@ function planAbrir(pl){
       const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(cuerpoEnv)});
       const j = await r.json();
       if(!j || !j.ok) throw new Error((j && j.error) || "sin respuesta");
-      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, extra, area: y.area || (y.aseo ? "Aseo" : "")});
+      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, fecha: j.fecha, extra, area: y.area || (y.aseo ? "Aseo" : ""), hechos: datos.hechos || []});
       ov.querySelector("div").innerHTML = `<div style="text-align:center;padding:20px 6px;"><div style="font-size:3rem;">✅</div>
         <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin-top:6px;">Planilla firmada</div>
         <div style="margin-top:6px;">${escH(pl.t)}${extra ? " · " + escH(extra) : ""}</div>
