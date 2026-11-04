@@ -3545,6 +3545,8 @@ function logEmpaque(p, iso){
     }
     // Alban 9 oct: cada torta (y cada tres leches) va en su propia caja → un rótulo por unidad
     if(iso && esTortaRot(iso, cod, name)){ for(let i = 0; i < Math.round(q); i++) rotulos.push({cod, name, q: 1, cli: p.cli, n: p.n}); return; }
+    // Alban 4 nov: alfajores y profiteroles se empacan de a 10 → 40 alfajores = 4 rótulos de 10 (lo que sobra, en un rótulo aparte)
+    if(k === 1 && /alfajor|profiterol/i.test(name) && q > 10){ let r = Math.round(q); while(r > 0){ const c = Math.min(10, r); rotulos.push({cod, name, q: c, cli: p.cli, n: p.n}); r -= c; } return; }
     const base = Math.floor(q / k), extra = q - base * k;
     for(let i = 0; i < k; i++) rotulos.push({cod, name, q: base + (i < extra ? 1 : 0), cli: p.cli, n: p.n});
   });
@@ -3633,44 +3635,53 @@ function logRotulos(iso){
 }
 // ---- Sello de seguridad genérico (Alban 13 oct): mismo tamaño que el rótulo, en blanco y negro (impresora térmica) ----
 let SELLO_N = 30;   // Alban 13 oct: por defecto 30 sellos
-function selloHTML(w, h, iso){
-  // Alban 31 oct: diseño nuevo "Cinta de garantía" (opción B). Arranca debajo de la franja que la impresora no imprime (ROT_MARGEN_SUP_MM).
-  const top = typeof ROT_MARGEN_SUP_MM !== "undefined" ? ROT_MARGEN_SUP_MM : 3, iw = w - 4, ih = h - top - 2, k = Math.min(iw / 100, ih / 62);
-  const st = pos => `<div style="position:absolute;left:0;right:0;${pos}:0;height:${6 * k}mm;background:repeating-linear-gradient(135deg,#000 0 ${2.4 * k}mm,#fff ${2.4 * k}mm ${4.8 * k}mm);-webkit-print-color-adjust:exact;print-color-adjust:exact;"></div>`;
+function selloHTML(w, h, iso, ci){
+  // Alban 4 nov: vuelve el diseño A (escudo con chulo). ci = versión con franja "CONSUMO INMEDIATO" abajo.
+  const top = typeof ROT_MARGEN_SUP_MM !== "undefined" ? ROT_MARGEN_SUP_MM : 3, iw = w - 4, ih = h - top - 2, k = Math.min(iw / 100, ih / 62) * (ci ? 0.82 : 1);
+  const escudo = `<svg viewBox="0 0 48 56" style="height:${(ci ? 30 : 36) * k}mm;flex:none;"><path d="M24 2 L44 9 V26 C44 40 35 49 24 54 C13 49 4 40 4 26 V9 Z" fill="#000"/><path d="M24 7 L39 12.5 V26 C39 37 32 44.5 24 48.6 C16 44.5 9 37 9 26 V12.5 Z" fill="#fff"/><path d="M15.5 27.5 L21.5 33.5 L33 21" fill="none" stroke="#000" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const cuerpo = `<div style="flex:1;display:flex;align-items:center;justify-content:center;gap:${4 * k}mm;padding:0 ${4 * k}mm;background:repeating-linear-gradient(135deg,#fff 0 1.6mm,#f1f1f1 1.6mm 2mm);">
+        ${escudo}
+        <div style="text-align:center;line-height:1.08;">
+          <div style="font-size:${4.4 * k}mm;letter-spacing:.6mm;font-weight:700;">★ ★ ★</div>
+          <div style="font-size:${9.5 * k}mm;font-weight:900;letter-spacing:.3mm;">SELLO DE</div>
+          <div style="font-size:${9.5 * k}mm;font-weight:900;letter-spacing:.3mm;">SEGURIDAD</div>
+          <div style="margin:${1.2 * k}mm auto 0;border-top:0.35mm solid #000;width:80%;"></div>
+          <div style="font-size:${4.2 * k}mm;font-weight:700;margin-top:${1 * k}mm;letter-spacing:.2mm;">PRODUCTO SELLADO</div>
+          <div style="font-size:${3.5 * k}mm;margin-top:${0.6 * k}mm;">No consumir si el sello está roto</div>
+        </div></div>`;
+  const banda = ci ? `<div style="background:#000;color:#fff;display:flex;align-items:center;justify-content:center;gap:${2.5 * k}mm;padding:${2.2 * k}mm 0;-webkit-print-color-adjust:exact;print-color-adjust:exact;"><svg viewBox="0 0 24 24" style="height:${8 * k}mm;flex:none;"><circle cx="12" cy="12" r="10" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M12 6.5 V12 L15.5 14.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg><span style="font-size:${8.4 * k}mm;font-weight:900;letter-spacing:${0.9 * k}mm;">CONSUMO INMEDIATO</span></div>` : "";
   return `<div class="rot sello" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:${top}mm 2mm 2mm;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;">
-    <div style="position:relative;width:100%;height:100%;box-sizing:border-box;border:${2.2 * k}mm solid #000;overflow:hidden;">
-      ${st("top")}${st("bottom")}
-      <div style="position:absolute;left:${4 * k}mm;right:${4 * k}mm;top:${6 * k}mm;bottom:${6 * k}mm;display:flex;align-items:center;justify-content:center;gap:${5 * k}mm;">
-        <svg viewBox="0 0 48 48" style="height:${24 * k}mm;flex:none;"><circle cx="24" cy="24" r="22" fill="#000"/><circle cx="24" cy="24" r="17.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-dasharray="3 2.2"/><path d="M14 25 L21 32 L35 17" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <div style="text-align:center;line-height:1.05;">
-          <div style="font-size:${12 * k}mm;font-weight:900;letter-spacing:${0.8 * k}mm;">SELLADO</div>
-          <div style="font-size:${3.6 * k}mm;font-weight:700;letter-spacing:${0.3 * k}mm;margin-top:${1.5 * k}mm;">GARANTÍA DE INOCUIDAD</div>
-          <div style="font-size:${3.1 * k}mm;margin-top:${0.8 * k}mm;">Si el sello está roto, no lo consumas</div>
-        </div>
-      </div>
+    <div style="width:100%;height:100%;box-sizing:border-box;border:0.9mm solid #000;border-radius:2.2mm;padding:1mm;">
+      <div style="width:100%;height:100%;box-sizing:border-box;border:0.35mm dashed #000;border-radius:1.4mm;display:flex;flex-direction:column;overflow:hidden;">${cuerpo}${banda}</div>
     </div>
   </div>`;
 }
 // Sello de seguridad: mismo bloque en Logística › Rótulos y en Rotular › Sello (Alban 13 oct)
+let SELLO_CI_N = 30;
 function selloBloqueEl(w, h, iso, col){
+    // Alban 4 nov: dos sellos — normal y con "Consumo inmediato"
     const sb = document.createElement("div");
-    sb.setAttribute("style", `margin-top:10px;display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:12px 14px;`);
-    const esc = Math.min(1, 300 / (w * 3.78));
-    sb.innerHTML = `<div style="width:${w * 3.78 * esc}px;height:${h * 3.78 * esc}px;overflow:hidden;flex:none;border:1px dashed ${C.line};background:#fff;">
-        <div style="transform:scale(${esc});transform-origin:0 0;">${selloHTML(w, h, iso)}</div></div>
+    sb.setAttribute("style", "margin-top:10px;display:grid;gap:10px;");
+    const esc = Math.min(1, 260 / (w * 3.78));
+    const uno = (ci, tit, nota, cls, val) => `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;background:${C.paper};border:1px solid ${C.line};border-radius:14px;padding:12px 14px;">
+      <div style="width:${w * 3.78 * esc}px;height:${h * 3.78 * esc}px;overflow:hidden;flex:none;border:1px dashed ${C.line};background:#fff;">
+        <div style="transform:scale(${esc});transform-origin:0 0;">${selloHTML(w, h, iso, ci)}</div></div>
       <div style="flex:1;min-width:180px;">
-        <div style="font-weight:700;font-size:0.98rem;">🔒 Sello de seguridad</div>
-        <div style="font-size:0.78rem;color:${C.inkSoft};margin:2px 0 8px;">Genérico, sin logo — para los clientes que no quieren la marca.</div>
+        <div style="font-weight:700;font-size:0.98rem;">${tit}</div>
+        <div style="font-size:0.78rem;color:${C.inkSoft};margin:2px 0 8px;">${nota}</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <input type="number" inputmode="numeric" min="1" class="sn" value="${SELLO_N}" style="width:4.5em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;">
-          <button type="button" class="sp" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;">🖨️ Imprimir sellos</button>
-        </div>
-      </div>`;
+          <input type="number" inputmode="numeric" min="1" class="sn${cls}" value="${val}" style="width:4.5em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:8px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;">
+          <button type="button" class="sp${cls}" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;">🖨️ Imprimir sellos</button>
+        </div></div></div>`;
+    sb.innerHTML = uno(false, "🔒 Sello de seguridad", "Genérico, sin logo — para los clientes que no quieren la marca.", "", SELLO_N)
+      + uno(true, "🔒 Sello de seguridad · consumo inmediato", "El mismo sello con la franja CONSUMO INMEDIATO.", "c", SELLO_CI_N);
     sb.querySelector(".sn").onchange = e=>{ SELLO_N = Math.max(1, Number(e.target.value) || 1); };
-    sb.querySelector(".sp").onclick = ()=>{ SELLO_N = Math.max(1, Number(sb.querySelector(".sn").value) || 1); selloImprimir(SELLO_N, iso); };
+    sb.querySelector(".snc").onchange = e=>{ SELLO_CI_N = Math.max(1, Number(e.target.value) || 1); };
+    sb.querySelector(".sp").onclick = ()=>{ SELLO_N = Math.max(1, Number(sb.querySelector(".sn").value) || 1); selloImprimir(SELLO_N, iso, false); };
+    sb.querySelector(".spc").onclick = ()=>{ SELLO_CI_N = Math.max(1, Number(sb.querySelector(".snc").value) || 1); selloImprimir(SELLO_CI_N, iso, true); };
     return sb;
 }
-function selloImprimir(n, iso){
+function selloImprimir(n, iso, ci){
   const {w, h} = logTam();
   let area = document.getElementById("print-area");
   if(!area){ area = document.createElement("div"); area.id = "print-area"; document.body.appendChild(area); }
@@ -3680,7 +3691,7 @@ function selloImprimir(n, iso){
     @media print{ @page{size:${w}mm ${h}mm;margin:0;} html,body{margin:0!important;padding:0!important;background:#fff!important;}
       body > *:not(#print-area){display:none!important;} #print-area{position:static;left:0;}
       #print-area .rot{page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact;} }`;
-  area.innerHTML = Array.from({length: n}, ()=>selloHTML(w, h, iso)).join("");
+  area.innerHTML = Array.from({length: n}, ()=>selloHTML(w, h, iso, ci)).join("");
   setTimeout(()=>window.print(), 50);
 }
 // Alban 13 oct: opción de imprimir el nombre del cliente en el rótulo (se recuerda en este equipo)
@@ -3712,8 +3723,9 @@ function imprimirNombreCliente(p, iso, n){
 }
 function rotClienteUI(el, iso, col){
   const peds = logPedidos(iso);
-  const todos = logRotulos(iso);
+  let todos = logRotulos(iso);
   const pintar = ()=>{
+    todos = logRotulos(iso);
     const CLIS = (typeof LOGISTICA !== "undefined" && LOGISTICA.cli && LOGISTICA.cli.length) ? LOGISTICA.cli : ROT_CLI;
     let sel = ROT_SEL != null ? peds.find(p=>String(p.n) === String(ROT_SEL)) : null;
     if(!sel && ROT_SEL != null && String(ROT_SEL).startsWith("C:")){   // cliente de la hoja Por mayor sin comanda ese día
@@ -3752,7 +3764,8 @@ function rotClienteUI(el, iso, col){
             <span style="flex:1;font-weight:700;font-size:0.98rem;">👤 ${logEsc(sel.cli)} <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:0.75rem;color:${C.inkSoft};">${sel.sinComanda ? "cód. " + logEsc(sel.cod) + " · sin comanda este día" : "#" + logEsc(sel.n)}</span></span>
             <button type="button" class="x" style="font-size:0.8rem;font-weight:700;border:none;background:${C.bg};color:${col.a};border-radius:8px;padding:6px 10px;cursor:pointer;">✕ Cambiar</button>
           </div>
-          <div style="font-size:0.78rem;color:${C.inkSoft};margin:4px 0 10px;">${mios.length} ${mios.length === 1 ? "rótulo" : "rótulos"} de producto: ${mios.map(r=>fmtN(r.q) + " " + logEsc((logProd(r.cod) || [r.name])[0])).join(" · ") || "ninguno"}</div>
+          <div style="font-size:0.78rem;color:${C.inkSoft};margin:4px 0 6px;">${mios.length} ${mios.length === 1 ? "rótulo" : "rótulos"} de producto. Cambia cuántos rótulos y cuántas unidades lleva cada uno:</div>
+          <div class="rpe" style="display:grid;gap:8px;margin-bottom:10px;"></div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             <button type="button" class="ip" ${mios.length ? "" : "disabled"} style="${sel.sinComanda ? "display:none;" : ""}flex:1 1 100%;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Rótulos de sus productos (con su nombre)</button>
             <span style="display:flex;align-items:center;gap:6px;flex:1 1 100%;"><input type="number" inputmode="numeric" min="1" class="nq" value="1" title="Cuántos rótulos" style="width:3.6em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:9px 6px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;">
@@ -3761,6 +3774,26 @@ function rotClienteUI(el, iso, col){
         </div>`;
       el.querySelector(".x").onclick = ()=>{ ROT_SEL = null; ROT_QCLI = ""; pintar(); const q = el.querySelector("input"); if(q) q.focus(); };
       el.querySelector(".ip").onclick = ()=>logImprimir(mios, iso);
+      // Alban 4 nov: editor por producto del cliente (ej. 2 o 3 rótulos para los empleados)
+      const rpe = el.querySelector(".rpe"), base = {};
+      if(!sel.sinComanda) logRotulosBase(iso).filter(r=>String(r.n) === String(sel.n)).forEach(r=>{ (base[r.cod] = base[r.cod] || {name: (logProd(r.cod) || [r.name])[0], qs: []}).qs.push(Number(r.q) || 0); });
+      Object.keys(base).forEach(cod=>{
+        const b = base[cod], k = rotKey(iso, sel.n, cod), total = b.qs.reduce((t,q)=>t + q, 0);
+        const qs = (ROT_AJ[k] || b.qs).map(Number);
+        const row = document.createElement("div");
+        row.setAttribute("style", `border:1px solid ${C.line};border-radius:10px;padding:8px 10px;background:${ROT_AJ[k] ? C.bg : "#fff"};`);
+        row.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px;font-size:0.88rem;"><b>${logEsc(b.name)}</b><span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">pedido ${fmtN(total)}</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">${qs.map((q,i)=>`<input type="number" inputmode="numeric" min="0" data-i="${i}" value="${q}" title="Rótulo ${i+1}" style="width:3.6em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:6px;border:1.5px solid ${C.line};border-radius:8px;text-align:center;">`).join("")}
+            <button type="button" class="mas" style="font-size:0.82rem;font-weight:700;border:1.5px solid ${col.a};background:#fff;color:${col.a};border-radius:8px;padding:6px 9px;cursor:pointer;">+ rótulo</button>
+            ${qs.length > 1 ? `<button type="button" class="menos" style="font-size:0.82rem;font-weight:700;border:1.5px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:8px;padding:6px 9px;cursor:pointer;">− rótulo</button>` : ""}
+            ${ROT_AJ[k] ? `<button type="button" class="rst" style="font-size:0.78rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">normal</button>` : ""}</div>`;
+        const guardar = nq => { nq = nq.map(q=>Number(q) || 0).filter(q=>q > 0); if(!nq.length) nq = [total]; if(JSON.stringify(nq) === JSON.stringify(b.qs)) delete ROT_AJ[k]; else ROT_AJ[k] = nq; rotGuardarAj(); pintar(); };
+        row.querySelectorAll("input[data-i]").forEach(inp=>{ inp.onchange = ()=>{ const nq = qs.slice(); nq[Number(inp.dataset.i)] = Number(inp.value) || 0; guardar(nq); }; });
+        row.querySelector(".mas").onclick = ()=>{ const suma = qs.reduce((t,q)=>t + q, 0); guardar(qs.concat([Math.max(1, total - suma) || 1])); };
+        const me = row.querySelector(".menos"); if(me) me.onclick = ()=>guardar(qs.slice(0, -1));
+        const rs = row.querySelector(".rst"); if(rs) rs.onclick = ()=>{ delete ROT_AJ[k]; rotGuardarAj(); pintar(); };
+        rpe.appendChild(row);
+      });
       el.querySelector(".in").onclick = ()=>imprimirNombreCliente(sel, iso, Math.max(1, Math.round(Number(el.querySelector(".nq").value) || 1)));
       return;
     }
@@ -3849,6 +3882,7 @@ function logImprimir(lista, iso){
   area.querySelectorAll(".rot").forEach(rotFit);
   setTimeout(()=>window.print(), 50);
 }
+let ROT_VER_LISTA = false;
 let ROT_SUB = "dia";   // Alban 31 oct: Logística › Rótulo: "dia" = rótulos del día · "sello" = sello de seguridad + consumo inmediato
 function renderRotulos(main, col){
   const iso = activeDate, lista = logRotulos(iso), {w, h} = logTam();
@@ -3882,6 +3916,13 @@ function renderRotulos(main, col){
   };
   main.appendChild(top);
   if(!lista.length){ const v = document.createElement("div"); v.setAttribute("style", `font-size:0.9rem;color:${C.inkSoft};font-style:italic;padding:16px 4px;`); v.textContent = "No hay rótulos para este día."; main.appendChild(v); return; }
+  // Alban 4 nov: la lista de todos los rótulos del día queda escondida (es mucha información)
+  const tg = document.createElement("button"); tg.type = "button";
+  tg.setAttribute("style", `margin-top:14px;width:100%;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px solid ${col.a};background:#fff;color:${col.a};border-radius:12px;padding:12px 14px;cursor:pointer;`);
+  tg.textContent = (ROT_VER_LISTA ? "▾ " : "▸ ") + "Ver todos los rótulos del día por producto (" + lista.length + ")";
+  tg.onclick = ()=>{ ROT_VER_LISTA = !ROT_VER_LISTA; render(); };
+  main.appendChild(tg);
+  if(!ROT_VER_LISTA) return;
   const card = document.createElement("div");
   card.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-top:14px;overflow:hidden;`);
   Object.keys(porProd).sort((a,b)=>porProd[b].l.length - porProd[a].l.length || porProd[a].name.localeCompare(porProd[b].name)).forEach(cod=>{
@@ -4543,7 +4584,7 @@ function renderPedidos(main, col){
       <div style="flex:1;"></div>
       <div style="margin-top:10px;padding-top:9px;border-top:1px solid ${C.line};display:flex;align-items:center;gap:8px;font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;">
         <span style="flex:1;">${estado}</span>
-        <button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? "🛵 Enviado ✓" : "Enviar"}</button>
+        <button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? "🛵 Enviado ✓ · ↩️" : "Enviar"}</button>
         ${p.maps ? `<a href="${logEsc(p.maps)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:1.1rem;" title="Abrir en Maps">📍</a>` : ""}
         ${!p.rec && !sd ? [1,2].map(k=>`<button type="button" data-m="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === k ? col.a : "#fff"};color:${a && a.m === k ? "#fff" : col.a};cursor:pointer;">🛵 ${k}</button>`).join("") : ""}
       </div>`;
@@ -4555,6 +4596,7 @@ function renderPedidos(main, col){
     card.querySelector(".envb").onclick = ()=>{
       const eb = card.querySelector(".envb");
       if(!fl.env && fl.est !== "LISTO" && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "¿Enviar sin estar listo? Toca otra vez"; eb.style.background = "#FDECEA"; return; }
+      if(fl.env && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "↩️ ¿Regresar a NO enviados? Toca otra vez"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 4 nov: producto dañado / faltó algo
       empGuardar(iso, d=>{ if(fl.env) delete d.env[p.n]; else d.env[p.n] = true; });
     };
     card.dataset.s = pedNorm([p.n, String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."), p.cod, p.cli, p.para, p.dir, p.comp, p.barrio, p.nota].concat((p.todo || p.items || []).map(x=>x[1] + " " + x[0])).join(" | "));
@@ -6381,13 +6423,18 @@ function sanTareasDe(p, fam){
   return {zona: p.zona, d: (t.d || []).filter(t => !esPlan(t)).map(x => pre(p.zona, x)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
 }
 function sanPlanEstado(w){
+  // Alban 4 nov: debajo de "Enviar check del turno", aviso de las planillas obligatorias que faltan
+  const zf = w.querySelector(".san-falta");
+  if(zf){ const falta = [...w.querySelectorAll("[data-plr]")].filter(b => { const pl = PLANILLAS.find(x => x.id === b.dataset.plr); if(!pl || pl.opcional) return false; const vez = b.dataset.vez; return !planFirmadas(pl.id, b.dataset.area).some(r => !vez || r.extra === vez); }).map(b => { const pl = PLANILLAS.find(x => x.id === b.dataset.plr); return pl.t + (b.dataset.vez ? " · " + b.dataset.vez : ""); });
+    if(PLAN_HOY != null && falta.length){ zf.style.display = ""; zf.innerHTML = `<b style="color:#B3261E;">⚠️ Ojo: te falta llenar ${falta.length === 1 ? "esta planilla" : "estas " + falta.length + " planillas"}</b><div style="margin-top:4px;">${falta.map(t => "• " + escH(t)).join("<br>")}</div><div style="margin-top:6px;font-size:0.85rem;">Sin eso no vas a poder cerrar el turno correctamente en el Reloj.</div>`; }
+    else { zf.style.display = "none"; zf.innerHTML = ""; } }
   w.querySelectorAll("[data-plr]").forEach(b => {
     const pl = PLANILLAS.find(x => x.id === b.dataset.plr), vez = b.dataset.vez; if(!pl) return;
     const f = planFirmadas(pl.id, b.dataset.area).filter(r => !vez || r.extra === vez), ico = b.querySelector(".plr-ico"), est = b.querySelector(".plr-est"), col = ico.dataset.c;
     if(!PLAN_API){ est.textContent = "⚙️ falta activar"; return; }
     if(PLAN_HOY == null){ est.textContent = "sin conexión · toca para abrir"; return; }
     if(f.length){ ico.textContent = "✓"; ico.style.background = col; ico.style.color = "#fff"; est.style.color = "#2F6DB5"; est.textContent = "✅ firmada · " + f.map(r => r.persona + " " + String(r.hora).slice(0,5)).join(" · "); }
-    else { ico.textContent = ""; ico.style.background = "#fff"; est.style.color = pl.evento ? C.inkSoft : "#B23A2E"; est.textContent = pl.evento ? "cuando haya · o \"sin novedad\" · toca para abrir" : "⏳ pendiente · toca para llenar y firmar"; }
+    else { ico.textContent = ""; ico.style.background = "#fff"; est.style.color = pl.evento ? C.inkSoft : "#B23A2E"; est.textContent = pl.opcional ? "opcional · solo si hubo · toca para abrir" : pl.evento ? "cuando haya · o \"sin novedad\" · toca para abrir" : "⏳ pendiente · toca para llenar y firmar"; }
   });
 }
 function sanCheckHTML(fam, gente, col){
@@ -6426,6 +6473,7 @@ function sanCheckHTML(fam, gente, col){
   if(T.s.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">Semanales (una vez por semana)</div>`
     + T.s.map((t, i) => box("s" + i, t, !!sHechas[i], sHechas[i] ? "✓ hecha el " + sHechas[i].slice(8) + "/" + sHechas[i].slice(5,7) : "", !!sHechas[i])).join("");   // Alban 4 nov: hecha = tachada toda la semana
   h += `<button type="button" class="san-env" style="margin-top:16px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;border:none;border-radius:100px;padding:15px;cursor:pointer;background:${col};color:#fff;">✓ Enviar check del turno</button>
+    <div class="san-falta" style="display:none;margin-top:10px;background:#FDECEA;border:2px solid #B3261E;border-radius:12px;padding:10px 12px;font-size:0.95rem;line-height:1.4;"></div>
     <div class="san-msg" style="margin-top:8px;text-align:center;font-size:0.92rem;">${env ? "✓ Enviado hoy a las " + escH(env) + ". Si sigues marcando, puedes enviarlo otra vez." : ""}</div></div>`;
   return h;
 }
@@ -6469,7 +6517,7 @@ function sanCheckBind(w, fam, gente){
     btn.disabled = false; btn.style.opacity = "1";
     if(ok){ const hh = new Date().toLocaleTimeString("es-CO", {hour:"numeric", minute:"2-digit"}); sanLs(kE, hh); msg.style.color = "#2F6DB5"; msg.textContent = "✓ Check enviado (" + hh + "). ¡Gracias, " + p.nom + "!";
       // Alban 3 nov: avisar al Reloj si quedó todo listo (tareas del día + planillas firmadas) o qué falta
-      try{ const faltaPl = (T.pl || []).filter(x => !planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
+      try{ const faltaPl = (T.pl || []).filter(x => !x.pl.opcional).filter(x => !planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
         const faltaT = T.d.filter((t, i) => !dH[i]);
         const listo = !faltaPl.length && !faltaT.length;
         const cuerpo = JSON.stringify({tipo:"cierre", persona: p.nom, area: datos.area, listo, diarias: datos.diarias, falta: faltaPl.concat(faltaT.length ? ["Tareas sin marcar: " + faltaT.length] : []).join(" | ")});
@@ -6895,9 +6943,9 @@ const PLANILLAS = [
     ["Mesas (esquinas y bordes)"],["Licuadoras, microondas, batidora, grameras, impresoras (interior, exterior)"],["Canastas"],["Recipientes de almacenamiento de residuos"],
     ["§ Área de servicio y administrativa"],["Uniones entre el piso y las paredes, y paredes y techos"],["Mesas, organizadores, sillas (esquinas, bordes, cajones, rieles)"],["Recipientes de almacenamiento de residuos"],["Baños"]]},
   {id:"AGUA", cod:"MC-F-01", t:"Muestreo de agua – pH y cloro", quien:{zona:"Cuarto de aseo, agua y temperatura"}, tipo:"agua"},
-  {id:"PNC", cod:"PNC-F-01", t:"Producto no conforme – baja de productos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, cols:[
+  {id:"PNC", cod:"PNC-F-01", t:"Producto no conforme – baja de productos", quien:{area:"Logistica"}, tipo:"tabla", evento:true, opcional:true, cols:[
     {k:"des", t:"Descripción del PNC", req:1},{k:"can", t:"Cantidad", req:1},{k:"dis", t:"Disposición", op:["Desecho","Reproceso","Devolución al proveedor","Otro"], req:1},{k:"acc", t:"Acciones tomadas / comentarios"},{k:"aut", t:"Autorizado por", req:1},{k:"obs", t:"Observaciones"}]},
-  {id:"RECEP", cod:"PP-F-01", t:"Recepción de materia prima e insumos", quien:{area:"Logistica"}, tipo:"recep", evento:true, cols:[
+  {id:"RECEP", cod:"PP-F-01", t:"Recepción de materia prima e insumos", quien:{area:"Logistica"}, tipo:"recep", evento:true, opcional:true, cols:[
     {k:"pro", t:"Producto", req:1},{k:"can", t:"Cantidad", req:1},{k:"prv", t:"Proveedor", req:1},{k:"lot", t:"Lote"},{k:"ven", t:"Fecha de vencimiento", fecha:1},{k:"tem", t:"Temperatura (°C)", num:1},
     {k:"emp", t:"Empaque", op:["Conforme","No conforme"], req:1},{k:"cos", t:"Color · olor · sabor", op:["Conforme","No conforme","No aplica"], req:1},{k:"obs", t:"Observaciones"}]},
   {id:"TEMPREF", cod:"PLD-F-01", t:"Temperaturas de equipos de refrigeración", quien:{zona:"Cuarto de aseo, agua y temperatura"}, tipo:"frio", veces:["Apertura","Cierre"]},
