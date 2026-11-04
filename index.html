@@ -1532,17 +1532,38 @@ function renderCats(){
   el.appendChild(top);
   top.querySelector("#nav-home").onclick = ()=>irA("HOME");
   // Fila 2: Producción / Stock / Fórmulas (de esta categoría)
+  const TABS = [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulo"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"], ["SANIDAD","🧼 Sanidad"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.reduce((acc,t)=>{ if(t[0]==="SANIDAD") acc.splice(Math.min(1,acc.length),0,t); else acc.push(t); return acc; },[])   /* Alban 1 nov: Sanidad siempre de segunda */;
+  // Alban 4 nov: en las áreas de cocina arriba solo "Producción" y "Sanidad"; Dulcería, Topping, Tortas, De una vez, Stock y Fórmulas van dentro de Producción
+  const DOS = ["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && TABS.some(t => t[0] === "SANIDAD");
   const tabs = document.createElement("div");
   tabs.setAttribute("style", `display:flex;margin-top:12px;border:1.5px solid ${col.a};border-radius:14px;overflow:hidden;background:${C.paper};`);
-  [["PROD","🧾 Producción"], ["SEMANA","🔁 De una vez"], ["STOCK","📦 Stock"], ["FORMULAS","📄 Fórmulas"], ["TABLERO","📋 Tablero"], ["PEDIDOS","🧾 Pedidos"], ["ENTREGAS","🗺️ Ruta"], ["CAJAS","📦 Cajas"], ["ROTULOS","🏷️ Rótulo"], ["PLANTA","🏭 Planta"], ["CONSUMIDOR","🧺 Consumidor final"], ["CLIENTE","👤 Cliente"], ["REFRIG","Rótulo"], ["CAJAESP","Cajas especiales"], ["SELLO","🔒 Sello"], ["SANIDAD","🧼 Sanidad"]].filter(t=>f.modos ? f.modos.includes(t[0]) : (!LOGM.includes(t[0]) && !ROTM.includes(t[0]) && (t[0] !== "EMPAQUE" || f.key === "Panaderia")))   /* Alban 7 oct: logística solo en Logística · 9 oct: 🧊 Empaque solo en Panadería */.reduce((acc,t)=>{ if(t[0]==="SANIDAD") acc.splice(Math.min(1,acc.length),0,t); else acc.push(t); return acc; },[])   /* Alban 1 nov: Sanidad siempre de segunda */.forEach(([key,label],i)=>{
+  const tabBtn = (label, on, i, fn) => { const btn = document.createElement("button"); btn.textContent = label;
+    btn.setAttribute("style", `flex:1 1 0;min-width:0;font-family:'Work Sans',sans-serif;font-size:${DOS ? "0.95rem" : "0.8rem"};line-height:1.25;font-weight:700;padding:${DOS ? "13px 4px" : "11px 4px"};border:none;${i ? "border-left:1.5px solid " + col.a + ";" : ""}background:${on ? col.a : "transparent"};color:${on ? "#fff" : col.a};cursor:pointer;`);
+    btn.onclick = fn; tabs.appendChild(btn); };
+  const PROD_OP = TABS.filter(t => t[0] !== "SANIDAD");
+  if(DOS){
+    const conProd = TABS.some(t => t[0] === "PROD");
+    tabBtn("🧾 Producción", modo !== "SANIDAD", 0, ()=>irA(conProd ? navSub : PROD_OP[0][0]));
+    tabBtn("🧼 Sanidad", modo === "SANIDAD", 1, ()=>irA("SANIDAD"));
+  } else TABS.forEach(([key,label],i)=>{
     const on = key === modo || (key === "ROTULOS" && navFam === "Logistica" && ["CLIENTE","REFRIG","CAJAESP"].includes(modo));
-    const btn = document.createElement("button");
-    btn.textContent = label;
-    btn.setAttribute("style", `flex:1 1 0;min-width:0;font-family:'Work Sans',sans-serif;font-size:0.8rem;line-height:1.25;font-weight:700;padding:11px 4px;border:none;${i ? "border-left:1.5px solid " + col.a + ";" : ""}background:${on ? col.a : "transparent"};color:${on ? "#fff" : col.a};cursor:pointer;`);
-    btn.onclick = ()=>irA(key === "PROD" ? navSub : key);
-    tabs.appendChild(btn);
+    tabBtn(label, on, i, ()=>irA(key === "PROD" ? navSub : key));
   });
   el.appendChild(tabs);
+  if(DOS && modo !== "SANIDAD"){
+    const row = document.createElement("div");
+    row.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
+    const chip = (t, on, fn) => { const b = document.createElement("button"); b.textContent = t;
+      b.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;padding:9px 14px;border-radius:100px;border:1.5px solid ${col.a};background:${on ? col.a : C.paper};color:${on ? "#fff" : col.a};cursor:pointer;`);
+      b.onclick = fn; row.appendChild(b); };
+    PROD_OP.forEach(([key,label]) => {
+      if(key === "PROD"){ const subs = f.subs || [];
+        if(subs.length > 1) subs.forEach(sk => chip(GROUP_LABEL[sk] || sk, modo === "PROD" && activeCat === sk, ()=>{ navSub = sk; irA(sk); }));
+        else chip("🧾 Del día", modo === "PROD", ()=>irA(navSub)); }
+      else chip(label, key === modo, ()=>irA(key));
+    });
+    el.appendChild(row);
+  }
   // Alban 31 oct: Logística › Rótulos del día agrupa Del día · Cliente · Varios productos · Cajas especiales
   if(navFam === "Logistica" && ["ROTULOS","CLIENTE","REFRIG","CAJAESP"].includes(modo)){
     const row = document.createElement("div");
@@ -1556,7 +1577,7 @@ function renderCats(){
   }
   // Fila 3: áreas dentro de la categoría (solo en Producción y si hay más de una)
   const subs = f.subs ? f.subs : ["ALL", ...GROUP_ORDER];
-  if(modo === "PROD" && subs.length > 1 && (!f.modos || f.modos.includes("PROD"))){
+  if(!DOS && modo === "PROD" && subs.length > 1 && (!f.modos || f.modos.includes("PROD"))){
     const row = document.createElement("div");
     row.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
     subs.forEach(key=>{
@@ -5292,7 +5313,7 @@ function render(){
     setAccent(navFam); tintPage(navFam);
     const av = document.getElementById("aviso");
     if(av){ av.innerHTML = ""; av.style.display = "none"; }
-    if(ROTM.includes(activeCat)) renderRotular(); else if(activeCat === "EMPAQUE") renderEmpaque(); else if(LOG){ renderLogistica(); if(navFam === "Logistica" && activeDate === hoyISO()){ const ac = aseoCardEl("Logistica"), mm = document.getElementById("main"); if(ac && mm) mm.insertBefore(ac, mm.firstChild); } } else if(activeCat === "STOCK") renderStock(); else if(activeCat === "SEMANA") renderSemana(); else renderFormulas();
+    if(ROTM.includes(activeCat)) renderRotular(); else if(activeCat === "EMPAQUE") renderEmpaque(); else if(LOG){ renderLogistica(); if(ASEO_EN_PROD && navFam === "Logistica" && activeDate === hoyISO()){ const ac = aseoCardEl("Logistica"), mm = document.getElementById("main"); if(ac && mm) mm.insertBefore(ac, mm.firstChild); } } else if(activeCat === "STOCK") renderStock(); else if(activeCat === "SEMANA") renderSemana(); else renderFormulas();
     return;
   }
   setAccent(activeCat);
@@ -5303,7 +5324,7 @@ function render(){
   const main = document.getElementById("main");
   main.innerHTML = "";
   setTimeout(marcarVidrio, 0);   // Alban 22 oct: "*V*" = va en vidrio -> etiqueta visible para el operador
-  if(["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
+  if(ASEO_EN_PROD && ["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
   if(activeCat === "Tortas"){ const tb = tortasTableroEl(activeDate); if(tb) main.appendChild(tb); }   // Alban 30 oct: tablero de tortas (palitos) · 31 oct: ANTES del Orden de realización (ya tiene las horas en naranja)
   const day = DATA[activeDate];
   const groups = activeCat === "ALL" ? [...GROUP_ORDER, ...EXTRA_GROUPS_ALL] : [activeCat];
@@ -5885,6 +5906,7 @@ function aseoDetalleHTML(zona){
     ${t.n && t.n.length ? `<div style="margin-top:8px;font-size:0.85rem;color:${C.inkSoft};">${t.n.map(x=>"ℹ️ " + escH(x)).join("<br>")}</div>` : ""}`;
 }
 let ASEO_ABIERTO = null;
+var ASEO_EN_PROD = false;   // Alban 4 nov: "Aseo de esta semana" ya no sale en Producción (está en Sanidad)
 function aseoCardEl(fam){
   const lista = aseoDelArea(fam), ex = aseoExtras(fam);
   if(!lista.length && !ex.length) return null;
