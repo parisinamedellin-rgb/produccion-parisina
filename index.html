@@ -47,6 +47,7 @@ const PALETTE = {
   "Logistica":{a:"#8C5A2B", s:"#F4EADF"},   // Logística (6 oct): café
   "Marzzana":{a:"#B23A2E", s:"#F8E6E3"},
   "Rotular":{a:"#2F5D62", s:"#E3EFEF"},
+  "Aseo":{a:"#3C8DAD", s:"#E2F0F5"}, "ARELIS":{a:"#3C8DAD", s:"#E2F0F5"},   // Control de aseo (4 nov): azul agua
   "Oficina":{a:"#B8901E", s:"#FBF3DA"}   // Oficina (22 oct): dorado   // Rotular (13 oct): verde azulado   // La Marzzana (9 oct): rojo tomate
 };
 function setAccent(key){ const p = PALETTE[key] || PALETTE.ALL; C.accent = p.a; C.accentSoft = p.s; }
@@ -1163,6 +1164,7 @@ const FAMS = [
   {key:"Reposteria", label:"Repostería", emoji:"🍰", subs:["Reposteria","Topping","Tortas"], nota:"Dulcería · Topping & Cremas · Tortas"},   // Alban 10 oct
   {key:"Batido", label:"Batido", emoji:ICON_BATIDORA, subs:["Batido"], modos:["STOCK","FORMULAS","SANIDAD"], nota:"Stock · Fórmulas · Sanidad"},   // Alban 5 oct: sin Producción ni De una vez
   {key:"Logistica", label:"Logística", emoji:"🚚", subs:[], modos:["PEDIDOS","ROTULOS","SANIDAD"], nota:"Pedidos · Rótulo · Sanidad"}   /* Alban 31 oct: Ruta oculta; Cliente, Rótulo y Cajas especiales van dentro de Rótulos del día */   /* Alban 22 oct: sin Tablero ni Cajas (ocultos); Entregas = Ruta; + especiales de Rotular */,   // Alban 6 oct
+  {key:"Aseo", label:"Control de aseo", emoji:"🧽", subs:[], modos:["SANIDAD"], nota:"Sanidad"},   // Alban 4 nov: categoría de Arelis
   {key:"Marzzana", label:"La Marzzana", emoji:"🍕", subs:["Marzzana"], modos:["FORMULAS"], nota:"Fórmulas"},
   {key:"Rotular", label:"Rotular", emoji:"🏷️", subs:[], modos:["PLANTA","CONSUMIDOR","SELLO"], nota:"Planta · Consumidor final · Sello"}   /* Alban 22 oct: Cliente, Refrigerio y Cajas especiales pasan a Logística */   // Alban 13 oct   // Alban 9 oct: solo fórmulas (salsa napolitana de pizza)
 ];
@@ -1981,7 +1983,7 @@ function admPanel(){
 // (queda en localStorage "usuario_cod"). En Admin se maneja quién entra a qué. Guardado: estado/USUARIOS = {lista:[{id,nom,cod,acc}]}.
 // Mientras nadie tenga código, la página funciona como antes (no pide código).
 // ============================================================
-const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
+const USR_AREAS = [["ALL","📋 Todo"],["Panaderia","🥐 Panadería"],["Comida de sal","🐷 Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"],["Aseo","🧽 Control de aseo"],["Marzzana","🍕 La Marzzana"],["Rotular","🏷️ Rotular"]];
 const USR_DEF = [
   {id:"u1", nom:"Alban", puesto:"Gerente", msg:true, cod:"", acc:["ALL"]},
   {id:"u2", nom:"Deisy", puesto:"Panadería", cod:"", acc:["ALL"]},
@@ -2002,7 +2004,7 @@ function usrLista(){ return USUARIOS || USR_DEF; }
 const usrCod = u => String((u && u.cod) || "").trim();
 function usrActivo(){ return usrLista().some(u=>usrCod(u)); }
 function usrYo(){ let c = null; try{ c = localStorage.getItem("usuario_cod"); }catch(e){} if(!c) return null; return usrLista().find(u=>usrCod(u) && usrCod(u) === c) || null; }
-function usrPuede(fam){ if(!usrActivo()) return true; const u = usrYo(); if(!u) return false; const a = u.acc || []; return a.includes("ALL") || a.includes(fam); }
+function usrPuede(fam){ if(!usrActivo()) return true; const u = usrYo(); if(!u) return false; const a = u.acc || []; return a.includes("ALL") || a.includes(fam) || (fam === "Aseo" && pedNorm(u.nom).startsWith("arelis")); }   // Alban 4 nov: Arelis ve Control de aseo
 function usrNecesitaLogin(){ return usrActivo() && !usrYo(); }
 function bootUsuarios(){
   if(!DB) return;
@@ -6477,10 +6479,10 @@ function sanCheckBind(w, fam, gente){
     else { msg.style.color = "#B23A2E"; msg.textContent = "No se pudo enviar. Revisa el internet e inténtalo otra vez."; }
   };
 }
-const SAN_FAMS = ["Panaderia","Comida de sal","Reposteria","Batido","Logistica"];
+const SAN_FAMS = ["Panaderia","Comida de sal","Reposteria","Batido","Logistica","Aseo"];
 function renderSanidad(){
   const enArea = SAN_FAMS.includes(navFam);   // Alban 1 nov: Sanidad es una pestaña dentro de cada área
-  if(enArea) SAN_AREA = navFam;
+  if(enArea) SAN_AREA = navFam === "Aseo" ? "ARELIS" : navFam;   // Alban 4 nov: Control de aseo = Arelis
   setAccent(enArea ? navFam : "ALL"); tintPage(enArea ? navFam : "ALL");
   if(enArea) renderCats();
   (enArea ? ["days","aviso","adelantos"] : ["days","cats","aviso","adelantos"]).forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
@@ -6870,7 +6872,7 @@ const PLANILLAS = [
     ["Limpieza de recipientes de residuos y tapas","D"],["Limpieza de recipientes y ollas","D"],["Actualización de rótulos","D"],["Limpieza de cortinas plásticas","D"],["Verificación de rotulación","D"],
     ["Limpieza de utensilios de cocina (cucharas, cuchillos, tablas de picar, ralladores, coladores, ollas…)","D"],["Lavado y desinfección de baños (dispensadores, paredes, espejos, lavamanos, sanitario, pisos)","D"],
     ["Limpieza de lockers","M"],["Limpieza de lockers interno","M"],["Limpieza de oficina","D"],["Limpieza de ventanas","W"],["Limpieza de salón","D"],["Limpieza y desinfección de mesas y sillas","D"],["Limpieza y orden de bodega","L"],["Lavado y desinfección de utensilios de aseo","D"]]},
-  {id:"SUPERV", cod:"LCC-S", t:"Lista chequeo cierre del supervisor", quien:{area:"Logistica"}, tipo:"check", items:[
+  {id:"SUPERV", cod:"LCC-S", t:"Lista chequeo cierre del supervisor", quien:{aseo:true},   /* Alban 4 nov: pasa de Logística a Arelis (Control de aseo) */ tipo:"check", items:[
     ["§ Cuarto de aseo"],["Recogedores, trapeadores, escobas, baldes","D"],["Pocetas","D"],["Estantería","D"],["Paredes y piso","D"],
     ["§ Test de agua"],["Planilla de pH y cloro llena","D"],
     ["§ Hornos"],["No se encuentran alimentos afuera","D"],["No se encuentran moldes","D"],["No se encuentran latas o tapetes de silicona sucios","D"],["Hornos limpios","D"],["Lavado de los guantes","S"],
