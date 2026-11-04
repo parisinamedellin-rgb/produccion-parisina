@@ -6848,18 +6848,18 @@ const PLANILLAS = [
     ["Paredes"],["Piso",1],["Lavaplatos, mesón, repisas, jabonera",4],["Estufa, parrillas, quemadores",6],["Canecas de residuos",2],["Canastas",2],["Esponjas y trapos",4],["Tomas eléctricos, timer, calculadora",4],
     ["Licuadora",2],["Mixer",1],["Microondas, plato",2],["Selladora",1],["Báscula",1],["Procesadora",1],["Nevera #11",1],["Congelador #7",1]]},
   {id:"ASEO_DES", cod:"PLD-F-02", t:"Control de aseo – Despacho", quien:{area:"Logistica"}, tipo:"aseo", items:[
-    ["Tijeras",1],["Cinta",1],["Paredes"],["Piso",1],["Mesón",1],["Tomas eléctricos",4],["Basurera blanca",1],["Repisas",2],["Cortinas",1],["Nevera #4",1],["Congelador #3",1],["Portátil, base, cables",3],["Impresora, cables",2]]},
+    ["Tijeras",1],["Cinta",1],["Paredes"],["Piso",1],["Mesón",1],["Tomas eléctricos",4],["Basurera blanca",1],["Repisas",2],["Cortinas",1],["Nevera #4",1],["Portátil, base, cables",3],["Impresora, cables",2]]},
   {id:"ASEO_MAN", cod:"PLD-F-02", t:"Control de aseo – Zona de manipulación de alimentos", quien:{aseo:true}, tipo:"aseo", items:[
     ["Extintores",2],["Ventanas (repostería, despacho, hornos, cuarto de aseo)",4],["Tomas eléctricos"],["Bandejas",10],["Horno 1",1],["Horno 2",1],["Horno 3",1],["Campana, estufa, hornillas",3],["Carretillas",1],["Cuarto de aseo",1],["Base de los bultos",1],
-    ["Techos y mallas (bodega plásticos, batidos, despacho)",4],["Ambiente"],["Ventiladores",4],["Impresoras, monitores, cables, portátil",5],["Microondas, plato",2],["Diluidores, mangueras, tarros de almacenamiento",6]]},
+    ["Techos y mallas (bodega plásticos, batidos, despacho)",4],["Ambiente"],["Ventiladores",4],["Impresoras, monitores, cables, portátil",5],["Microondas, plato",2],["Diluidores, mangueras, tarros de almacenamiento",6],["Nevera #1",1]]},
   {id:"ASEO_PAN", cod:"PLD-F-02", t:"Control de aseo – Panadería", quien:{area:"Panaderia"}, tipo:"aseo", items:[
     ["Cuchillos, cubiertos, cucharas medidoras, espátulas, brocha, raspadoras, cortadores pizza, rodillos, cortadores pasteles",14],["Moldes plásticos",5],["Moldes de aluminio",5],["Reglas",3],["Rodillo hojaldre",1],["Tabla blanca",1],
     ["Paredes"],["Lavaplatos, mesón, repisas, jabonera",5],["Piso",1],["Mesones",1],["Esponjas y trapos",4],["Canastas",2],["Cortinas, puerta",2],["Tomas eléctricos",2],
-    ["Mojadora",1],["Laminadora, brocha laminadora",2],["Báscula",1],["Calculadora",1],["Nevera #1",1],["Nevera #8",1],["Congelador #2",1],["Congelador #5",1]]},
+    ["Mojadora",1],["Laminadora, brocha laminadora",2],["Báscula",1],["Calculadora",1],["Congelador #2",1],["Congelador #10",1],["Congelador #5",1]]},   // Alban 4 nov: responsables de neveras/congeladores
   {id:"ASEO_REP", cod:"PLD-F-02", t:"Control de aseo – Repostería", quien:{area:"Reposteria"}, tipo:"aseo", items:[
     ["Bowl grande y pequeño",6],["Mangas, jarra, cucharas medidoras",16],["Bailarinas, tijeras, rodillos",5],["Brocha, espátulas, miserables, cortadores, boquillas, cuchillos, moldes tartas",26],["Moldes tartas",40],["Tabla blanca",1],
     ["Paredes"],["Piso",1],["Mesón, repisas, imán",5],["Lavaplatos, escurridor, jabonera, esponjas y trapos",7],["Canecas de residuos",2],["Canastas, carpetas",7],["Tomas eléctricos, timers",3],
-    ["Batidora grande (8 L), gancho, escudo, globo, base",5],["Microondas, plato",2],["Batidora KitchenAid, aspas",3],["Báscula",2],["Batidora de mano, ganchos",3],["Procesadora, tapa, cuchillas",3],["Nevera #1",1],["Congelador #10",1]]},
+    ["Batidora grande (8 L), gancho, escudo, globo, base",5],["Microondas, plato",2],["Batidora KitchenAid, aspas",3],["Báscula",2],["Batidora de mano, ganchos",3],["Procesadora, tapa, cuchillas",3],["Congelador #3",1],["Nevera #8",1]]},
   {id:"ASEO_ZC", cod:"PLD-F-02", t:"Control de aseo – Zonas comunes", quien:{aseo:true}, tipo:"aseo", items:[
     ["Extintores"],["Ventanas y persianas (cuarto de descanso, oficina)"],["Tomas eléctricos, caja de llaves"],["Escritorio, comedor, sillas, forros del comedor"],["Puertas, reja, muebles, estantería de bolsos, lockers, estantería zapatos, repisas de vajilla"],
     ["Paredes, fachada, jardinera"],["Pisos"],["Baño (orinal, inodoro, espejo, ventana, jabonera, lavamanos, utensilios baño)"],["Canecas de residuos"],["Ventiladores, escalera"],["Ambiente"],
@@ -6923,7 +6923,9 @@ function sanLunesISO(){ const d = new Date(hoyISO() + "T12:00:00"); d.setDate(d.
 function planNevHecho(pl, eq){ const DIAS = ["dom","lun","mar","mié","jue","vie","sáb"];
   const r = (PLAN_SEM || []).concat(PLAN_HOY || []).find(x => x.planilla === pl.id && (x.hechos || []).includes(eq));
   return r ? DIAS[new Date(r.fecha + "T12:00:00").getDay()] + " " + +String(r.fecha).slice(8) : ""; }
-function planNevPend(pl){ return (pl.items || []).map(it => it[0]).filter(n => aseoCat(n) === "nev" && !planNevHecho(pl, n)); }
+function planNevPend(pl){ return (pl.items || []).map(it => it[0]).filter(n => aseoCat(n) === "nev" && aseoItemHoy(pl, n) && !planNevHecho(pl, n)); }
+// Alban 4 nov: el Congelador 5 es de Batido una semana y de Panadería la otra (aseoExtras)
+function aseoItemHoy(pl, n){ return n !== "Congelador #5" || aseoExtras((pl.quien || {}).area || "").length > 0; }
 const PLAN_DIAS = {D:[1,2,3,4,5,6], LJ:[1,4], MV:[2,5], M:[2], W:[3], L:[1], S:[1,2,3,4,5,6], X:[1,2,3,4,5,6]};
 const PLAN_OPC = {S:"(semanal)", X:"(1 vez al mes)"};
 let PLAN_HOY = null, PLAN_HOY_T = 0, PLAN_VEZ_PRE = null;   // registros firmados hoy (del servidor): [{planilla, persona, hora, extra}]
@@ -7106,7 +7108,7 @@ function planAbrir(pl){
       <div style="margin-top:8px;"><button type="button" class="pl-todo" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;border-radius:10px;padding:7px 12px;cursor:pointer;">✓ Marcar todo</button></div>
       <div style="margin-top:6px;"><button type="button" class="pl-quim" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;border:1px solid ${C.line};background:#fff;border-radius:8px;padding:5px 10px;cursor:pointer;">🧪 ¿cómo se usa cada químico?</button></div>
       ${(() => { const nev = planNevPend(pl); return nev.length && planHoyDow() >= 4 ? `<div style="margin-top:10px;background:#FDECEA;border:2px solid #B3261E;border-radius:12px;padding:10px 12px;font-size:0.92rem;"><b style="color:#B3261E;">⚠️ Ojo: esta semana no se ha limpiado</b> ${escH(nev.join(", "))}. Recuerda hacerlo hoy (jueves, viernes o sábado).</div>` : ""; })()}
-      ${ASEO_CATS.map(([ck, ct, nota]) => { const its = pl.items.map((it, i) => ({it, i})).filter(x => aseoCat(x.it[0]) === ck); if(!its.length) return "";
+      ${ASEO_CATS.map(([ck, ct, nota]) => { const its = pl.items.map((it, i) => ({it, i})).filter(x => aseoCat(x.it[0]) === ck && aseoItemHoy(pl, x.it[0])); if(!its.length) return "";
         const qs = PLAN_QUIM.filter(([n]) => ck === "piso" ? ["1","3","5"].includes(n) : ck === "nev" ? ["1","3"].includes(n) : ["1","2","3","6"].includes(n));
         return `<div style="${box}"><div style="font-weight:800;font-size:0.95rem;">${ct}</div>${nota ? `<div style="font-size:0.8rem;color:${ck === "piso" ? "#2F6DB5" : "#B3261E"};font-weight:600;margin-top:2px;">${nota}</div>` : ""}
           ${its.map(({it, i}) => `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid ${C.line};cursor:pointer;font-size:0.95rem;">
