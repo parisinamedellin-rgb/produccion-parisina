@@ -6787,7 +6787,7 @@ const PLANILLAS = [
     ["§ Neveras"],["Superficie externa","D"],["Empaques","D"],["Filtro y bandeja de agua","S"],
     ["§ Cuarto de empaques"],["Paredes y piso","D"],["Ninguna bolsa queda abierta ni en contacto con el piso","D"]]},
   // Alban 3 nov: es para TODOS y todos los días; alimento de lista (o "Otro" y se escribe). Los campos quedan vacíos: ellos los llenan (guía: Suma Eden 1 ml/L; blandas y huevo 1 min; duras, hojas y vegetales 5 min; sin enjuague)
-  {id:"DESINF", cod:"PLD-P-01", t:"Desinfección de alimentos", quien:{todos:true}, tipo:"tabla", cols:[
+  {id:"DESINF", cod:"PLD-P-01", t:"Desinfección de alimentos", quien:{todos:true, menos:["Logistica"]}, tipo:"tabla", cols:[   // Alban 4 nov: no aplica a Logística
     {k:"ali", t:"Alimento", op:["Huevo","Fruta de cáscara blanda","Fruta de cáscara dura / hojas","Vegetales","Otro"], otro:1, req:1},{k:"qui", t:"Producto químico", op:["Suma Eden","Otro"], req:1},{k:"con", t:"Concentración", req:1},{k:"tie", t:"Tiempo de desinfección (min)", num:1, req:1},{k:"enj", t:"Enjuague", op:["Sí","No"], req:1}],
     // Alban 3 nov: al elegir el alimento se llena solo (producto, concentración, tiempo, enjuague) para que el operador no escriba nada
     auto: (v, d) => { const T = {"Huevo":1, "Fruta de cáscara blanda":1, "Fruta de cáscara dura / hojas":5, "Vegetales":5};
@@ -6827,7 +6827,7 @@ function planEsMia(pl, y){
 }
 function planEsMia1(pl, y){
   if(!y) return false; const q = pl.quien;
-  if(q.todos) return true;   // Alban 3 nov: desinfección de alimentos es para todos
+  if(q.todos) return !(q.menos || []).includes(y.area);   // Alban 3 nov: desinfección de alimentos es para todos · 4 nov: menos Logística
   if(q.area) return y.area === q.area;
   if(q.areas) return q.areas.includes(y.area);
   if(q.aseo) return y.aseo;
@@ -6836,7 +6836,7 @@ function planEsMia1(pl, y){
 }
 function planResponsables(pl){
   const q = pl.quien, P = PERSONAL || [];
-  if(q.todos) return P.map(p => p.n);
+  if(q.todos) return P.filter(p => !(q.menos || []).includes(p.a)).map(p => p.n);
   if(q.area) return P.filter(p => p.a === q.area).map(p => p.n);
   if(q.areas) return P.filter(p => q.areas.includes(p.a)).map(p => p.n);
   if(q.aseo) return P.filter(p => p.p === "Fijo" && !p.a).map(p => p.n);
