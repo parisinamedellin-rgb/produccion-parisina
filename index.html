@@ -2275,8 +2275,8 @@ async function registrarLote(def, cantidad, mult){
     const lotes = ((snap.exists && snap.data().lotes) || []).slice();
     // cantidad = lo que salió de verdad; mult = por cuánto se multiplicó/dividió la fórmula (para inventario)
     const m = mult > 0 ? mult : 1;
-    const c = cantidad > 0 ? cantidad : def.stock.batch * m;
-    lotes.push({fecha: hoyISO(), cantidad: c, mult: m, esperado: def.stock.batch * m, ts: new Date().toISOString()});
+    const c = cantidad < 0 ? cantidad : (cantidad > 0 ? cantidad : def.stock.batch * m);   // Alban 4 nov: negativo = ajuste que resta del stock
+    lotes.push(c < 0 ? {fecha: hoyISO(), cantidad: c, ajuste: true, ts: new Date().toISOString()} : {fecha: hoyISO(), cantidad: c, mult: m, esperado: def.stock.batch * m, ts: new Date().toISOString()});
     await ref.set({lotes: lotes.slice(-30)});
   }catch(err){ console.warn("No se pudo registrar el lote:", err); }
 }
@@ -2334,6 +2334,7 @@ function stockDayBlock(def, gramos){
 // ¿La cantidad real cuadra con la fórmula elegida? Si se aleja más de 15 %, se pregunta
 // por cuánto se multiplicó o dividió la fórmula (Alban 3 oct) y se sugiere el múltiplo más cercano.
 function revisarLote(batch, mult, cantidad){
+  if(cantidad < 0) return {estado:"neg", mult:1, esperado:0, cantidad, dif:0};   // Alban 4 nov: valor negativo = restar del stock
   if(!(cantidad > 0)) return {estado:"vacio"};
   const m = mult > 0 ? mult : 1, esperado = Math.round(batch*m*10)/10;
   const dif = Math.round((cantidad - esperado)*10)/10;
@@ -2404,7 +2405,7 @@ function stockPanelEl(def){
       const hist = st.lotes.slice().reverse().slice(0, 6).map(l=>{
         const {dow, dm} = fmtDay(l.fecha);
         const dif = l.esperado ? Math.round((l.cantidad - l.esperado)*10)/10 : 0;
-        const fx = l.mult && l.mult !== 1 ? ` · fórmula ×${fmtN(l.mult)}` : (l.mult ? " · fórmula ×1" : "");
+        const fx = l.cantidad < 0 ? " · ajuste (resta)" : l.mult && l.mult !== 1 ? ` · fórmula ×${fmtN(l.mult)}` : (l.mult ? " · fórmula ×1" : "");
         return `<div>${dow} ${dm} — <b>${fmtN(l.cantidad)} ${def.stock.unit || "g"}</b>${fx}${dif ? ` · ${dif > 0 ? "+" : "−"}${fmtN(Math.abs(dif))} vs. lo esperado` : ""}</div>`;
       }).join("") || `<div style="font-style:italic;">Sin lotes registrados.</div>`;
       el.innerHTML = `
@@ -2429,6 +2430,7 @@ function stockPanelEl(def){
           </select>
           <label style="display:block;font-size:0.8rem;font-weight:600;margin:10px 0 3px;">¿Cuánto salió de verdad?</label>
           <div style="display:flex;align-items:center;gap:8px;">
+            <button type="button" class="lote-neg" title="Cambiar a negativo / positivo" style="font-family:Arial,sans-serif;font-size:1.2rem;font-weight:700;width:42px;height:42px;border:1.5px solid ${C.accent};border-radius:8px;background:${C.paper};color:${C.accent};cursor:pointer;">±</button>
             <input type="text" inputmode="decimal" class="lote-cant" value="${fmtN(def.stock.batch)}" style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.1rem;padding:9px 10px;border:1px solid ${C.line};border-radius:8px;width:120px;text-align:center;background:${C.paper};color:${C.ink};">
             <span style="font-size:0.9rem;color:${C.inkSoft};">${def.stock.unit || "g"}</span>
           </div>
@@ -2450,19 +2452,22 @@ function stockPanelEl(def){
       const revisar = ()=>{
         const r = revisarLote(def.stock.batch, parseFloat(selM.value), numAj(inC.value));
         if(r.estado === "vacio"){ msg.style.color = "#A3252B"; msg.textContent = "Escribe la cantidad que salió."; }
+        else if(r.estado === "neg"){ msg.style.color = "#A3252B"; msg.textContent = `Se van a RESTAR ${fmtN(Math.abs(r.cantidad))} ${u} del stock (ajuste).`; }
         else if(r.estado === "ok"){ msg.style.color = C.inkSoft; msg.textContent = r.dif === 0 ? "Igual a la fórmula." : `Salieron ${fmtN(Math.abs(r.dif))} ${r.dif > 0 ? "más" : "menos"} de lo esperado (${fmtN(r.esperado)} ${u}). Se guarda la cantidad real.`; }
         else { msg.style.color = "#A3252B"; msg.innerHTML = `<b>Ojo:</b> con esa fórmula deberían salir ${fmtN(r.esperado)} ${u} y pusiste ${fmtN(r.cantidad)}. ¿Multiplicaste o dividiste la fórmula? Elígelo arriba${r.sugerido ? ` (parece <b>×${fmtN(r.sugerido)}</b>)` : ""}. Si la fórmula sí es esa, guarda igual.`; }
         return r;
       };
       selM.onchange = ()=>{ if(!tocado) inC.value = fmtN(Math.round(def.stock.batch*parseFloat(selM.value)*10)/10); desarmar(); revisar(); };
       inC.oninput = ()=>{ tocado = true; desarmar(); revisar(); };
+      const bn = el.querySelector(".lote-neg");   // Alban 4 nov: el teclado del celular no tiene "−": este botón cambia el signo
+      if(bn) bn.onclick = ()=>{ const v = String(inC.value).trim(); inC.value = v.startsWith("-") ? v.slice(1) : "-" + (v || ""); tocado = true; desarmar(); revisar(); };
       bh.onclick = ()=>{
         if(!DB){ bh.textContent = "No hay conexión para guardar"; return; }
         const r = revisar();
         if(r.estado === "vacio") return;
         if(bh.dataset.armed2){ registrarLote(def, r.cantidad, r.mult); return; }
         bh.dataset.armed2 = "1";
-        bh.textContent = `Confirmar: ${fmtN(r.cantidad)} ${u} · fórmula ×${fmtN(r.mult)}${r.estado === "raro" ? " (guardar igual)" : ""}`;
+        bh.textContent = r.estado === "neg" ? `Confirmar: restar ${fmtN(Math.abs(r.cantidad))} ${u} del stock` : `Confirmar: ${fmtN(r.cantidad)} ${u} · fórmula ×${fmtN(r.mult)}${r.estado === "raro" ? " (guardar igual)" : ""}`;
         setTimeout(()=>{ if(bh.dataset.armed2){ delete bh.dataset.armed2; bh.textContent = "Guardar en el stock"; } }, 5000);
       };
     }
@@ -2812,6 +2817,38 @@ const FORM_OPEN = {};
 const RECIPE_DEFS = FORMULA_DEFS.filter(d => d.recipe);
 function normTxt(s){ return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,""); }
 const FORM_N = {};
+// Alban 4 nov: el operador puede hacer MÁS que la fórmula estándar (×1,5, ×2… o por cantidad de producto), nunca menos
+const FORM_K = {}, FORM_E = {};
+function formEscInfo(def){
+  const unit = def.stock ? (def.stock.unit || "g") : (def.unit || "g"), per = def.stock ? def.stock.batch : def.recipe.per;
+  const fmts = def.formatos ? Object.entries(def.formatos).filter(([, v]) => v > 0) : [];
+  return {unit, per, fmts};
+}
+function formEscHTML(def){
+  const {unit, per, fmts} = formEscInfo(def), k = FORM_K[def.id] || 1, e = FORM_E[def.id] || {};
+  const bt = `font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border-radius:100px;padding:8px 13px;cursor:pointer;border:1.5px solid ${C.accent};`;
+  const inp = `font-family:'IBM Plex Mono',monospace;font-size:1rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:${C.ink};box-sizing:border-box;`;
+  return `<div class="f-esc" style="padding:12px 16px;border-bottom:1px solid ${C.line};background:#fff;">
+    <div style="font-size:0.92rem;font-weight:700;">¿Cuánto vas a hacer?</div>
+    <div style="font-size:0.78rem;color:${C.inkSoft};">La estándar es el mínimo. Si necesitas más, multiplícala o escribe la cantidad.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${[1,1.5,2,3,4].map(m => `<button type="button" data-fm="${m}" style="${bt}background:${!e.n && k === m ? C.accent : "#fff"};color:${!e.n && k === m ? "#fff" : C.accent};">${m === 1 ? "Estándar ×1" : "×" + fmtN(m)}</button>`).join("")}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:0.88rem;">
+      <span style="font-weight:600;">o por cantidad:</span>
+      ${fmts.length ? `<select class="fe-fmt" style="${inp}font-family:'Work Sans',sans-serif;font-size:0.88rem;max-width:100%;">${fmts.map(([f, v], i) => `<option value="${i}"${String(e.f) === String(i) ? " selected" : ""}>${escH(f)} (la estándar da ${fmtN(v)})</option>`).join("")}</select>` : ""}
+      <input class="fe-n" type="text" inputmode="decimal" value="${e.n || ""}" placeholder="${fmts.length ? "n.º" : fmtN(per)}" style="${inp}width:90px;text-align:center;">
+      <span>${fmts.length ? "tortas" : escH(unit)}</span>
+    </div>
+    <div class="fe-msg" style="font-size:0.8rem;margin-top:6px;color:${C.inkSoft};"></div></div>`;
+}
+function formPasosHTML(def, k){
+  return def.recipe.steps.map(st2=>`
+    <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
+    <ul style="list-style:none;margin:0;padding:0;">${st2.items.map(([nm,q,u])=>{
+      const v = q*k, shown = q === 0 ? "al gusto" : (u === "unid" ? fmtN(Math.ceil(v - 1e-9)) : v >= 10 ? fmtN(Math.round(v)) : (v % 1 ? fmtN(Math.round(v*10)/10) : fmtN(v)));
+      return `<li style="display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid ${C.line};">
+        <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${k !== 1 ? "#FBF3DA" : C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:3.4em;text-align:center;">${shown}</span>
+        <span style="flex:1;font-size:0.95rem;">${nm}${q === 0 ? "" : ` <span style="color:${C.inkSoft};font-size:0.8rem;">(${u})</span>`}</span></li>`;}).join("")}</ul>`).join("");
+}
 // Cantidad de referencia de una fórmula ajustable: el ingrediente base (p. ej. tomate pelado) o el rendimiento
 function ajBase(def){
   const b = def.ajustable && def.ajustable.base;
@@ -2893,7 +2930,8 @@ function renderFormulas(){
             <button type="button" class="fa-mas" aria-label="Más" style="-webkit-appearance:none;appearance:none;width:40px;height:40px;padding:0;border-radius:10px;border:1.5px solid ${C.accent};background:${C.accentSoft};color:${C.accent};font-family:Arial,Helvetica,sans-serif;font-size:1.5rem;font-weight:700;line-height:1;cursor:pointer;">+</button>
           </span>
         </div>` : ""}
-        <div style="${def.ajustable ? "display:none;" : ""}padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
+        ${def.ajustable ? "" : formEscHTML(def)}
+        <div class="f-tit" style="${def.ajustable ? "display:none;" : ""}padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
         <div class="f-pasos">${pasos}</div>
         ${def.note ? `<div style="padding:14px 16px;border-top:1px solid ${C.line};">${notaHTML(def.note)}</div>` : ""}
         ${usaEn.length ? `<div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
@@ -2933,6 +2971,29 @@ function renderFormulas(){
       fn.oninput = ()=>{ const v = parseFloat(String(fn.value).replace(",", ".")); if(v > 0){ FORM_N[def.id] = Math.min(a.max, v); pintarN(); } };
       fn.onchange = ()=>{ const v = parseFloat(String(fn.value).replace(",", ".")); FORM_N[def.id] = v > 0 ? Math.min(a.max, Math.max(a.min, v)) : cur(); fn.value = FORM_N[def.id]; pintarN(); };
       pintarN();
+    }
+    if(!def.ajustable){
+      const fe = card.querySelector(".f-esc"), fp = card.querySelector(".f-pasos"), ft = card.querySelector(".f-tit"), fmsg = fe.querySelector(".fe-msg");
+      const {unit: eu, per, fmts} = formEscInfo(def);
+      const pintar = ()=>{
+        const k = FORM_K[def.id] || 1;
+        ft.textContent = k === 1 ? `Receta estándar — ${fmtN(per)} ${eu}` : `Receta ×${fmtN(Math.round(k*100)/100)} — rinde ≈ ${fmtN(Math.round(per*k))} ${eu}`;
+        fp.innerHTML = formPasosHTML(def, k);
+        fe.querySelectorAll("[data-fm]").forEach(b => { const on = !(FORM_E[def.id] || {}).n && +b.dataset.fm === k; b.style.background = on ? C.accent : "#fff"; b.style.color = on ? "#fff" : C.accent; });
+      };
+      const porCant = ()=>{
+        const n = numAj(fe.querySelector(".fe-n").value), sel = fe.querySelector(".fe-fmt");
+        FORM_E[def.id] = {n: fe.querySelector(".fe-n").value, f: sel ? sel.value : ""};
+        if(!(n > 0)){ FORM_E[def.id] = {}; FORM_K[def.id] = 1; fmsg.textContent = ""; pintar(); return; }
+        const rinde = fmts.length ? fmts[+sel.value][1] : per, k = n / rinde;
+        if(k < 1){ FORM_K[def.id] = 1; fmsg.style.color = "#8A5A00"; fmsg.textContent = `La fórmula estándar ya da ${fmtN(rinde)}: se hace la estándar (no se puede hacer menos).`; }
+        else { FORM_K[def.id] = k; fmsg.style.color = C.inkSoft; fmsg.textContent = `Para ${fmtN(n)} ${fmts.length ? "tortas" : eu}: la fórmula ×${fmtN(Math.round(k*100)/100)}.`; }
+        pintar();
+      };
+      fe.onclick = e => e.stopPropagation();
+      fe.querySelectorAll("[data-fm]").forEach(b => b.onclick = ()=>{ FORM_K[def.id] = +b.dataset.fm; FORM_E[def.id] = {}; fe.querySelector(".fe-n").value = ""; fmsg.textContent = ""; pintar(); });
+      fe.querySelector(".fe-n").oninput = porCant; const fs = fe.querySelector(".fe-fmt"); if(fs) fs.onchange = porCant;
+      if((FORM_E[def.id] || {}).n) porCant(); else pintar();
     }
     const br = card.querySelector(".bat-reg");
     if(br) br.appendChild(batRegistroEl(def, PALETTE[def.group] || PALETTE.ALL));
@@ -6343,9 +6404,9 @@ function sanCheckHTML(fam, gente, col){
   const T = sanTareasDe(p, fam), w = aseoW(), hoy = hoyISO();
   const kD = "san_d_" + p.nom + "_" + hoy, kS = "san_s_" + p.nom + "_" + w, kI = "san_i_" + p.nom + "_" + w, kE = "san_e_" + p.nom + "_" + hoy;
   const dHechas = sanLs(kD) || {}, sHechas = sanLs(kS) || {}, ini = sanLs(kI), env = sanLs(kE);
-  const box = (key, txt, on, extra) => `<label style="display:flex;gap:12px;align-items:flex-start;padding:9px 2px;cursor:pointer;font-size:1rem;line-height:1.4;border-top:1px solid ${C.line};">
+  const box = (key, txt, on, extra, tach) => `<label style="${tach ? "opacity:.6;" : ""}display:flex;gap:12px;align-items:flex-start;padding:9px 2px;cursor:pointer;font-size:1rem;line-height:1.4;border-top:1px solid ${C.line};">
       <input type="checkbox" data-k="${key}" ${on ? "checked" : ""} style="width:24px;height:24px;flex:0 0 24px;margin:0;accent-color:${col};">
-      <span>${(m => m ? `<i style="color:${C.inkSoft};">${escH(m[1])}</i> – ${escH(m[2])}` : escH(txt))(/^(.+?) – (.+)$/.exec(txt))}${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;   // Alban 3 nov: el lugar en cursiva
+      <span><span${tach ? ' style="text-decoration:line-through;"' : ""}>${(m => m ? `<i style="color:${C.inkSoft};">${escH(m[1])}</i> – ${escH(m[2])}` : escH(txt))(/^(.+?) – (.+)$/.exec(txt))}</span>${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;   // Alban 3 nov: el lugar en cursiva
   if(fam !== "ARELIS" && fam !== "Logistica" && !ini){   // Alban 4 nov: se califica una sola vez por semana; ya marcado no vuelve a salir hasta el lunes
     h += `<div style="margin-top:12px;background:#FBF3DA;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;">
       <div style="font-weight:700;">Inicio de semana — ${escH(T.zona)}</div>
@@ -6361,7 +6422,7 @@ function sanCheckHTML(fam, gente, col){
       <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("");
   h += `<div class="san-nev"></div>`;
   if(T.s.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">Semanales (una vez por semana)</div>`
-    + T.s.map((t, i) => box("s" + i, t, !!sHechas[i], sHechas[i] ? "· hecha el " + sHechas[i].slice(8) + "/" + sHechas[i].slice(5,7) : "")).join("");
+    + T.s.map((t, i) => box("s" + i, t, !!sHechas[i], sHechas[i] ? "✓ hecha el " + sHechas[i].slice(8) + "/" + sHechas[i].slice(5,7) : "", !!sHechas[i])).join("");   // Alban 4 nov: hecha = tachada toda la semana
   h += `<button type="button" class="san-env" style="margin-top:16px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;border:none;border-radius:100px;padding:15px;cursor:pointer;background:${col};color:#fff;">✓ Enviar check del turno</button>
     <div class="san-msg" style="margin-top:8px;text-align:center;font-size:0.92rem;">${env ? "✓ Enviado hoy a las " + escH(env) + ". Si sigues marcando, puedes enviarlo otra vez." : ""}</div></div>`;
   return h;
@@ -6376,7 +6437,8 @@ function sanCheckBind(w, fam, gente){
   el.querySelectorAll("input[data-k]").forEach(c => c.onchange = ()=>{
     const k = c.dataset.k, i = +k.slice(1);
     if(k[0] === "d"){ const o = sanLs(kD) || {}; if(c.checked) o[i] = 1; else delete o[i]; sanLs(kD, o); }
-    else { const o = sanLs(kS) || {}; if(c.checked) o[i] = hoy; else delete o[i]; sanLs(kS, o); }
+    else { const o = sanLs(kS) || {}; if(c.checked) o[i] = hoy; else delete o[i]; sanLs(kS, o);
+      const lb = c.closest("label"), sp = lb && lb.querySelector("span > span"); if(lb) lb.style.opacity = c.checked ? ".6" : ""; if(sp) sp.style.textDecoration = c.checked ? "line-through" : ""; }
   });
   el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ()=>{ PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
   // Alban 4 nov: desde el jueves, aviso si las neveras/congeladores del área no se han limpiado en la semana
@@ -7062,13 +7124,13 @@ function planAbrir(pl){
           <input type="text" data-pgo="${i}" placeholder="Cuál / acción correctiva" style="flex:1;min-width:160px;font-family:'Work Sans',sans-serif;font-size:0.9rem;padding:6px 9px;border:1px solid ${C.line};border-radius:9px;"></div></div>`).join("")}</div>`;
   } else if(pl.tipo === "agua"){
     const punto = (typeof ASEO_AGUA_PUNTO !== "undefined" && ASEO_AGUA_PUNTO[dow]) || "";
-    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Rangos normales: <b>cloro 0,3 a 2 ppm</b> · <b>pH 6,5 a 9</b>.</div>
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Rangos de referencia: <b>cloro 0,3 a 2 ppm</b> · <b>pH 6,5 a 9</b>. Escribe el valor <b>real</b> que marca.</div>
       <div style="${box}"><span style="${lab}">Punto de muestra</span>${planCampo({k:"pun"}, punto)}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div><span style="${lab}">pH</span>${planCampo({k:"ph", num:1})}</div><div><span style="${lab}">Cloro (ppm)</span>${planCampo({k:"clo", num:1})}</div></div></div>`;
   } else if(pl.tipo === "frio"){
     const f = planFirmadas(pl.id), sig = (PLAN_VEZ_PRE && pl.veces.includes(PLAN_VEZ_PRE)) ? PLAN_VEZ_PRE : (pl.veces.find(v => !f.some(r => r.extra === v)) || pl.veces[pl.veces.length - 1]);
     PLAN_VEZ_PRE = null;
-    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Neveras: <b>0 a 4 °C</b> · Congeladores: <b>−18 °C o menos</b>. Se toma 2 veces al día.</div>
+    cuerpo = `<div style="font-size:0.88rem;color:${C.inkSoft};">Neveras: <b>0 a 4 °C</b> · Congeladores: <b>−18 °C o menos</b> (rango de referencia). Escribe la temperatura <b>real</b> que marca el equipo. Se toma 2 veces al día.</div>
       <div style="display:flex;gap:8px;margin-top:10px;">${pl.veces.map(v => `<label style="flex:1;display:flex;gap:6px;align-items:center;justify-content:center;border:1.5px solid ${C.ink};border-radius:10px;padding:9px;background:#fff;font-weight:700;"><input type="radio" name="pl-vez" value="${v}"${v === sig ? " checked" : ""}>${v}</label>`).join("")}</div>
       <div style="${box}">${PLAN_EQUIPOS_FRIO.map((e, i) => `<div style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:${i ? `1px solid ${C.line}` : "none"};"><span style="flex:1;font-size:0.95rem;">${escH(e)}</span>
         <input type="text" inputmode="decimal" data-t="${i}" placeholder="°C" style="width:90px;font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px;border:1.5px solid ${C.line};border-radius:9px;text-align:center;"></div>`).join("")}</div>`;
@@ -7185,14 +7247,14 @@ function planAbrir(pl){
       const ph = num(q('[data-k="ph"]').value), clo = num(q('[data-k="clo"]').value), pun = q('[data-k="pun"]').value.trim();
       if(ph == null || clo == null || !pun){ err.textContent = "⚠️ Escribe el punto, el pH y el cloro."; return; }
       const fuera = (ph < 6.5 || ph > 9) || (clo < 0.3 || clo > 2);
-      if(fuera && !obs){ err.textContent = "⚠️ Fuera de rango: escribe en Observaciones qué se hizo."; return; }
+      // Alban 4 nov: el rango es indicativo; se guarda el valor real aunque esté fuera
       datos = {punto: pun, ph, cloro: clo, fueraDeRango: fuera}; resumen = `${pun}: pH ${ph} · cloro ${clo} ppm` + (fuera ? " · FUERA DE RANGO" : "");
     } else if(pl.tipo === "frio"){
       extra = (ov.querySelector('input[name="pl-vez"]:checked') || {}).value || "";
       const t = PLAN_EQUIPOS_FRIO.map((e, i) => ({equipo: e, temp: num(q(`[data-t="${i}"]`).value)}));
       if(t.some(x => x.temp == null)){ err.textContent = "⚠️ Falta la temperatura de algún equipo."; return; }
       const mal = t.filter(x => /congel/i.test(x.equipo) ? x.temp > -18 : (x.temp < 0 || x.temp > 4));
-      if(mal.length && !obs){ err.textContent = "⚠️ " + mal.map(x => x.equipo).join(", ") + " fuera de rango: escribe en Observaciones qué se hizo."; return; }
+      // Alban 4 nov: el rango es indicativo; se guarda la temperatura real aunque esté fuera
       datos = {momento: extra, temperaturas: t}; resumen = extra + ": " + t.map(x => x.equipo.replace("Congelador", "C").replace("Nevera", "N") + " " + x.temp + "°").join(" · ") + (mal.length ? " · FUERA DE RANGO: " + mal.map(x => x.equipo).join(", ") : "");
     } else if(pl.tipo === "recep"){
       const sn = q(".pl-sn") && q(".pl-sn").checked;
@@ -7214,7 +7276,7 @@ function planAbrir(pl){
         const falta = filas.find(o => pl.cols.some(c => c.req && !String(o[c.k]).trim()));
         if(falta){ err.textContent = "⚠️ Faltan datos obligatorios (*)."; return; }
         const bajo = pl.cols.find(c => c.min != null) ? filas.filter(o => { const c = pl.cols.find(c => c.min != null); const v = num(o[c.k]); return v != null && v < c.min; }) : [];
-        if(bajo.length && !obs){ err.textContent = "⚠️ Temperatura por debajo de lo mínimo: escribe en Observaciones qué se hizo."; return; }
+        // Alban 4 nov: el mínimo es indicativo; se guarda la temperatura real
       }
       datos = sn ? {sinNovedad: true} : {filas}; resumen = sn ? "Sin novedad" : filas.map(o => pl.cols.map(c => o[c.k]).filter(Boolean).join(" · ")).join(" | ");
     }
