@@ -7489,7 +7489,7 @@ function planAbrir(pl){
         <input type="text" inputmode="decimal" data-t="${i}" placeholder="°C" style="width:90px;font-family:'Work Sans',sans-serif;font-size:1rem;padding:8px;border:1.5px solid ${C.line};border-radius:9px;text-align:center;"></div>`).join("")}</div>`;
   } else if(pl.tipo === "recep"){
     cuerpo = `<div class="pl-rec"><div style="color:${C.inkSoft};font-size:0.9rem;">Cargando proveedores…</div></div>
-      <span style="${lab}">📷 Foto de la factura (respaldo)</span>
+      <span style="${lab}">📷 Foto de la factura (opcional)</span>
       <input type="file" accept="image/*" capture="environment" class="pl-foto" style="font-size:0.95rem;max-width:100%;">
       <img class="pl-fprev" alt="" style="display:none;margin-top:8px;max-width:100%;max-height:240px;border-radius:10px;border:1px solid ${C.line};">
       <label style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:0.95rem;"><input type="checkbox" class="pl-sn" style="width:20px;height:20px;"> Hoy <b>no hubo</b> recepción (sin novedad)</label>`;
@@ -7615,7 +7615,7 @@ function planAbrir(pl){
       const filas = sel ? qa(".pl-rp").map(d => { const o = {pro: d.dataset.n, prv: sel.nom}; d.querySelectorAll("[data-r]").forEach(x => o[x.dataset.r] = x.value.trim()); return o; }).filter(o => o.can) : [];
       if(!sn && !sel){ err.textContent = "⚠️ Elige el proveedor, o marca \"Hoy no hubo recepción\"."; return; }
       if(!sn && !filas.length){ err.textContent = "⚠️ Pon la cantidad de lo que llegó."; return; }
-      if(!sn && !ov._foto){ err.textContent = "⚠️ Toma la foto de la factura."; return; }
+      // Alban 5 nov: la foto de la factura es opcional
       const nc = filas.filter(o => /✗/.test(o.emp + " " + o.cos));
       if(nc.length && !obs){ err.textContent = "⚠️ Hay algo NO conforme: escribe en Observaciones qué se hizo."; return; }
       extra = sn ? "" : sel.nom; datos = sn ? {sinNovedad: true} : {proveedor: sel.nom, filas};
