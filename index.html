@@ -2960,9 +2960,9 @@ function bkAdminEl(){
 var ENS_AREAS = {Panaderia:"Panadería", Reposteria:"Repostería", "Comida de sal":"Comida de sal", Marzzana:"La Marzzana"};
 // Alban 5 nov: el admin elige área y subcategoría de cada fórmula (estado/RECETARIO_AJUSTES = {aj:{code:{area,sub}}})
 var ENS_AJ = {};
-var ENS_SUBS = {Panaderia: ["Panes", "Croissant y hojaldre", "Rellenos", "Pasabocas"],
+var ENS_SUBS = {Panaderia: ["Panes", "Croissant y hojaldre", "Rellenos", "Rellenos hojaldre", "Pasabocas"],
   Reposteria: ["Dulcería", "Galletas", "Tartas", "Tortas", "Batido", "Topping & Cremas", "Mise en place"],
-  "Comida de sal": ["Plato fuerte", "Componente de plato", "Salsas y bases", "Quiche", "Sándwich & wraps", "Pasabocas", "Bebida"],
+  "Comida de sal": ["Rellenos hojaldre", "Plato fuerte", "Componente de plato", "Salsas y bases", "Quiche", "Sándwich & wraps", "Pasabocas", "Bebida"],
   Marzzana: ["Pizza", "Salsas y bases"]};
 function ensEsAdmin(){ try{ if(typeof planYo === "function" && (planYo() || {}).admin) return true; }catch(e){} try{ if(ADM) return true; }catch(e){} return false; }
 function ensAplicarAj(){ (ENS_REC || []).forEach(f => { const a = ENS_AJ[f.code]; if(!a) return; if(a.area) f.area = a.area; if(a.sub != null) f.subgrupo = a.sub; }); }
@@ -2987,6 +2987,9 @@ function ensCargar(forzar){
   ENS_CARGA = (async () => {
     try{ const r = await fetch("formulas_recetario.json?t=" + Date.now(), {cache: "no-store"}); if(r.ok){ ENS_REC = await r.json(); try{ localStorage.setItem("ens_rec_cache", JSON.stringify(ENS_REC)); }catch(e){} } }catch(e){}
     if(!ENS_REC){ try{ ENS_REC = JSON.parse(localStorage.getItem("ens_rec_cache") || "null"); }catch(e){} }
+    // Alban 5 nov: fórmulas agregadas sin tocar el archivo del repo (estado/RECETARIO_EXTRA = {add:[fórmulas], del:[códigos]})
+    try{ if(DB && ENS_REC){ const g = await DB.doc("estado/RECETARIO_EXTRA").get(); const x = g.exists && g.data();
+      if(x){ const quitar = new Set([...(x.del || []), ...(x.add || []).map(f => f.code)]); ENS_REC = ENS_REC.filter(f => !quitar.has(f.code)).concat(x.add || []); } } }catch(e){}
     try{ if(DB){ const g = await DB.doc("estado/RECETARIO_AJUSTES").get(); if(g.exists && g.data() && g.data().aj) ENS_AJ = g.data().aj; } }catch(e){}
     ensAplicarAj();
     const api = ensApi();
@@ -3021,8 +3024,9 @@ function ensFormula(f){
 }
 function ensAplicar(f, e){
   const g = JSON.parse(JSON.stringify(f));
-  g.pasos = (e.pasos || []).map(p => ({titulo: p.titulo, items: (p.items || []).filter(it => it.usado || it.nuevo).map(it => ({ing: it.ing, cant: ensN(it.cant) != null ? ensN(it.cant) : it.cant_formula, u: it.u}))}));
-  if(ensN(e.rinde_real)) g.rinde = ensN(e.rinde_real);
+  const K = ensN(e.factor) || 1;   // el ensayo se pudo hacer ×K: se guarda la fórmula base (÷K)
+  g.pasos = (e.pasos || []).map(p => ({titulo: p.titulo, items: (p.items || []).filter(it => it.usado || it.nuevo).map(it => ({ing: it.ing, cant: ensN(it.cant) != null ? ensR(ensN(it.cant) / K, 2) : (it.cant_base != null ? it.cant_base : it.cant_formula), u: it.u}))}));
+  if(ensN(e.rinde_real)) g.rinde = ensR(ensN(e.rinde_real) / K, 2);
   g.estado = "confirmada"; g.rend_real = e.rend || null; if(e.carne && e.carne.crudo) g.carne = e.carne;
   if(f.tipo === "plato" && e.plato) (g.componentes || []).forEach(c => c.opciones.forEach(o => { const x = e.plato.find(p => p.code === o.code && p.rol === c.rol); if(x && ensN(x.g_porcion)) o.g_porcion = ensN(x.g_porcion); }));
   return g;
@@ -3095,7 +3099,7 @@ function ensPasosHTML(f, k){
   k = k || 1;
   return (f.pasos || []).map(p => `<div style="padding:10px 4px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${escH(p.titulo || "")}</div>
     ${(p.items || []).length ? `<ul style="list-style:none;margin:0;padding:0;background:#fff;border:1px solid ${C.line};border-radius:12px;overflow:hidden;">${p.items.map((it, i) => `<li style="display:flex;align-items:center;gap:12px;padding:9px 12px;${i ? `border-top:1px solid ${C.line};` : ""}">
-      <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:4.2em;text-align:center;">${ensN(it.cant) ? ensF(ensR(ensN(it.cant) * k, 1)) : "—"}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:4.2em;text-align:center;">${ensN(it.cant) ? ensF(ensR(ensN(it.cant) * k, 2)) : it.cant === 0 ? "al gusto" : "—"}</span>
       <span style="flex:1;font-size:0.95rem;">${escH(it.ing)} <span style="color:${C.inkSoft};font-size:0.8rem;">${escH(it.u || "")}</span></span></li>`).join("")}</ul>` : `<div style="font-size:0.85rem;color:${C.inkSoft};font-style:italic;padding:4px;">(sin ingredientes cargados)</div>`}`).join("");
 }
 function ensAbrir(f0){
@@ -3139,7 +3143,7 @@ function ensForm(f){
   try{ (typeof usrLista === "function" ? usrLista() : []).forEach(u => { const ac = u.acc || []; if(u.nom && (ac.includes(f.area) || (f.area === "Marzzana" && ac.includes("Comida de sal"))) && !pers.includes(u.nom)) pers.push(u.nom); }); }catch(e){}
   if(yo && yo.nom && !pers.includes(yo.nom)) pers.unshift(yo.nom);
   const st = {persona: yo ? yo.nom : "", pasos: (f.pasos || []).map(p => ({titulo: p.titulo, items: (p.items || []).map(it => ({ing: it.ing, cant_formula: it.cant, u: it.u || "g", st: "", cant: ""}))})),
-    extra: [], rend: {peso_total: "", unidades: "", g_unidad: "", g_auto: true}, carne: {crudo: "", limpio: "", modo: "", porciones: "", g_porcion: "", cocido_peso: ""},
+    k: 1, kTxt: "", extra: [], rend: {peso_total: "", unidades: "", g_unidad: "", g_auto: true}, carne: {crudo: "", limpio: "", modo: "", porciones: "", g_porcion: "", cocido_peso: ""},
     horno: {temp: "", min: ""}, plato: [], obs: ""};
   if(f.tipo === "plato") (f.componentes || []).forEach(c => c.opciones.forEach(o => st.plato.push({rol: c.rol, code: o.code, g_porcion: o.g_porcion || ""})));
   const conCarne = !!f.proteina || /plato|prote/i.test(f.subgrupo || "") || /^PROT-/.test(f.code);
@@ -3164,10 +3168,14 @@ function ensForm(f){
       ${titulo(1, "¿Quién hace el ensayo?")}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">${pers.map(n => `<button type="button" data-per="${escH(n)}" style="${big(st.persona === n, C.ink)}">${escH(n)}</button>`).join("")}
         <input data-c="persona" type="text" placeholder="Otro nombre" value="${pers.includes(st.persona) ? "" : escH(st.persona)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 12px;border:1.5px solid ${C.line};border-radius:12px;width:150px;"></div>
-      ${titulo(2, "Ingredientes, paso a paso", "Toca ✓ si usaste la cantidad de la fórmula, ✏️ para poner la cantidad real, ✗ si no lo usaste.")}
+      ${titulo(2, "¿Cuánto vas a hacer?", "Puedes hacer más o menos que la fórmula: las cantidades se ajustan solas, en la misma proporción.")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">${[0.5, 1, 1.5, 2, 3].map(x => `<button type="button" data-kx="${x}" style="${big(st.k === x && !st.kTxt, "#2E7D4F")}min-width:60px;">×${String(x).replace(".", ",")}</button>`).join("")}</div>
+      ${ensN(f.rinde) ? `<label style="display:flex;align-items:center;gap:10px;margin-top:10px;font-size:0.95rem;flex-wrap:wrap;"><span>O cuánto quieres que rinda:</span><input data-kr type="text" inputmode="decimal" value="${escH(st.kTxt)}" placeholder="${escH(f.rinde)}" style="${inp}width:120px;text-align:right;"><b>${escH(f.unidad || "")}</b></label>` : ""}
+      <div style="margin-top:10px;background:#E3F3E8;border:1.5px solid #2E7D4F;border-radius:12px;padding:9px 12px;font-size:0.95rem;">Vas a hacer la fórmula <b>×${ensF(ensR(st.k, 3))}</b>${ensN(f.rinde) ? ` → debe rendir <b>${ensF(ensR(ensN(f.rinde) * st.k, 1))} ${escH(f.unidad || "")}</b>` : ""}</div>
+      ${titulo(3, "Ingredientes, paso a paso", "Toca ✓ si usaste la cantidad de la fórmula, ✏️ para poner la cantidad real, ✗ si no lo usaste.")}
       ${st.pasos.map((p, pi) => `<div style="padding:12px 2px 4px;font-size:0.74rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${escH(p.titulo || "")}</div>
         <div style="display:grid;gap:8px;">${p.items.map((it, ii) => `<div style="background:#fff;border:1.5px solid ${it.st === "ok" ? "#2E7D4F" : it.st === "edit" ? "#2F6DB5" : it.st === "no" ? "#A3252B" : C.line};border-radius:12px;padding:10px 12px;">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="flex:1 1 150px;font-size:1rem;font-weight:600;">${escH(it.ing)} <span style="font-family:'IBM Plex Mono',monospace;font-weight:400;color:${C.inkSoft};">${ensN(it.cant_formula) ? ensF(it.cant_formula) + " " + escH(it.u) : "(sin cantidad)"}</span></span>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span style="flex:1 1 150px;font-size:1rem;font-weight:600;">${escH(it.ing)} <span style="font-family:'IBM Plex Mono',monospace;font-weight:400;color:${C.inkSoft};">${ensN(it.cant_formula) ? ensF(ensR(ensN(it.cant_formula) * st.k, 2)) + " " + escH(it.u) : "(sin cantidad)"}</span></span>
             <span style="display:flex;gap:6px;"><button type="button" data-it="${pi}.${ii}" data-st="ok" style="${big(it.st === "ok", "#2E7D4F")}min-width:52px;">✓</button><button type="button" data-it="${pi}.${ii}" data-st="edit" style="${big(it.st === "edit", "#2F6DB5")}min-width:52px;">✏️</button><button type="button" data-it="${pi}.${ii}" data-st="no" style="${big(it.st === "no", "#A3252B")}min-width:52px;">✗</button></span></div>
           ${it.st === "edit" ? `<div style="display:flex;align-items:center;gap:8px;margin-top:8px;"><span style="font-size:0.9rem;">Cantidad real:</span><input data-cant="${pi}.${ii}" type="text" inputmode="decimal" value="${escH(it.cant)}" style="${inp}width:140px;text-align:right;"><b>${escH(it.u)}</b></div>` : ""}</div>`).join("")}</div>`).join("")}
       ${st.extra.map((x, i) => `<div style="background:#fff;border:1.5px solid #2F6DB5;border-radius:12px;padding:10px 12px;margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -3176,11 +3184,11 @@ function ensForm(f){
         <select data-xu="${i}" style="font-size:1rem;padding:10px;border:1.5px solid ${C.line};border-radius:10px;">${["g", "ml", "unid"].map(u => `<option${u === x.u ? " selected" : ""}>${u}</option>`).join("")}</select>
         <button type="button" data-xdel="${i}" style="${big(false, "#A3252B")}">🗑</button></div>`).join("")}
       <button type="button" class="ens-add" style="${big(false, "#2F6DB5")}margin-top:10px;">+ agregué otro ingrediente</button>
-      ${titulo(3, "Rendimiento")}
+      ${titulo(4, "Rendimiento")}
       ${campo("¿Cuánto pesó todo al final?", "r.peso_total", st.rend.peso_total, "g")}
       ${campo("¿Cuántas " + escH(f.unidad && !/^(g|kg|ml|l)$/i.test(f.unidad) ? f.unidad : "unidades / porciones") + " salieron?", "r.unidades", st.rend.unidades, "")}
       ${campo("Peso por unidad (se calcula solo)", "r.g_unidad", st.rend.g_unidad, "g")}
-      ${conCarne ? `${titulo(4, "Prueba de la carne", "Para saber cuánta carne cruda comprar por porción.")}
+      ${conCarne ? `${titulo(5, "Prueba de la carne", "Para saber cuánta carne cruda comprar por porción.")}
         ${campo("¿Cuánto pesó la carne cruda al llegar?", "c.crudo", c.crudo, "g")}
         ${campo("¿Cuánto pesó ya limpia (sin cordones, grasa…)?", "c.limpio", c.limpio, "g")}
         <div style="margin-top:12px;font-size:0.95rem;">¿Porcionaste crudo o cocido?</div>
@@ -3189,7 +3197,7 @@ function ensForm(f){
         ${c.modo === "cocido" ? campo("¿Cuánto pesó saliendo del horno?", "c.cocido_peso", c.cocido_peso, "g") + campo("¿Cuántas porciones dio?", "c.porciones", c.porciones, "") : ""}
         <div style="margin-top:12px;background:#FFF4EC;border:1.5px solid #8A3B12;border-radius:12px;padding:10px 12px;font-size:0.95rem;line-height:1.6;">
           Merma de limpieza: <b>${c.merma_limpieza !== "" ? ensF(c.merma_limpieza) + " %" : "—"}</b>${c.modo === "cocido" ? `<br>Merma de cocción: <b>${c.merma_coccion !== "" ? ensF(c.merma_coccion) + " %" : "—"}</b>` : ""}<br>Carne cruda por porción: <b>${c.g_crudo_porcion !== "" ? ensF(c.g_crudo_porcion) + " g" : "—"}</b></div>` : ""}
-      ${st.plato.length ? `${titulo(conCarne ? 5 : 4, "Gramos por porción de cada componente")}${st.plato.map((x, i) => { const cf = ENS_REC.find(y => y.code === x.code); return campo(escH(x.rol) + " — " + escH(cf ? cf.nombre : x.code), "p." + i, x.g_porcion, "g"); }).join("")}` : ""}
+      ${st.plato.length ? `${titulo(conCarne ? 6 : 5, "Gramos por porción de cada componente")}${st.plato.map((x, i) => { const cf = ENS_REC.find(y => y.code === x.code); return campo(escH(x.rol) + " — " + escH(cf ? cf.nombre : x.code), "p." + i, x.g_porcion, "g"); }).join("")}` : ""}
       ${titulo("·", "Tiempos y horno (opcional)")}
       ${campo("Temperatura", "h.temp", st.horno.temp, "°C")}
       ${campo("Tiempo", "h.min", st.horno.min, "min")}
@@ -3199,6 +3207,8 @@ function ensForm(f){
       <button type="button" class="ens-env" style="margin-top:6px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.2rem;font-weight:700;background:#A3252B;color:#fff;border:none;border-radius:14px;padding:17px;cursor:pointer;">📨 Enviar ensayo</button>`;
     cont.querySelector(".ens-x").onclick = () => { if(confirm("¿Salir sin enviar el ensayo?")) ov._cerrar(); };
     cont.querySelectorAll("[data-per]").forEach(b => b.onclick = () => { st.persona = b.dataset.per; pintar(); });
+    cont.querySelectorAll("[data-kx]").forEach(b => b.onclick = () => { st.k = Number(b.dataset.kx); st.kTxt = ""; const sy = ov.scrollTop; pintar(); ov.scrollTop = sy; });
+    const kr = cont.querySelector("[data-kr]"); if(kr) kr.onchange = () => { const v = ensN(kr.value); if(v > 0){ st.k = v / ensN(f.rinde); st.kTxt = kr.value; } else { st.k = 1; st.kTxt = ""; } const sy = ov.scrollTop; pintar(); ov.scrollTop = sy; };
     cont.querySelectorAll("[data-it]").forEach(b => b.onclick = () => { const [pi, ii] = b.dataset.it.split(".").map(Number), it = st.pasos[pi].items[ii]; it.st = it.st === b.dataset.st ? "" : b.dataset.st; pintar();
       if(it.st === "edit"){ const x = cont.querySelector(`[data-cant="${pi}.${ii}"]`); if(x) x.focus(); } });
     cont.querySelectorAll("[data-cant]").forEach(x => x.oninput = () => { const [pi, ii] = x.dataset.cant.split(".").map(Number); st.pasos[pi].items[ii].cant = x.value; });
@@ -3249,9 +3259,10 @@ function ensForm(f){
     for(const x of st.plato) if(String(x.g_porcion).trim() && !(ensN(x.g_porcion) > 0)) return malo("Los gramos por porción deben ser mayores que 0.");
     const unit = f.unidad && /^(g|kg)$/i.test(f.unidad) ? (/kg/i.test(f.unidad) ? ensN(r.peso_total) / 1000 : ensN(r.peso_total)) : ensN(r.unidades);
     const ahora = new Date();
-    const e = {uid: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), code: f.code, nombre: f.nombre, area: f.area, unidad: f.unidad, rinde_formula: f.rinde,
+    const K = st.k, kq = q => ensN(q) != null ? ensR(ensN(q) * K, 2) : q;   // Alban 5 nov: fórmula aumentada o reducida
+    const e = {uid: Date.now().toString(36) + Math.random().toString(36).slice(2, 7), code: f.code, nombre: f.nombre, area: f.area, unidad: f.unidad, rinde_formula: ensN(f.rinde) ? kq(f.rinde) : f.rinde, factor: ensR(K, 4),
       persona: st.persona, rinde_real: unit || "",
-      pasos: st.pasos.map(p => ({titulo: p.titulo, items: p.items.map(it => ({ing: it.ing, cant_formula: it.cant_formula, u: it.u, usado: it.st !== "no", cant: it.st === "edit" ? ensN(it.cant) : it.st === "ok" ? it.cant_formula : ""}))}))
+      pasos: st.pasos.map(p => ({titulo: p.titulo, items: p.items.map(it => ({ing: it.ing, cant_formula: kq(it.cant_formula), cant_base: it.cant_formula, u: it.u, usado: it.st !== "no", cant: it.st === "edit" ? ensN(it.cant) : it.st === "ok" ? kq(it.cant_formula) : ""}))}))
         .concat(st.extra.length ? [{titulo: "Agregado en el ensayo", items: st.extra.map(x => ({ing: x.ing.trim(), u: x.u, nuevo: true, usado: true, cant: ensN(x.cant)}))}] : []),
       rend: {peso_total: ensN(r.peso_total) || "", unidades: ensN(r.unidades) || "", g_unidad: ensN(r.g_unidad) || ""},
       carne: conCarne && ensN(c.crudo) ? {crudo: ensN(c.crudo), limpio: ensN(c.limpio), modo: c.modo, porciones: ensN(c.porciones), g_porcion: ensN(c.g_porcion) || "", cocido_peso: ensN(c.cocido_peso) || "",
