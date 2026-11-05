@@ -1,0 +1,7452 @@
+[
+ {
+  "code": "CHOCO-1LB",
+  "nombre": "Torta de Chocolate 1 lb",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1800,
+      "ing": "Batido de Chocolate",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "FALTA formula del relleno\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-3-PISOS",
+  "nombre": "3 PISOS",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 42,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 10,
+      "ing": "Kiwi",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Mango dulce",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Fresa jumbo",
+      "u": "g"
+     },
+     {
+      "cant": 12,
+      "ing": "Crema de leche",
+      "u": "ml"
+     },
+     {
+      "cant": 0.5,
+      "ing": "Azucar comun",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-ANTIPASTO",
+  "nombre": "Antipasto",
+  "area": "Comida de sal",
+  "subgrupo": "Pasabocas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 39,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 5,
+      "ing": "Pimenton rojo",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 7,
+      "ing": "Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 0.2,
+      "ing": "Ajo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Vino blanco (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 2,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 4,
+      "ing": "Vinagre blanco",
+      "u": "ml"
+     },
+     {
+      "cant": 3,
+      "ing": "Pasta de tomate",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 1.5,
+      "ing": "Aceituna verde (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Aceite olivia (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 0.5,
+      "ing": "Sal marina",
+      "u": "g"
+     },
+     {
+      "cant": 1.5,
+      "ing": "Aceituna negra (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior\nSegún Alban (31/10/2026): pimentón rojo, cebolla blanca, zanahoria, ajo, vino blanco, pasta de tomate, azúcar morena, aceite de oliva y aceituna negra. Verificar si van agua, vinagre, aceituna verde y sal.",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-BANANO",
+  "nombre": "Banano",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 11,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3,
+      "ing": "Banano (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 115,
+      "ing": "Mantequilla derretida (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Esencia de vainilla (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 100,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 190,
+      "ing": "Harina de trigo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Cocoa",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 60,
+      "ing": "Chunks chocolate",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-BOWL-DE-SALMON",
+  "nombre": "Bowl de Salmon",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 530,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 150,
+      "ing": "Lechuga crespa",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Repollo morado",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Cebolla crispy",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Salmon",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Mango dulce",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-BURRITOS-KUMINI",
+  "nombre": "BURRITOS KUMINI",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 5963,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 4140,
+      "ing": "Arvejas",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Caldo de gallina (cubitos)",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Comino",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Coriandro",
+      "u": "g"
+     },
+     {
+      "cant": 120,
+      "ing": "Pimenton rojo (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Arroz blanco",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Sal (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 92,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Caldo de pollo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Frijoles negros",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-CARNE-MOLIDA",
+  "nombre": "CARNE MOLIDA",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 16712,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 11000,
+      "ing": "Carne molida",
+      "u": "g"
+     },
+     {
+      "cant": 12,
+      "ing": "Ajo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2400,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 1600,
+      "ing": "Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 1700,
+      "ing": "Pasta de tomate",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-CHAMPI",
+  "nombre": "Champi",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1858,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 50,
+      "ing": "Tomate (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Champiñones",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Aceite olica (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 20,
+      "ing": "Vino blanco (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Vol-au-vent (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 780,
+      "ing": "Pechuga de pollo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Cebolla blanca (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 90,
+      "ing": "Pimenton rojo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Zanahoria (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 3,
+      "ing": "Ajo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Sal (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Pimienta (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Oregano (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Queso mozarela colanta / Tajada (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Pasta lasaña / g (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-CREMA-DE-TOMATE",
+  "nombre": "Crema de tomate",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 5,
+  "unidad": "envases",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 500,
+      "ing": "Tomate",
+      "u": "g"
+     }
+    ],
+    "titulo": "Pasos 2 y 3 — Pelar y quitar semillas; se sofríe después de la cebolla y el ajo"
+   },
+   {
+    "items": [
+     {
+      "cant": 575,
+      "ing": "Agua",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Va en el paso 4 — del agua de pelar los tomates (guardada en el paso 1)"
+   },
+   {
+    "items": [
+     {
+      "cant": 175,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Ajo (≈ 1 diente)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Sofreír primero"
+   },
+   {
+    "items": [
+     {
+      "cant": 20,
+      "ing": "Azúcar común",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 4 — Con el agua, la sal, la pimienta y el orégano; hervir a fuego bajo 5 a 10 min. Licuar en la olla con el mixer: que queden pedazos"
+   },
+   {
+    "items": [
+     {
+      "cant": 150,
+      "ing": "Pasta de tomate",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Crema de leche",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 5 — Agregar a la mezcla"
+   },
+   {
+    "items": [
+     {
+      "cant": 0,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Pimienta",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Orégano",
+      "u": "g"
+     }
+    ],
+    "titulo": "Va en el paso 4"
+   },
+   {
+    "items": [
+     {
+      "cant": 5,
+      "ing": "Envase de vidrio",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 6 — Servir en los envases de vidrio, tapar y voltear el envase"
+   }
+  ],
+  "usos": [],
+  "nota": "1 envase = 250 g. Se hace 2 días antes. Hervir agua con los vasos y usar la misma agua para pelar el tomate (GUARDAR el agua para la crema); secar los vasos en el horno unos minutos. ⚠ Por definir: si el tomate de la fórmula es antes o después de pelar (si es después, comprar 175 g de tomate crudo por envase).",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "CS-GALLETA-CANELA",
+  "nombre": "Galleta Canela",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 922,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 300,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 170,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 150,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Cocoa",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Canela polvo",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Leche en polvo",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-GALLETA-CORAZON",
+  "nombre": "Galleta Corazon",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 902,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 300,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 150,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Leche en polvo",
+      "u": "ml"
+     },
+     {
+      "cant": 170,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-GALLETA-JENGIBRE",
+  "nombre": "Galleta jengibre",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 922,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 300,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 170,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 150,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Cocoa",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Jengibre (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Leche en polvo",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-LASANA-CARNE",
+  "nombre": "LASAÑA CARNE",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 12334,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 900,
+      "ing": "Tomate",
+      "u": "g"
+     },
+     {
+      "cant": 70,
+      "ing": "Pimenton rojo",
+      "u": "g"
+     },
+     {
+      "cant": 70,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 30,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 160,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 100,
+      "ing": "Pasta de tomate",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Oregano (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Sal (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 11000,
+      "ing": "Carne molida",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Ajo",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-MERMELADA-DE-TOCINETA",
+  "nombre": "MERMELADA DE TOCINETA",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 2230,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Tocineta ricachef",
+      "u": "g"
+     },
+     {
+      "cant": 1250,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 750,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 1041,
+      "ing": "Cafe cafetera",
+      "u": "g"
+     },
+     {
+      "cant": 416,
+      "ing": "Vinagre balsamico",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-MUFFIN-AREQUIPE",
+  "nombre": "Muffin arequipe",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 22,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 350,
+      "ing": "Aciete vegetal (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 525,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 420,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 7,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 840,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 17.5,
+      "ing": "Esencia vainilla (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 7,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 210,
+      "ing": "Arequipe bolsa (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-PANNA-COTTA",
+  "nombre": "Panna Cotta",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1347,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 250,
+      "ing": "Crema de leche",
+      "u": "ml"
+     },
+     {
+      "cant": 200,
+      "ing": "Lecherita (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 100,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 30,
+      "ing": "Agua (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 10,
+      "ing": "Gelatina sin sabor",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     },
+     {
+      "cant": 2,
+      "ing": "Triple sec (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 250,
+      "ing": "Agua",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-PARFAIT",
+  "nombre": "Parfait",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 165,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1,
+      "ing": "Parfait (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 70,
+      "ing": "Topping con agraz",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Granola",
+      "u": "g"
+     },
+     {
+      "cant": 75,
+      "ing": "Frutas mixtas",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-PAVLOVA",
+  "nombre": "Pavlova",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 300,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 100,
+      "ing": "Clara / uds (match aproximado — verificar)",
+      "u": "unid"
+     },
+     {
+      "cant": 100,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Azucar xxx",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-POLLO-CRISPY",
+  "nombre": "POLLO CRISPY",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 2900,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3000,
+      "ing": "Pechuga de pollo",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Sal (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Ajo en polvo (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     },
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 120,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Panko",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-POLLO-VERDURAS-NO",
+  "nombre": "POLLO VERDURAS NO",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 40,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 20,
+      "ing": "Pechuga de pollo",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 4.4,
+      "ing": "Crema de leche",
+      "u": "ml"
+     },
+     {
+      "cant": 0.14,
+      "ing": "Curry (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-POLLO-VIZENCIA",
+  "nombre": "POLLO VIZENCIA",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 8600,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 4000,
+      "ing": "Pollo desmechado (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 1500,
+      "ing": "Arvejas",
+      "u": "g"
+     },
+     {
+      "cant": 1100,
+      "ing": "Crema de leche",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-SALMON-BLINIS",
+  "nombre": "Salmón Blinis",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1782,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 10,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 0.1,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 5,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 20,
+      "ing": "Salmon",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Eneldo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal marina",
+      "u": "g"
+     },
+     {
+      "cant": 7.5,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Limon mandarino",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Queso crema",
+      "u": "g"
+     },
+     {
+      "cant": 780,
+      "ing": "Pechuga de pollo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Cebolla blanca (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 90,
+      "ing": "Pimenton rojo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Zanahoria (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 3,
+      "ing": "Ajo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Sal (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Pimienta (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Oregano (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Queso mozarela colanta / Tajada (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Pasta lasaña / g (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-SALMON-ORIENTAL",
+  "nombre": "SALMON ORIENTAL",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 165,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 20,
+      "ing": "Pimenton verde (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Pimenton rojo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Pimenton amarillo julianas (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 25,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 75,
+      "ing": "Jugo de naranja",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Fecula de maiz (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-SANDWICH-POLLO",
+  "nombre": "Sandwich pollo",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 137,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1,
+      "ing": "Pan baguette 160g",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Pechuga de pollo",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Mermelada de tocineta",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Queso mozarella/tajado",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Lechuga crespa",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-TIRAMISU",
+  "nombre": "Tiramisù",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 610,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 4,
+      "ing": "Yemas (match aproximado — verificar)",
+      "u": "unid"
+     },
+     {
+      "cant": 4,
+      "ing": "Claras",
+      "u": "unid"
+     },
+     {
+      "cant": 200,
+      "ing": "Crema de leche",
+      "u": "ml"
+     },
+     {
+      "cant": 200,
+      "ing": "Queso crema",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Zumo de limon (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Esencia vainilla / gotas (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 180,
+      "ing": "Azucar comun",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-TOPPING",
+  "nombre": "Topping",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1813,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 78,
+      "ing": "Mantequilla colanta",
+      "u": "g"
+     },
+     {
+      "cant": 144,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 540,
+      "ing": "Queso crema (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Escencia de vainilla / gotas (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "1/2 libra red velvet (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 370,
+      "ing": "Libra red velvet (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 380,
+      "ing": "Ajo (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-TRES-LECHES",
+  "nombre": "TRES LECHES",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 681,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1,
+      "ing": "Bizcocho joconda (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 20,
+      "ing": "Leche en polvo",
+      "u": "ml"
+     },
+     {
+      "cant": 10,
+      "ing": "Esencia de vainilla (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Topping con agraz (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Chocolate cobertura (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-TROPEZIENNE-2",
+  "nombre": "Tropézienne (2)",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 790,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 70,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 400,
+      "ing": "Harina 3 castillos (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 30,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Mantequilla colanta",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "CS-ZANAHORIA-ANDRES",
+  "nombre": "Zanahoria Andres",
+  "area": "Reposteria",
+  "subgrupo": "Comida de sal",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1211,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 9,
+      "ing": "Zanahoria (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 225,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     },
+     {
+      "cant": 150,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 150,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 300,
+      "ing": "Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 90,
+      "ing": "Almendras (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 270,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Canela polvo",
+      "u": "g"
+     },
+     {
+      "cant": 2,
+      "ing": "Bicarbonato",
+      "u": "g"
+     },
+     {
+      "cant": 9,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Comida de sal 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "ML-1LB",
+  "nombre": "Maria Luisa 1 lb",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1350,
+      "ing": "Batido Maria Luisa",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "FALTA formula del relleno\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-ARTELLANO",
+  "nombre": "Pan Artellano",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 908,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 200,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 80,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 1,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Azucar comun (azucar blanca=comun?)",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Oregano (venia 'al gusto' - falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "rinde por confirmar\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-BAGUETTE",
+  "nombre": "Baguette",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1750,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Masa madre (masa madre = semielaborado, cargar su formula)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "rinde 10 baguettes de 160 g\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-FUGAZZA",
+  "nombre": "Fugazza",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1779,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 650,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 20,
+      "ing": "Aceite de oliva (aceite oliva)",
+      "u": "ml"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 21,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 60,
+      "ing": "Masa madre (masa madre = SE)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-INTEGRAL",
+  "nombre": "Pan integral",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1769,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 25,
+      "ing": "Salvado de trigo",
+      "u": "g"
+     },
+     {
+      "cant": 25,
+      "ing": "Germen de trigo",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Masa madre (masa madre = SE)",
+      "u": "g"
+     },
+     {
+      "cant": 35,
+      "ing": "Aceite de oliva (aceite oliva)",
+      "u": "ml"
+     },
+     {
+      "cant": 21,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 600,
+      "ing": "Agua",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-PARMESANO",
+  "nombre": "Pan parmesano oregano",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1078,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 600,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 60,
+      "ing": "Margarina da gusto (margarina generica - confirmar cual)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 10,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Oregano (venia '1 cucharada' - falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 30,
+      "ing": "Queso parmesano (parmesano rallado)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "rinde por confirmar\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-PERRO",
+  "nombre": "Pan perro",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 870,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 500,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 50,
+      "ing": "Mantequilla Betania",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 10,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PAN-TOCINETA",
+  "nombre": "Pancito Tocineta",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 6840,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 1880,
+      "ing": "Agua (agua fria)",
+      "u": "ml"
+     },
+     {
+      "cant": 360,
+      "ing": "Leche liquida (leche entera)",
+      "u": "ml"
+     },
+     {
+      "cant": 32,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 56,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1940,
+      "ing": "Tocineta ricachef (tocineta)",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Miel (miel)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "rinde 72 pan de 90 g\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PB-BOMBITA-ATUN",
+  "nombre": "Bombita de atún",
+  "area": "Comida de sal",
+  "subgrupo": "Comida de sal",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 28,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 45,
+      "ing": "Pimentón verde",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     },
+     {
+      "cant": 104,
+      "ing": "Atún",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Saltear pimentón + cebolla + atún"
+   },
+   {
+    "items": [
+     {
+      "cant": 210,
+      "ing": "Queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Retirar del fuego, agregar el queso crema y homogeneizar. Refrigerar si es posible"
+   },
+   {
+    "items": [
+     {
+      "cant": 0,
+      "ing": "Cilantro — decoración",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     },
+     {
+      "cant": 0,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Al gusto — sin gramaje"
+   },
+   {
+    "items": [
+     {
+      "cant": 28,
+      "ing": "Profiterol — base",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 3 — Cortar el profiterol a 3/4 de la altura (NO en la mitad) y sin terminar el corte: la tapa queda pegada por un lado, como bisagra. Levantarla, rellenar y decorar"
+   }
+  ],
+  "usos": [],
+  "nota": "Se prepara el día anterior. Relleno ≈ 13,5 g por bombita. Decorar con hoja de cilantro o perejil crespo.",
+  "validada": "03/10/26",
+  "historial": [
+   "03/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "PB-BOMBITA-POLLO",
+  "nombre": "Bombitas de pollo",
+  "area": "Comida de sal",
+  "subgrupo": "Pasabocas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "unid",
+  "proteina": "pollo",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 0,
+      "ing": "Pollo",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Pimentón",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Azúcar",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Lechuga",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Crema de leche",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Faltan cantidades. Confirmar si va en profiterol como la bombita de atún.",
+  "validada": "",
+  "historial": [
+   "31/10/2026: creada con ingredientes, sin cantidades"
+  ]
+ },
+ {
+  "code": "PF-SOLOMITO-3-QUESOS",
+  "nombre": "Solomito tocineta salsa 3 quesos",
+  "area": "Comida de sal",
+  "subgrupo": "Plato fuerte",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "porciones",
+  "proteina": "solomito",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 0,
+      "ing": "Solomito",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Tocineta",
+      "u": "g"
+     }
+    ],
+    "titulo": "Proteína"
+   },
+   {
+    "items": [],
+    "titulo": "Salsa 3 quesos — falta fórmula"
+   },
+   {
+    "items": [
+     {
+      "cant": 0,
+      "ing": "Lechuga",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Tomate cherry",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Cebollitas encurtidas",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Mango en láminas",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ensalada fresca"
+   },
+   {
+    "items": [],
+    "titulo": "Puré de papa — falta fórmula"
+   }
+  ],
+  "usos": [],
+  "nota": "Plato: solomito con tocineta en salsa 3 quesos, ensalada fresca y puré de papa. Faltan las cantidades por porción.",
+  "validada": "05/11/2026",
+  "historial": [
+   "31/10/2026: creada (vacía, falta fórmula)",
+   "31/10/2026: componentes del plato definidos, sin cantidades",
+   "05/11/2026: aprobada"
+  ],
+  "tipo": "plato",
+  "componentes": [
+   {
+    "rol": "Proteína",
+    "min": 1,
+    "max": 2,
+    "base": "PROT-SOLOMITO-TOCINETA",
+    "opciones": [
+     {
+      "code": "PROT-SOLOMITO-TOCINETA",
+      "g_porcion": null
+     }
+    ]
+   },
+   {
+    "rol": "Salsa",
+    "min": 1,
+    "max": 1,
+    "base": "SE-SALSA-3-QUESOS",
+    "opciones": [
+     {
+      "code": "SE-SALSA-3-QUESOS",
+      "g_porcion": null
+     }
+    ]
+   },
+   {
+    "rol": "Acompañante",
+    "min": 1,
+    "max": 1,
+    "base": "SE-PURE-PAPA",
+    "opciones": [
+     {
+      "code": "SE-PURE-PAPA",
+      "g_porcion": null
+     },
+     {
+      "code": "SE-ARROZ-FRUTOS-SECOS",
+      "g_porcion": null
+     }
+    ]
+   },
+   {
+    "rol": "Ensalada",
+    "min": 0,
+    "max": 1,
+    "base": "SE-ENSALADA-FRESCA",
+    "opciones": [
+     {
+      "code": "SE-ENSALADA-FRESCA",
+      "g_porcion": null
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "code": "PROT-SOLOMITO-TOCINETA",
+  "nombre": "Solomito con tocineta",
+  "area": "Comida de sal",
+  "subgrupo": "Plato fuerte — componente",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "g",
+  "proteina": "solomito",
+  "pasos": [
+   {
+    "titulo": "Proteína",
+    "items": [
+     {
+      "ing": "Solomito",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Tocineta",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [
+   {
+    "producto": "Solomito tocineta salsa 3 quesos",
+    "cant": null,
+    "u": "g",
+    "nota": "g por porción: lo define el ensayo"
+   }
+  ],
+  "nota": "Registrar la prueba de carne (cruda, limpia, cocida, porciones).",
+  "validada": "",
+  "historial": [
+   "05/11/2026: creada como componente del plato PF-SOLOMITO-3-QUESOS (por ensayar)"
+  ]
+ },
+ {
+  "code": "SE-SALSA-3-QUESOS",
+  "nombre": "Salsa 3 quesos",
+  "area": "Comida de sal",
+  "subgrupo": "Plato fuerte — componente",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Ingredientes",
+    "items": []
+   }
+  ],
+  "usos": [
+   {
+    "producto": "Solomito tocineta salsa 3 quesos",
+    "cant": null,
+    "u": "g",
+    "nota": "g por porción: lo define el ensayo"
+   }
+  ],
+  "nota": "Falta la fórmula: agrega los ingredientes en el ensayo (+ agregué otro ingrediente).",
+  "validada": "",
+  "historial": [
+   "05/11/2026: creada como componente del plato PF-SOLOMITO-3-QUESOS (por ensayar)"
+  ]
+ },
+ {
+  "code": "SE-PURE-PAPA",
+  "nombre": "Puré de papa",
+  "area": "Comida de sal",
+  "subgrupo": "Plato fuerte — componente",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Ingredientes",
+    "items": []
+   }
+  ],
+  "usos": [
+   {
+    "producto": "Solomito tocineta salsa 3 quesos",
+    "cant": null,
+    "u": "g",
+    "nota": "g por porción: lo define el ensayo"
+   }
+  ],
+  "nota": "Falta la fórmula: agrega los ingredientes en el ensayo (+ agregué otro ingrediente).",
+  "validada": "",
+  "historial": [
+   "05/11/2026: creada como componente del plato PF-SOLOMITO-3-QUESOS (por ensayar)"
+  ]
+ },
+ {
+  "code": "SE-ARROZ-FRUTOS-SECOS",
+  "nombre": "Arroz de frutos secos",
+  "area": "Comida de sal",
+  "subgrupo": "Plato fuerte — componente",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Ingredientes",
+    "items": []
+   }
+  ],
+  "usos": [
+   {
+    "producto": "Solomito tocineta salsa 3 quesos",
+    "cant": null,
+    "u": "g",
+    "nota": "g por porción: lo define el ensayo"
+   }
+  ],
+  "nota": "Falta la fórmula: agrega los ingredientes en el ensayo (+ agregué otro ingrediente). Acompañante alterno al puré.",
+  "validada": "",
+  "historial": [
+   "05/11/2026: creada como componente del plato PF-SOLOMITO-3-QUESOS (por ensayar)"
+  ]
+ },
+ {
+  "code": "SE-ENSALADA-FRESCA",
+  "nombre": "Ensalada fresca",
+  "area": "Comida de sal",
+  "subgrupo": "Plato fuerte — componente",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": "",
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Ensalada fresca",
+    "items": [
+     {
+      "ing": "Lechuga",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Tomate cherry",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Cebollitas encurtidas",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Mango en láminas",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [
+   {
+    "producto": "Solomito tocineta salsa 3 quesos",
+    "cant": null,
+    "u": "g",
+    "nota": "g por porción: lo define el ensayo"
+   }
+  ],
+  "nota": "Opcional en el plato.",
+  "validada": "",
+  "historial": [
+   "05/11/2026: creada como componente del plato PF-SOLOMITO-3-QUESOS (por ensayar)"
+  ]
+ },
+ {
+  "code": "PN-BAGELS",
+  "nombre": "Bagels",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 900,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 500,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Masa madre",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 275,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-BAGUETTE-PARED",
+  "nombre": "Baguette pared",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1608,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Masa madre",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-BRIOCHE-CHOCOLATE",
+  "nombre": "Brioche Chocolate",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 650,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 30,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 125,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-BRIOCHE-SUIZA",
+  "nombre": "Brioche Suiza",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 916,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 2,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 200,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 4,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 520,
+      "ing": "Harina elite (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-BRIOCHE",
+  "nombre": "Brioche",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 650,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 30,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 125,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-BROWNIE",
+  "nombre": "Brownie",
+  "area": "Reposteria",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 7450,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Margarina da gusto (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 750,
+      "ing": "Chocolate cruz",
+      "u": "g"
+     },
+     {
+      "cant": 3200,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Esencia de almendras",
+      "u": "ml"
+     },
+     {
+      "cant": 1440,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-CAMARON",
+  "nombre": "Camarón",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 125,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 2,
+      "ing": "Ajo (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 3,
+      "ing": "Pimienta (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Aceite oliva (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 100,
+      "ing": "Maracuya (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Azucar comun",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-CIABATTA-PARED",
+  "nombre": "Ciabatta pared",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1119,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 4,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 35,
+      "ing": "Aceite de oliva",
+      "u": "ml"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 18,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Oregano",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Pesto procesado",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-CROISSANT-PARED-2",
+  "nombre": "Croissant Pared (2)",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 21882,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3500,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 70,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 400,
+      "ing": "Masa madre",
+      "u": "g"
+     },
+     {
+      "cant": 8000,
+      "ing": "Harina tres castillos",
+      "u": "g"
+     },
+     {
+      "cant": 1280,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 640,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 192,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1800,
+      "ing": "Vitana amarilla / cada masa (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 6000,
+      "ing": "Cada uno (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-CROISSANT-PARED-NO",
+  "nombre": "Croissant Pared NO",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 22176,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3500,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Agua (match aproximado — verificar)",
+      "u": "ml"
+     },
+     {
+      "cant": 64,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 400,
+      "ing": "Masa madre",
+      "u": "g"
+     },
+     {
+      "cant": 8000,
+      "ing": "Harina tres castillos",
+      "u": "g"
+     },
+     {
+      "cant": 1280,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 640,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 192,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1800,
+      "ing": "Vitana amarilla / cada masa (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 6000,
+      "ing": "Cada uno (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-CROISSANT-PARED",
+  "nombre": "Croissant Pared",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 7304,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 4,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 4000,
+      "ing": "Harina tres castillos",
+      "u": "g"
+     },
+     {
+      "cant": 35,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Masa madre",
+      "u": "g"
+     },
+     {
+      "cant": 750,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 320,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 95,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1600,
+      "ing": "Vitina roja",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-EMPANADA-ARGENTINA",
+  "nombre": "Empanada Argentina",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 50,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Margarina da gusto",
+      "u": "g"
+     },
+     {
+      "cant": 180,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 900,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 60,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-EMPANADA-PARED",
+  "nombre": "Empanada pared",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1433,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 87,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Margarina da gusto",
+      "u": "g"
+     },
+     {
+      "cant": 180,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 900,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 60,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-FOCCACIA",
+  "nombre": "Focaccia jamón serrano",
+  "area": "Panaderia",
+  "subgrupo": "Pasabocas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 835,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 400,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Masa madre (falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 250,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 15,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 30,
+      "ing": "Aceite de oliva",
+      "u": "ml"
+     },
+     {
+      "cant": 0,
+      "ing": "Pesto procesado (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 60,
+      "ing": "Jamon serrano",
+      "u": "g"
+     },
+     {
+      "cant": 60,
+      "ing": "Queso mozarella",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior\nSegún Alban (31/10/2026): masa con harina, levadura, sal y masa madre. Falta gramos de masa madre; verificar agua, azúcar, aceite, pesto y mozzarella.",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-FRA",
+  "nombre": "FRA",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1414,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 150,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 650,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 150,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Licor de naranja",
+      "u": "ml"
+     },
+     {
+      "cant": 8,
+      "ing": "Gelatina sin sabor (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 30,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 110,
+      "ing": "Agraz (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 110,
+      "ing": "Mango o melocoton (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Claras",
+      "u": "unid"
+     },
+     {
+      "cant": 100,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 1,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior\nAlban 5 nov: seguramente torta de frutos rojos y amarillos.",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)",
+   "05/11/2026: área confirmada por Alban (Reposteria)"
+  ]
+ },
+ {
+  "code": "PN-GALETTES-DES-ROIS-2023",
+  "nombre": "Galettes des rois 2023",
+  "area": "Reposteria",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 344,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 125,
+      "ing": "Almendras",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 15,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Margarina da gusto (venia 'al gusto' — falta gramos)",
+      "u": "g"
+     },
+     {
+      "cant": 1.25,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 3,
+      "ing": "Ron",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-HAMBURGUESA",
+  "nombre": "Hamburguesa",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1688,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 40,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     },
+     {
+      "cant": 60,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Masa madre",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-HOJALDRE-MIL-HOJAS",
+  "nombre": "Hojaldre Mil Hojas",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 9600,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 5000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 600,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 400,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1500,
+      "ing": "Vitina roja",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-HOJALDRE-PALITO",
+  "nombre": "Hojaldre Palito",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 9730,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 80,
+      "ing": "Masa de pastel (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 50,
+      "ing": "Queso campesino",
+      "u": "g"
+     },
+     {
+      "cant": 5000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 1500,
+      "ing": "Vitina roja",
+      "u": "g"
+     },
+     {
+      "cant": 600,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 400,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-HOJALDRE-PARED",
+  "nombre": "Hojaldre pared",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 4687,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 87,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 600,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 400,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1500,
+      "ing": "Vitina roja",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-HOJALDRE",
+  "nombre": "Hojaldre",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 9600,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 5000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 600,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 400,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 1500,
+      "ing": "Vitina roja",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-ARABE",
+  "nombre": "Pan arabe",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 800,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 250,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 500,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 35,
+      "ing": "Aceite de oliva",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-CANELA",
+  "nombre": "PAN CANELA",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 786,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 30,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 350,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Canela polvo",
+      "u": "g"
+     },
+     {
+      "cant": 125,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-CEREAL",
+  "nombre": "Pan Cereal",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 700,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 100,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 59.03,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 0.69,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 5.56,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 34.72,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 347.22,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 10.42,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 13.89,
+      "ing": "Aceite de oliva",
+      "u": "ml"
+     },
+     {
+      "cant": 60,
+      "ing": "Uvas pasas",
+      "u": "g"
+     },
+     {
+      "cant": 13.89,
+      "ing": "Avena en hojuelas",
+      "u": "g"
+     },
+     {
+      "cant": 13.89,
+      "ing": "Semillas de chia",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-CIABATTA",
+  "nombre": "Pan Ciabatta",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1615,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 500,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 35,
+      "ing": "Aceite de oliva",
+      "u": "ml"
+     },
+     {
+      "cant": 8,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 18,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Oregano",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Pesto procesado",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-DE-UVA",
+  "nombre": "Pan de Uva",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 10165,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 450,
+      "ing": "Crema pastelera de vainilla",
+      "u": "g"
+     },
+     {
+      "cant": 115,
+      "ing": "Uvas pasas",
+      "u": "g"
+     },
+     {
+      "cant": 5000,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 1500,
+      "ing": "Vitina roja",
+      "u": "g"
+     },
+     {
+      "cant": 600,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 400,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-DOBLE-CHOCOLATE",
+  "nombre": "Pan Doble Chocolate",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 645,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 30,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 5,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 125,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PAN-TAJADO",
+  "nombre": "Pan Tajado",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 631,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 76.88,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 62.23,
+      "ing": "Leche liquida",
+      "u": "ml"
+     },
+     {
+      "cant": 0.73,
+      "ing": "Huevos - aa",
+      "u": "unid"
+     },
+     {
+      "cant": 3.66,
+      "ing": "Levadura seca",
+      "u": "g"
+     },
+     {
+      "cant": 36.61,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 366.07,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 10.98,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 14.64,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PASTEL-ORIGINAL",
+  "nombre": "Pastel Original",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 13200,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 3500,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 8000,
+      "ing": "Harina elite",
+      "u": "g"
+     },
+     {
+      "cant": 800,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 800,
+      "ing": "Azucar morena",
+      "u": "g"
+     },
+     {
+      "cant": 160,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 13260,
+      "ing": "Empaste por cada masa (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 1250,
+      "ing": "Vitina roja",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-PASTEL-PARED",
+  "nombre": "Pastel Pared",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 22564,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 4,
+      "ing": "En este orden (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 8000,
+      "ing": "Harina elite",
+      "u": "g"
+     },
+     {
+      "cant": 800,
+      "ing": "Mantequilla auralac",
+      "u": "g"
+     },
+     {
+      "cant": 800,
+      "ing": "Azucar comun",
+      "u": "g"
+     },
+     {
+      "cant": 160,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Vitina roja",
+      "u": "g"
+     },
+     {
+      "cant": 6000,
+      "ing": "Cada uno (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 960,
+      "ing": "Aceite de oliva",
+      "u": "g"
+     },
+     {
+      "cant": 3000,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 480,
+      "ing": "Azucar blanca común / g (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Masa madre",
+      "u": "g"
+     },
+     {
+      "cant": 60,
+      "ing": "Levadura seca (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-RELLENO-PANADERIA",
+  "nombre": "Relleno panaderia",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 21735,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 6000,
+      "ing": "Martes (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 1860,
+      "ing": "Espinaca (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 510,
+      "ing": "Chorizo español (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 35,
+      "ing": "Espinaca",
+      "u": "g"
+     },
+     {
+      "cant": 930,
+      "ing": "Jamon y queso (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 650,
+      "ing": "Pesto procesado (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 3650,
+      "ing": "Pollo vizencia (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2090,
+      "ing": "Queso azul",
+      "u": "g"
+     },
+     {
+      "cant": 1360,
+      "ing": "Ranchero (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2650,
+      "ing": "Tomate (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 2000,
+      "ing": "Miercoles (match aproximado — verificar)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-RELLENOS-HOJALDRES",
+  "nombre": "Rellenos Hojaldres",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 11206,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 116,
+      "ing": "Crema pastelera musseline (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 90,
+      "ing": "Croissant + (match aproximado — verificar)",
+      "u": "g"
+     },
+     {
+      "cant": 11000,
+      "ing": "Carne molida",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "PN-TOPPING-PM-ANTIGUO",
+  "nombre": "Topping PM Antiguo",
+  "area": "Reposteria",
+  "subgrupo": "Panaderia",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 11483,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1300,
+      "ing": "Margarina da gusto",
+      "u": "g"
+     },
+     {
+      "cant": 2160,
+      "ing": "Azucar xxx",
+      "u": "g"
+     },
+     {
+      "cant": 23,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     },
+     {
+      "cant": 8000,
+      "ing": "Queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "AUTO — verificar (Excel Panaderia 2024.xlsx)\nCuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "RP-COOKIE-RED-VELVET",
+  "nombre": "Cookies red velvet",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 44,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 500,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 8,
+      "ing": "Huevos AA (≈ 440 g)",
+      "u": "unid"
+     },
+     {
+      "cant": 20,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 1 — En el bowl de la batidora pequeña: azúcar + huevos + vainilla. BATIR 7 MINUTOS"
+   },
+   {
+    "items": [
+     {
+      "cant": 560,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 60,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Polvo de hornear (1 cucharadita)",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Bicarbonato (2 cucharaditas)",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Sal (½ cucharadita)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Pesar los secos en un bowl mediano (NO tamizar)"
+   },
+   {
+    "items": [
+     {
+      "cant": 2000,
+      "ing": "Migas de red velvet",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Migas sin grumos a la batidora; luego todos los secos con la pala: a toques y después velocidad baja"
+   },
+   {
+    "items": [
+     {
+      "cant": 160,
+      "ing": "Chips de chocolate blanco",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 4 — Armar bolitas de 80 g en la bandeja y poner los chips encima"
+   },
+   {
+    "items": [
+     {
+      "cant": 440,
+      "ing": "Topping de queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 5 — Rellenar cada cookie (10 g por galleta) y congelar"
+   }
+  ],
+  "usos": [],
+  "nota": "Tener listas y CONGELADAS. Hornear en el momento, desde congelado: 180 °C arriba / 160 °C abajo, 25 a 26 minutos. Lote doble (Alban 3 oct): masa total 3.606 g = 44 galletas de 80 g. Antes de empezar: bowl de la batidora pequeña, accesorio de pala, bandeja con tapete de silicona y gramera.",
+  "validada": "03/10/26",
+  "historial": [
+   "03/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "RP-GALLETA-AVENA",
+  "nombre": "Galletas de avena",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 84,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 912,
+      "ing": "Avena en hojuelas",
+      "u": "g"
+     },
+     {
+      "cant": 1166,
+      "ing": "Granola",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — En el bowl de la batidora pequeña, unificar a mano"
+   },
+   {
+    "items": [
+     {
+      "cant": 412,
+      "ing": "Mantequilla (temperatura ambiente)",
+      "u": "g"
+     },
+     {
+      "cant": 16,
+      "ing": "Huevos AA (≈ 900 g)",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 2 — Agregar la mantequilla a temperatura ambiente y los huevos uno a uno"
+   },
+   {
+    "items": [
+     {
+      "cant": 534,
+      "ing": "Miel",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 3 — La miel de último"
+   },
+   {
+    "items": [
+     {
+      "cant": 336,
+      "ing": "Uvas pasas",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 4 — Encima de cada galleta ya formada (3 o 4)"
+   }
+  ],
+  "usos": [],
+  "nota": "Antes de empezar: 4 bandejas grandes con tapete silpat. Peso total 4.258 g · porciones de 50 g = 84 galletas. Formar cada porción con el cortador de 7,5 cm sobre el silpat y poner 3 o 4 pasas pequeñas encima. Horneo: HORNO No. 3 — 180 °C arriba y abajo, 15 a 18 min · HORNOS No. 1 y 2 — 180 °C arriba y abajo, 20 min.",
+  "validada": "08/10/26",
+  "historial": [
+   "08/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "RP-GALLETA-CHOCOLATE",
+  "nombre": "Galletas de chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 60,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1013,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 34,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 4.2,
+      "ing": "Polvo de hornear",
+      "u": "g"
+     }
+    ],
+    "titulo": "Secos — van en el paso 2, juntos, a velocidad 1 SOLO HASTA INTEGRAR"
+   },
+   {
+    "items": [
+     {
+      "cant": 363,
+      "ing": "Azúcar morena",
+      "u": "g"
+     },
+     {
+      "cant": 224,
+      "ing": "Azúcar blanca",
+      "u": "g"
+     },
+     {
+      "cant": 477,
+      "ing": "Mantequilla",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Cremar a velocidad 2 (es lo primero que se hace)"
+   },
+   {
+    "items": [
+     {
+      "cant": 4.2,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Va con los secos del paso 2"
+   },
+   {
+    "items": [
+     {
+      "cant": 156,
+      "ing": "Huevos AA (pesados)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Agregar los huevos (pesarlos: 156 g ≈ 2,8 huevos)"
+   },
+   {
+    "items": [
+     {
+      "cant": 608,
+      "ing": "Cobertura de chocolate Nestlé, en trozos",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 4 — De último, para que quede en trozos grandecitos. Luego pesar bolas de 45 g"
+   }
+  ],
+  "usos": [],
+  "nota": "Fórmula estándar (10/10/26): 60 galletas de 45 g. Peso total 2.883 g (+ ≈6 % de merma). Antes estaba a 50 de 80 g: el peso de 80 g estaba mal. Horneo: 180 °C arriba / 180 °C abajo, 15 minutos.",
+  "validada": "08/10/26",
+  "historial": [
+   "08/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "RP-GALLETA-MACADAMIA",
+  "nombre": "Galletas de macadamia",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 58,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 200,
+      "ing": "Chips de chocolate blanco",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Nueces de macadamia",
+      "u": "g"
+     }
+    ],
+    "titulo": "Chips y decorado — los chips van al cremado con los secos; las nueces, 4 encima de cada galleta"
+   },
+   {
+    "items": [
+     {
+      "cant": 500,
+      "ing": "Mantequilla",
+      "u": "g"
+     },
+     {
+      "cant": 100,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Azúcar morena",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — En la batidora con pala, cremar mantequilla + azúcares + vainilla"
+   },
+   {
+    "items": [
+     {
+      "cant": 4,
+      "ing": "Huevos AA (≈ 220 g)",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 2 — Agregar los huevos uno a uno"
+   },
+   {
+    "items": [
+     {
+      "cant": 800,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Polvo de hornear",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Pesar aparte los secos; agregarlos al cremado con los chips y batir hasta homogenizar"
+   },
+   {
+    "items": [
+     {
+      "cant": 10,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Va en el paso 1, con el cremado"
+   }
+  ],
+  "usos": [],
+  "nota": "Lote doble: masa ≈ 2.340 g = 58 galletas en bolas de 40 g, sobre latas con tapete silpat. Decorado: 4 nueces de macadamia por galleta (no almendras). Llevar a congelación. Hornear desde congelado: 180 °C arriba / 180 °C abajo, 20 minutos.",
+  "validada": "05/10/26",
+  "historial": [
+   "05/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "RP-GALLETA-MANTEQUILLA",
+  "nombre": "Galletas de mantequilla",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 28,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 300,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 150,
+      "ing": "Azúcar XXX",
+      "u": "g"
+     },
+     {
+      "cant": 80,
+      "ing": "Leche en polvo",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — En la batidora a velocidad mediana con EL ESCUDO, unificar"
+   },
+   {
+    "items": [
+     {
+      "cant": 170,
+      "ing": "Mantequilla (al clima)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Unificar la mantequilla al clima — NO BATIR"
+   },
+   {
+    "items": [
+     {
+      "cant": 2,
+      "ing": "Huevos AA",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 3 — Unificar los huevos — NO BATIR"
+   }
+  ],
+  "usos": [],
+  "nota": "Masa 902 g · galleta horneada 30 g ≈ 28 galletas (rinde estimado: contar el próximo lote y registrarlo real). Estirar la masa con guía de 6 mm y cortar con el cortador. Horneo: 180 °C arriba y abajo, 15 a 18 minutos. Es la masa base de la galleta de canela y la de jengibre.",
+  "validada": "08/10/26",
+  "historial": [
+   "08/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "RP-OPERA",
+  "nombre": "Ópera",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1256,
+      "ing": "Joconda — 1 lata = 3 capas (≈419 g c/u)",
+      "u": "g"
+     },
+     {
+      "cant": 59.5,
+      "ing": "Jarabe de café (1 reserva)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Cubrir el molde con acetato de 91 × 7 sobre blonda rectangular. 1ra capa de joconda, remojada con jarabe de café (≈20 g por capa, las 3 capas)"
+   },
+   {
+    "items": [
+     {
+      "cant": 555,
+      "ing": "Ganache de chocolate (1 reserva)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Ganache: 275 g sobre la 1ra capa, alisar y congelar 10 min; 2da capa de joconda con jarabe; 275 g más; los 30 g restantes, tibios, para pintar la 3ra capa con el pincel"
+   },
+   {
+    "items": [
+     {
+      "cant": 604,
+      "ing": "Buttercream de café (1 reserva)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Buttercream: 302 g sobre cada ganache, congelar 10 min cada vez"
+   },
+   {
+    "items": [
+     {
+      "cant": 282.5,
+      "ing": "Glace de chocolate (1 reserva, en tibio)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 4 — 3ra capa de joconda ya pintada, remojada con jarabe; terminar con el glace tibio (brillo espejo) y refrigerar"
+   }
+  ],
+  "usos": [],
+  "nota": "Se arma el mismo día. Orden de capas: joconda + ganache + buttercream + joconda + ganache + buttercream + joconda + glace. Las 3 capas de joconda van remojadas con el jarabe de café. Usar primero las reservas de la nevera. Escribir 'ÓPERA'. DESMOLDAR SOLO CUANDO SE VAYA A DESPACHAR. Peso aproximado armada: 2.757 g. El ópera mini es de 3 × 3 cm.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "RV-05LB",
+  "nombre": "Red Velvet 1/2 lb",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1500,
+      "ing": "Bizcocho Red Velvet",
+      "u": "g"
+     },
+     {
+      "cant": 900,
+      "ing": "Topping de Queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: mismo dia",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "RV-1LB",
+  "nombre": "Red Velvet 1 lb",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1900,
+      "ing": "Bizcocho Red Velvet",
+      "u": "g"
+     },
+     {
+      "cant": 1100,
+      "ing": "Topping de Queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: mismo dia",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "SE-BAT-CHOCO",
+  "nombre": "Batido chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Batido",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 14808,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 48,
+      "ing": "Huevos AA",
+      "u": "unid"
+     },
+     {
+      "cant": 3840,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 1920,
+      "ing": "Leche líquida",
+      "u": "ml"
+     },
+     {
+      "cant": 2880,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Polvo de hornear",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 48,
+      "ing": "Café en polvo",
+      "u": "g"
+     },
+     {
+      "cant": 1440,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 10,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     },
+     {
+      "cant": 130,
+      "ing": "Color caramelo",
+      "u": "g"
+     },
+     {
+      "cant": 320,
+      "ing": "Cocoa",
+      "u": "g"
+     },
+     {
+      "cant": 1760,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes — en el orden de la fórmula"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 0,
+    "nota": "por definir",
+    "producto": "Chocolate 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1851,
+    "nota": "8 por batch · faltan 120 g en el batch",
+    "producto": "Chocolate 1 libra",
+    "u": "g"
+   },
+   {
+    "cant": 0,
+    "nota": "por definir",
+    "producto": "Chocolate 2 libras",
+    "u": "g"
+   }
+  ],
+  "nota": "Se hace el día anterior. Horneo: 145 °C 40 min + 165 °C 60 min. Batido total 14.808 g: rinde 8 tortas de 1 libra (1.800 g por molde).",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)",
+   "31/10/2026: batch = 8 tortas de 1 libra (faltan 120 g para completar los 8 moldes)"
+  ]
+ },
+ {
+  "code": "SE-BAT-ML",
+  "nombre": "Batido Maria Luisa",
+  "area": "Reposteria",
+  "subgrupo": "Batido",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 11021,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 2577,
+      "ing": "Margarina",
+      "u": "g"
+     },
+     {
+      "cant": 2577,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 48,
+      "ing": "Huevos AA",
+      "u": "unid"
+     },
+     {
+      "cant": 2577,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 25,
+      "ing": "Polvo de hornear",
+      "u": "g"
+     },
+     {
+      "cant": 329,
+      "ing": "Leche en polvo",
+      "u": "g"
+     },
+     {
+      "cant": 329,
+      "ing": "Leche líquida",
+      "u": "ml"
+     },
+     {
+      "cant": 42,
+      "ing": "Esencia de naranja",
+      "u": "ml"
+     },
+     {
+      "cant": 17,
+      "ing": "Limón Tahití",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes — en el orden de la fórmula"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 0,
+    "nota": "por definir",
+    "producto": "Maria Luisa 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1378,
+    "nota": "8 por batch",
+    "producto": "Maria Luisa 1 libra",
+    "u": "g"
+   }
+  ],
+  "nota": "Se hace el día anterior. Horneo: 150 °C arriba / 160 °C abajo, 120 min. Con el escudo. Molde 1.350 g. Batido total 11.021 g.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-BAT-ZAN",
+  "nombre": "Batido zanahoria",
+  "area": "Reposteria",
+  "subgrupo": "Batido",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 12694,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1550,
+      "ing": "Azúcar morena",
+      "u": "g"
+     },
+     {
+      "cant": 670,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 36,
+      "ing": "Huevos AA",
+      "u": "unid"
+     },
+     {
+      "cant": 1820,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     },
+     {
+      "cant": 3420,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 85,
+      "ing": "Polvo de hornear",
+      "u": "g"
+     },
+     {
+      "cant": 37,
+      "ing": "Bicarbonato",
+      "u": "g"
+     },
+     {
+      "cant": 26,
+      "ing": "Canela en polvo",
+      "u": "g"
+     },
+     {
+      "cant": 3,
+      "ing": "Clavos en polvo",
+      "u": "g"
+     },
+     {
+      "cant": 3,
+      "ing": "Nuez moscada",
+      "u": "g"
+     },
+     {
+      "cant": 18,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 3000,
+      "ing": "Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 400,
+      "ing": "Almendras",
+      "u": "g"
+     },
+     {
+      "cant": 220,
+      "ing": "Leche líquida",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes — en el orden de la fórmula"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 0,
+    "nota": "por definir",
+    "producto": "Zanahoria 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1813,
+    "nota": "7 por batch",
+    "producto": "Zanahoria 1 libra",
+    "u": "g"
+   }
+  ],
+  "nota": "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 70 min. Molde de 1 libra: 1.600 g. NO se corta. Batido total 12.694 g.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-BIZ-RV",
+  "nombre": "Batido red velvet",
+  "area": "Reposteria",
+  "subgrupo": "Batido",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 15084,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 2890,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     },
+     {
+      "cant": 2550,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 440,
+      "ing": "Azúcar morena",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Con el globo, velocidad mínima 30 segundos"
+   },
+   {
+    "items": [
+     {
+      "cant": 28,
+      "ing": "Huevos AA",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 2 — Huevos uno a uno, luego velocidad máxima 8 minutos"
+   },
+   {
+    "items": [
+     {
+      "cant": 3820,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 280,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 142,
+      "ing": "Cocoa",
+      "u": "g"
+     },
+     {
+      "cant": 12,
+      "ing": "Polvo de hornear",
+      "u": "g"
+     },
+     {
+      "cant": 11,
+      "ing": "Bicarbonato",
+      "u": "g"
+     },
+     {
+      "cant": 9,
+      "ing": "Sal",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Sólidos: intercalar con los líquidos, sin sobrebatir"
+   },
+   {
+    "items": [
+     {
+      "cant": 3387,
+      "ing": "Leche líquida",
+      "u": "ml"
+     },
+     {
+      "cant": 13,
+      "ing": "Vinagre blanco",
+      "u": "ml"
+     },
+     {
+      "cant": 45,
+      "ing": "Colorante en polvo",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Líquidos: intercalar con los sólidos"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 754,
+    "nota": "20 por batch",
+    "producto": "Red velvet 1/4 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1508,
+    "nota": "10 por batch",
+    "producto": "Red velvet 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1886,
+    "nota": "8 por batch · faltan 116 g en el batch",
+    "producto": "Red velvet 1 libra",
+    "u": "g"
+   },
+   {
+    "cant": 3771,
+    "nota": "4 por batch",
+    "producto": "Red velvet 2 libras",
+    "u": "g"
+   }
+  ],
+  "nota": "Se hace el día anterior. Antes de empezar: engrasar los moldes con desmoldante. Pesar en moldes: ¼ lb 750 g · ½ lb 1.500 g · 1 lb 1.900 g · 2 lb 3.300 g. Horneo en dos etapas: 165 °C arriba / 175 °C abajo 55 min, luego 170 °C arriba / 175 °C abajo 32 min. Enfriar 2 horas antes de desmoldar y cortar. Batido total 15.084 g: rinde 10 de ½ libra u 8 de 1 libra.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)",
+   "31/10/2026: batch = 8 tortas de 1 libra (faltan 116 g para completar los 8 moldes)"
+  ]
+ },
+ {
+  "code": "SE-BIZCOCHUELO",
+  "nombre": "Bizcochuelo",
+  "area": "Reposteria",
+  "subgrupo": "Batido",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 7051,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 52,
+      "ing": "Huevos AA",
+      "u": "unid"
+     }
+    ],
+    "titulo": "Paso 1 — Separar claras y yemas. Batir las claras a punto de nieve"
+   },
+   {
+    "items": [
+     {
+      "cant": 2151,
+      "ing": "Azúcar común",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Batir las yemas con el azúcar"
+   },
+   {
+    "items": [
+     {
+      "cant": 1882,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 268,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Integrar con movimientos envolventes y la harina cernida"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 641,
+    "nota": "11 por batch",
+    "producto": "Bizcochuelo 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 881,
+    "nota": "8 por batch",
+    "producto": "Bizcochuelo 1 libra",
+    "u": "g"
+   }
+  ],
+  "nota": "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 75 min. Peso en molde: ½ lb 600 g · 1 lb 800 g. Batido total 7.051 g: rinde 8 moldes.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-CREMA-LIMON",
+  "nombre": "Crema de limón",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 680,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 221,
+      "ing": "Zumo de limón mandarino",
+      "u": "ml"
+     },
+     {
+      "cant": 89,
+      "ing": "Mantequilla",
+      "u": "g"
+     }
+    ],
+    "titulo": "1er paso — 100 °C · 10 minutos · velocidad 3"
+   },
+   {
+    "items": [
+     {
+      "cant": 15,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 221,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 112,
+      "ing": "Huevos (pesados)",
+      "u": "g"
+     }
+    ],
+    "titulo": "2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 30,
+    "producto": "Tarta limón mini",
+    "u": "g"
+   },
+   {
+    "cant": 50,
+    "producto": "Tarta limón indiv.",
+    "u": "g"
+   },
+   {
+    "cant": 680,
+    "producto": "Tarta limón 8-10 porc.",
+    "u": "g"
+   }
+  ],
+  "nota": "⚠⚠ REVISAR LA HOJA ORIGINAL ANTES DE PRODUCIR: los ingredientes suman 658 g pero dice que salen 680 g (imposible: en la cocción se pierde agua). Probablemente falta huevo (tiene mucho menos que la de maracuyá). — Es un curd: zumo y mantequilla primero, huevo blanqueado después; la fécula solo estabiliza. Huevos: pesarlos (112 g ≈ 2 unid). Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "10/10/26",
+  "historial": [
+   "10/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-CREMA-MARACUYA",
+  "nombre": "Crema de maracuyá",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 680,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 189,
+      "ing": "Pulpa de maracuyá sin pepa",
+      "u": "g"
+     },
+     {
+      "cant": 76,
+      "ing": "Mantequilla",
+      "u": "g"
+     }
+    ],
+    "titulo": "1er paso — 100 °C · 10 minutos · velocidad 3"
+   },
+   {
+    "items": [
+     {
+      "cant": 15,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 189,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 291,
+      "ing": "Huevos (pesados)",
+      "u": "g"
+     }
+    ],
+    "titulo": "2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 30,
+    "producto": "Tarta maracuyá mini",
+    "u": "g"
+   },
+   {
+    "cant": 50,
+    "producto": "Tarta maracuyá indiv.",
+    "u": "g"
+   },
+   {
+    "cant": 680,
+    "producto": "Tarta maracuyá 8-10 porc.",
+    "u": "g"
+   }
+  ],
+  "nota": "Es un curd: la pulpa y la mantequilla primero, el huevo blanqueado después; la fécula solo estabiliza. CONTROL: los ingredientes suman 760 g y salen 680 g (se pierde ≈ 10,5 %): el control es el PESO FINAL. Huevos: pesarlos (291 g ≈ 5,3 unid). Un lote de 680 g = 1 tarta grande, 22 mini o 13 individuales. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "10/10/26",
+  "historial": [
+   "10/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-CREMA-PASTELERA",
+  "nombre": "Crema pastelera (base)",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 696,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 565,
+      "ing": "Leche entera",
+      "u": "ml"
+     },
+     {
+      "cant": 34,
+      "ing": "Mantequilla",
+      "u": "g"
+     }
+    ],
+    "titulo": "1er paso — 100 °C · 10 minutos · velocidad 3"
+   },
+   {
+    "items": [
+     {
+      "cant": 130,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 40,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 62,
+      "ing": "Huevos (pesados)",
+      "u": "g"
+     },
+     {
+      "cant": 68,
+      "ing": "Yemas (pesadas)",
+      "u": "g"
+     }
+    ],
+    "titulo": "2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 34.8,
+    "producto": "Profiterol",
+    "u": "g"
+   },
+   {
+    "cant": 49.7,
+    "producto": "Rayo vainilla",
+    "u": "g"
+   },
+   {
+    "cant": 29.8,
+    "producto": "Tarta fresa mini",
+    "u": "g"
+   },
+   {
+    "cant": 29.8,
+    "producto": "Tarta fresa indiv.",
+    "u": "g"
+   },
+   {
+    "cant": 29.8,
+    "producto": "Rayo mini vainilla",
+    "u": "g"
+   },
+   {
+    "cant": 646.3,
+    "producto": "Tarta multifruta 8-10 porc.",
+    "u": "g"
+   },
+   {
+    "cant": 646.3,
+    "producto": "Tarta fresa 8-10 porc.",
+    "u": "g"
+   },
+   {
+    "cant": 984.3,
+    "producto": "Saint-Honoré",
+    "u": "g"
+   },
+   {
+    "cant": 984.3,
+    "producto": "Saint-Honoré PM",
+    "u": "g"
+   },
+   {
+    "cant": 44.4,
+    "producto": "Rayo chocolate",
+    "u": "g"
+   },
+   {
+    "cant": 31.1,
+    "producto": "Rayo mini chocolate",
+    "u": "g"
+   },
+   {
+    "cant": 49.8,
+    "producto": "Rayo café",
+    "u": "g"
+   },
+   {
+    "cant": 34.9,
+    "producto": "Rayo mini café",
+    "u": "g"
+   }
+  ],
+  "nota": "BASE SIN SABORIZAR: no se usa sola. Se hace una vez y se reparte CALIENTE en vainilla, chocolate y café (mira cuánta base lleva cada una en sus tarjetas). Máquina de cocción con cuchilla. CONTROL: los ingredientes suman ≈ 895 g y salen 696 g (se evapora ≈ 22 % de agua en los 25 min): el control es el PESO FINAL, no el tiempo. Huevos y yemas: pesarlos (receta base: 62 g de huevo ≈ 1,1 unid · 68 g de yema ≈ 3,4 yemas). OJO: la crema pastelera de mil hojas NO sale de esta base.",
+  "validada": "10/10/26",
+  "historial": [
+   "10/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-DESMOLDANTE",
+  "nombre": "Desmoldante",
+  "area": "Reposteria",
+  "subgrupo": "Mise en place",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1900,
+  "unidad": "ml",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 600,
+      "ing": "Harina haz de oros",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Fecula de maiz",
+      "u": "g"
+     },
+     {
+      "cant": 1000,
+      "ing": "Aceite vegetal",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: dos dias antes",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "SE-JOCONDA",
+  "nombre": "Joconda (Ópera)",
+  "area": "Reposteria",
+  "subgrupo": "Batido",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 2512,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1080,
+      "ing": "Claras",
+      "u": "g"
+     },
+     {
+      "cant": 0.4,
+      "ing": "Huevos AA",
+      "u": "unid"
+     },
+     {
+      "cant": 130,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 800,
+      "ing": "Azúcar XXX",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Con el globo a velocidad mínima, batir 30 segundos; luego velocidad mínima 13 minutos"
+   },
+   {
+    "items": [
+     {
+      "cant": 360,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Agregar la harina a velocidad mínima, en 4 tandas. Colocar los silpat en las latas, enmantequillar y servir la mezcla"
+   },
+   {
+    "items": [
+     {
+      "cant": 120,
+      "ing": "Maní triturado",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Espolvorear por encima"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 1256,
+    "nota": "2 por batch",
+    "producto": "Joconda x 3 tapas",
+    "u": "g"
+   }
+  ],
+  "nota": "Se hace el día anterior. Horneo: 180 °C arriba / 180 °C abajo, 20 minutos, en 2 hornos — 2 latas por horno, con preferencia latas cuadradas. Rendimiento real: un batch de 2.512 g da 2 latas; de las 2 latas salen 6 capas = 2 óperas (1 lata ≈ 1.256 g = 3 capas ≈ 419 g por capa). Ya fría, cortar las capas con el cortador rectangular y llevar al congelador; para la Ópera se saca a atemperar.",
+  "validada": "08/10/26",
+  "historial": [
+   "08/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-MASA-BOMBA",
+  "nombre": "Masa bomba",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 1057,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 195,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 195,
+      "ing": "Leche entera",
+      "u": "ml"
+     },
+     {
+      "cant": 170,
+      "ing": "Mantequilla",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Azúcar común",
+      "u": "g"
+     }
+    ],
+    "titulo": "1er paso — 7 minutos · 100 °C · velocidad 1"
+   },
+   {
+    "items": [
+     {
+      "cant": 235,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     }
+    ],
+    "titulo": "2do paso — Agregar toda la harina de una vez: 4 minutos · 90 °C · velocidad 4 (se despega de las paredes)"
+   },
+   {
+    "items": [
+     {
+      "cant": 250,
+      "ing": "Huevos a temperatura ambiente (pesados)",
+      "u": "g"
+     }
+    ],
+    "titulo": "3er paso — Reposar 7-8 minutos (que baje la temperatura). 4to paso — Agregar los huevos: 4 minutos · velocidad 4 · sin temperatura"
+   }
+  ],
+  "usos": [],
+  "nota": "Se hace STOCK. Base de los profiteroles, rayos y Saint-Honoré. Los HUEVOS van a TEMPERATURA AMBIENTE y la masa tiene que haber reposado: huevo frío sobre masa caliente = huevo cuajado. Huevos: pesarlos (≈ 250 g = 5 huevos M). Escudillar sobre lata con papel. HORNO: precalentar a 220 °C, 5 minutos a 220 °C y luego bajar a 180 °C por 25 minutos. NO ABRIR EL HORNO antes de esos 25 minutos: se bajan. ⚠ Pesar la masa final una vez y avisarle a Alban (el rinde real es menor que 1.057 g porque se evapora agua).",
+  "validada": "10/10/26",
+  "historial": [
+   "10/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-MERENGUE",
+  "nombre": "Merengue",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 340,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 110,
+      "ing": "Claras",
+      "u": "g"
+     },
+     {
+      "cant": 220,
+      "ing": "Azúcar XXX",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Albúmina",
+      "u": "g"
+     }
+    ],
+    "titulo": "1er paso — 6 minutos · 60 °C · velocidad 4. 2do paso — 8 minutos · velocidad 4, sin temperatura"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 309.1,
+    "producto": "Saint-Honoré",
+    "u": "g"
+   },
+   {
+    "cant": 18.6,
+    "producto": "Tarta limón mini",
+    "u": "g"
+   },
+   {
+    "cant": 34,
+    "producto": "Tarta limón indiv.",
+    "u": "g"
+   },
+   {
+    "cant": 340,
+    "producto": "Tarta limón 8-10 porc.",
+    "u": "g"
+   },
+   {
+    "cant": 247.3,
+    "producto": "Fraisier 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 247.3,
+    "producto": "Fraisier 1/2 libra PM",
+    "u": "g"
+   },
+   {
+    "cant": 340,
+    "producto": "Fraisier - Fresera",
+    "u": "g"
+   },
+   {
+    "cant": 340,
+    "producto": "Fraisier - Fresera PM",
+    "u": "g"
+   },
+   {
+    "cant": 463.6,
+    "producto": "Fraisier 2 Lb",
+    "u": "g"
+   },
+   {
+    "cant": 463.6,
+    "producto": "Fraisier 2 Lb PM",
+    "u": "g"
+   },
+   {
+    "cant": 216.4,
+    "producto": "Rojos y amarillos 1/4lb",
+    "u": "g"
+   },
+   {
+    "cant": 216.4,
+    "producto": "Rojos y amarillos 1/4lb PM",
+    "u": "g"
+   },
+   {
+    "cant": 247.3,
+    "producto": "Rojos amarillos 1/2 lb",
+    "u": "g"
+   },
+   {
+    "cant": 247.3,
+    "producto": "Rojos amarillos 1/2 lb PM",
+    "u": "g"
+   },
+   {
+    "cant": 340,
+    "producto": "Rojos y amarillos",
+    "u": "g"
+   },
+   {
+    "cant": 340,
+    "producto": "Rojos y amarillos PM",
+    "u": "g"
+   },
+   {
+    "cant": 463.6,
+    "producto": "Rojos y amarillos 2 lb",
+    "u": "g"
+   },
+   {
+    "cant": 463.6,
+    "producto": "Rojos y amarillos 2 lb PM",
+    "u": "g"
+   }
+  ],
+  "nota": "⚠ EL VASO DEBE ESTAR IMPECABLE, SIN NADA DE GRASA (si hay grasa no monta). Montar CON PALA. Usar de inmediato. El azúcar es el DOBLE del peso de la clara. Un lote de 340 g = 1 tarta de limón grande. MÁQUINA según la CLARA: menos de 200 g → Yammin o KitchenAid · 200 a 400 g → batidora pequeña · más de 400 g → dividir en varios lotes.",
+  "validada": "10/10/26",
+  "historial": [
+   "10/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-MUSSELINA",
+  "nombre": "Crema musselina",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 1100,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 596,
+      "ing": "Leche entera",
+      "u": "ml"
+     },
+     {
+      "cant": 138,
+      "ing": "Mantequilla",
+      "u": "g"
+     },
+     {
+      "cant": 5,
+      "ing": "Licor de naranja (o Triple Sec)",
+      "u": "ml"
+     },
+     {
+      "cant": 138,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 46,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 151,
+      "ing": "Huevos (pesados)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — 20 segundos · velocidad 7 · sin temperatura"
+   },
+   {
+    "items": [],
+    "titulo": "Paso 2 — 16 minutos · 100 °C · velocidad 4"
+   },
+   {
+    "items": [
+     {
+      "cant": 7,
+      "ing": "Gelatina sin sabor",
+      "u": "g"
+     },
+     {
+      "cant": 28,
+      "ing": "Agua (para hidratar la gelatina)",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 3 — Retirar del fuego; por debajo de 85 °C agregar la gelatina hidratada y mezclar hasta disolver"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 1100,
+    "producto": "Fraisier 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1100,
+    "producto": "Fraisier 1/2 libra PM",
+    "u": "g"
+   },
+   {
+    "cant": 1300,
+    "producto": "Fraisier - Fresera",
+    "u": "g"
+   },
+   {
+    "cant": 1300,
+    "producto": "Fraisier - Fresera PM",
+    "u": "g"
+   },
+   {
+    "cant": 2100,
+    "producto": "Fraisier 2 Lb",
+    "u": "g"
+   },
+   {
+    "cant": 2100,
+    "producto": "Fraisier 2 Lb PM",
+    "u": "g"
+   },
+   {
+    "cant": 600,
+    "producto": "Rojos y amarillos 1/4lb",
+    "u": "g"
+   },
+   {
+    "cant": 600,
+    "producto": "Rojos y amarillos 1/4lb PM",
+    "u": "g"
+   },
+   {
+    "cant": 1100,
+    "producto": "Rojos amarillos 1/2 lb",
+    "u": "g"
+   },
+   {
+    "cant": 1100,
+    "producto": "Rojos amarillos 1/2 lb PM",
+    "u": "g"
+   },
+   {
+    "cant": 1300,
+    "producto": "Rojos y amarillos",
+    "u": "g"
+   },
+   {
+    "cant": 1300,
+    "producto": "Rojos y amarillos PM",
+    "u": "g"
+   },
+   {
+    "cant": 2100,
+    "producto": "Rojos y amarillos 2 lb",
+    "u": "g"
+   },
+   {
+    "cant": 2100,
+    "producto": "Rojos y amarillos 2 lb PM",
+    "u": "g"
+   }
+  ],
+  "nota": "NO sale de la crema pastelera base. Lleva gelatina: es lo que le da cuerpo para montar las tortas. Antes de empezar: hidratar la gelatina en el agua y reservar. La gelatina va AL FINAL, fuera del fuego y por debajo de 85 °C (si se cocina pierde fuerza). Huevos: pesarlos (151 g ≈ 2,8 unid). Un lote de 1.100 g = 1 torta de media libra. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "10/10/26",
+  "historial": [
+   "10/10/26: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-OP-BUTTERCREAM-CAFE",
+  "nombre": "Ópera · Buttercream de café",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 3,
+  "unidad": "reservas",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 900,
+      "ing": "Mantequilla Auralac",
+      "u": "g"
+     },
+     {
+      "cant": 900,
+      "ing": "Azúcar XXX",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Con el escudo, batir hasta integrar"
+   },
+   {
+    "items": [
+     {
+      "cant": 12,
+      "ing": "Café instantáneo",
+      "u": "g"
+     },
+     {
+      "cant": 9.9,
+      "ing": "Agua",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 2 — Disolver el café en el agua e incorporarlo a la buttercream"
+   }
+  ],
+  "usos": [],
+  "nota": "Fórmula ×3 = 1.812 g → 3 reservas de 604 g (una por ópera); cada una se divide en 2 de 302 g, una por relleno. Se hace solo al usar la última reserva de la nevera.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-OP-GANACHE-CHOCO",
+  "nombre": "Ópera · Ganache de chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 3,
+  "unidad": "reservas",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 540,
+      "ing": "Crema de leche",
+      "u": "g"
+     },
+     {
+      "cant": 225,
+      "ing": "Mantequilla Auralac (temperatura ambiente)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — En una olla, calentar a temperatura media"
+   },
+   {
+    "items": [
+     {
+      "cant": 900,
+      "ing": "Chococubierta Canasta",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — A fuego bajo, agregar el chocolate solo hasta derretir"
+   }
+  ],
+  "usos": [],
+  "nota": "Fórmula ×3 = 1.665 g → 3 reservas (una por ópera); cada una: 2 rellenos de 275 g + 30 g para pintar la 3ra capa de joconda. Refrigerar en bolsas con rótulo. Se hace solo al usar la última reserva de la nevera.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-OP-GLACE-CHOCO",
+  "nombre": "Ópera · Glace de chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 3,
+  "unidad": "reservas",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 69,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 18,
+      "ing": "Gelatina sin sabor",
+      "u": "g"
+     }
+    ],
+    "titulo": "Hidratar — la gelatina en el agua, y reservar"
+   },
+   {
+    "items": [
+     {
+      "cant": 90,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 270,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 360,
+      "ing": "Crema de leche",
+      "u": "g"
+     },
+     {
+      "cant": 40.5,
+      "ing": "Cocoa",
+      "u": "g"
+     }
+    ],
+    "titulo": "Cocción — hervir agua + azúcar; a fuego bajo incorporar crema y cocoa con el globo. Retirar y agregar enseguida la gelatina hidratada"
+   }
+  ],
+  "usos": [],
+  "nota": "Fórmula ×3 = 847,5 g → 3 reservas en bolsas pequeñas con rótulo. Al usarla: calentar una reserva y ponerla en tibio (brillo espejo). Se hace solo al usar la última reserva de la nevera.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-OP-JARABE-CAFE",
+  "nombre": "Ópera · Jarabe de café",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 3,
+  "unidad": "reservas",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 150,
+      "ing": "Agua",
+      "u": "ml"
+     },
+     {
+      "cant": 24,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 4.5,
+      "ing": "Café instantáneo (6 cucharaditas)",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Llevar a ebullición sin dejar de mezclar"
+   }
+  ],
+  "usos": [],
+  "nota": "Fórmula ×3 = 178,5 g → 3 reservas de 59,5 g (una por ópera); cada reserva se divide en 3, una por capa de joconda. Se hace solo al usar la última reserva de la nevera.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-PASTELERA-CAFE",
+  "nombre": "Crema pastelera de café",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 500,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 498,
+      "ing": "Crema pastelera base",
+      "u": "g"
+     }
+    ],
+    "titulo": "Tomar la parte de crema pastelera BASE, todavía caliente"
+   },
+   {
+    "items": [
+     {
+      "cant": 2.15,
+      "ing": "Café instantáneo",
+      "u": "g"
+     }
+    ],
+    "titulo": "Agregar y mezclar hasta que se disuelva por completo"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 50,
+    "producto": "Rayo café",
+    "u": "g"
+   },
+   {
+    "cant": 35,
+    "producto": "Rayo mini café",
+    "u": "g"
+   }
+  ],
+  "nota": "Sale de la crema pastelera base. El café va en la base CALIENTE para que se disuelva sin grumos. Un lote de 500 g alcanza para 10 rayos o 14 rayos mini. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-PASTELERA-CHOCOLATE",
+  "nombre": "Crema pastelera de chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 500,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 444,
+      "ing": "Crema pastelera base",
+      "u": "g"
+     }
+    ],
+    "titulo": "Tomar la parte de crema pastelera BASE, todavía caliente"
+   },
+   {
+    "items": [
+     {
+      "cant": 56,
+      "ing": "Chocolate semiamargo 43 % en bloque",
+      "u": "g"
+     }
+    ],
+    "titulo": "Picar el chocolate y agregarlo a la base caliente; mezclar hasta que se derrita"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 50,
+    "producto": "Rayo chocolate",
+    "u": "g"
+   },
+   {
+    "cant": 35,
+    "producto": "Rayo mini chocolate",
+    "u": "g"
+   }
+  ],
+  "nota": "Sale de la crema pastelera base, recién hecha y caliente. Mezclar hasta que el chocolate se derrita por completo y quede homogénea y brillante. Un lote de 500 g alcanza para 10 rayos o 14 rayos mini. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-PASTELERA-MILHOJAS",
+  "nombre": "Crema pastelera mil hojas",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 200,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 147,
+      "ing": "Leche entera",
+      "u": "ml"
+     },
+     {
+      "cant": 9,
+      "ing": "Mantequilla",
+      "u": "g"
+     }
+    ],
+    "titulo": "1er paso — 100 °C · 10 minutos · velocidad 3"
+   },
+   {
+    "items": [
+     {
+      "cant": 34,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 10,
+      "ing": "Fécula de maíz",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Harina Haz de Oros",
+      "u": "g"
+     },
+     {
+      "cant": 17,
+      "ing": "Huevos (pesados)",
+      "u": "g"
+     },
+     {
+      "cant": 6,
+      "ing": "Yemas (pesadas)",
+      "u": "g"
+     }
+    ],
+    "titulo": "2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3"
+   },
+   {
+    "items": [
+     {
+      "cant": 0.9,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Al final — fuera del fuego. ⚠ NO OLVIDAR LA ESENCIA"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 100,
+    "producto": "Mil hojas 10 x 4,5 Arequipe",
+    "u": "g"
+   },
+   {
+    "cant": 50,
+    "producto": "Mil hojas 4,5x4,5 Arequipe",
+    "u": "g"
+   }
+  ],
+  "nota": "NO sale de la crema pastelera base: lleva HARINA y mucho menos huevo, para que quede firme y aguante el corte del mil hojas. CONTROL: los ingredientes suman ≈ 228 g y salen 200 g (se evapora ≈ 12 %): el control es el PESO FINAL. Huevos y yemas: pesarlos (receta base: 17 g de huevo ≈ 0,3 unid · 6 g de yema ≈ 0,3 yema). Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-PASTELERA-VAINILLA",
+  "nombre": "Crema pastelera de vainilla",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 700,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 696,
+      "ing": "Crema pastelera base",
+      "u": "g"
+     }
+    ],
+    "titulo": "Tomar la parte de crema pastelera BASE, todavía caliente"
+   },
+   {
+    "items": [
+     {
+      "cant": 4.4,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Al final — fuera del fuego. ⚠ NO OLVIDAR LA ESENCIA"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 35,
+    "producto": "Profiterol",
+    "u": "g"
+   },
+   {
+    "cant": 50,
+    "producto": "Rayo vainilla",
+    "u": "g"
+   },
+   {
+    "cant": 30,
+    "producto": "Tarta fresa mini",
+    "u": "g"
+   },
+   {
+    "cant": 30,
+    "producto": "Tarta fresa indiv.",
+    "u": "g"
+   },
+   {
+    "cant": 30,
+    "producto": "Rayo mini vainilla",
+    "u": "g"
+   },
+   {
+    "cant": 650,
+    "producto": "Tarta multifruta 8-10 porc.",
+    "u": "g"
+   },
+   {
+    "cant": 650,
+    "producto": "Tarta fresa 8-10 porc.",
+    "u": "g"
+   },
+   {
+    "cant": 990,
+    "producto": "Saint-Honoré",
+    "u": "g"
+   },
+   {
+    "cant": 990,
+    "producto": "Saint-Honoré PM",
+    "u": "g"
+   }
+  ],
+  "nota": "Sale de la crema pastelera base. Un lote de 700 g alcanza para 20 profiteroles, 14 rayos de vainilla o 1 tarta grande. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "SE-RELLENO-CHOCO",
+  "nombre": "Relleno chocolate",
+  "area": "Panaderia",
+  "subgrupo": "Panaderia",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 7200,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1300,
+      "ing": "Chocolate semiamargo 43 %",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Derretir el chocolate a baño maría"
+   },
+   {
+    "items": [
+     {
+      "cant": 250,
+      "ing": "Azúcar XXX",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Cocoa",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Con el chocolate derretido, integrar muy bien"
+   },
+   {
+    "items": [
+     {
+      "cant": 4250,
+      "ing": "Crema de avellanas",
+      "u": "g"
+     },
+     {
+      "cant": 1100,
+      "ing": "Hazelnut spread",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 3 — Adicionar alternando una a una e integrar hasta crema homogénea"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 40,
+    "producto": "Nevera · Croissant chocolate",
+    "u": "g"
+   },
+   {
+    "cant": 40,
+    "producto": "Congelador · Croissant chocolate *C*",
+    "u": "g"
+   },
+   {
+    "cant": 20,
+    "producto": "Nevera · Croiss. mini chocolate",
+    "u": "g"
+   },
+   {
+    "cant": 20,
+    "producto": "Congelador · Croiss. mini Chocolate *C*",
+    "u": "g"
+   }
+  ],
+  "nota": "Se prepara el día anterior. Armar el croissant con el relleno frío (sin congelarlo aparte), dejándolo a 1 cm de las puntas y sellando bien el borde. Si se fuga, el problema es el sellado, no la fórmula.",
+  "validada": "18/09/26",
+  "historial": [
+   "18/09/26: aprobada (recuperada de Producción)",
+   "05/11/2026: área confirmada por Alban (Panaderia)"
+  ]
+ },
+ {
+  "code": "SE-SALSA-NAPOLITANA",
+  "nombre": "Salsa napolitana (lasaña)",
+  "area": "Marzzana",
+  "subgrupo": "Comida de sal",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 1330,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 900,
+      "ing": "Tomate pelado",
+      "u": "g"
+     }
+    ],
+    "titulo": "Pasos 1 y 3 — Pelar y despepar con agua caliente; se agregan en cuartos después del salteado"
+   },
+   {
+    "items": [
+     {
+      "cant": 70,
+      "ing": "Pimentón rojo",
+      "u": "g"
+     },
+     {
+      "cant": 70,
+      "ing": "Cebolla blanca",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Saltear en cubos grandes"
+   },
+   {
+    "items": [
+     {
+      "cant": 30,
+      "ing": "Azúcar común",
+      "u": "g"
+     },
+     {
+      "cant": 160,
+      "ing": "Agua (del escaldado)",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 4 — Con el orégano y la sal; cocinar 5 minutos"
+   },
+   {
+    "items": [
+     {
+      "cant": 100,
+      "ing": "Pasta de tomate",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 4 — Al final, hasta lograr el color. Retirar y licuar con la licuadora invertida"
+   },
+   {
+    "items": [
+     {
+      "cant": 0,
+      "ing": "Orégano",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 0,
+      "ing": "Pimienta",
+      "u": "g"
+     }
+    ],
+    "titulo": "Va en el paso 4"
+   }
+  ],
+  "usos": [],
+  "nota": "Solo para lasaña de carne. Se hace 2 días antes. Sin albahaca (cocida y congelada se oscurece). Enfriar, poner en moldes de silicona grandes y congelar. Escribe arriba cuánto tomate pelado tienes y la fórmula se calcula sola. ⚠ Falta el peso final después de cocinar y licuar. Cuando se sepan los gramos por lasaña, el stock bajará solo al chulear las lasañas de carne.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)",
+   "05/11/2026: área confirmada por Alban (Marzzana)"
+  ]
+ },
+ {
+  "code": "SE-SALSA-PIZZA",
+  "nombre": "Salsa de pizza (La Marzzana)",
+  "area": "Marzzana",
+  "subgrupo": "Marzzana",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 1030,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1000,
+      "ing": "Tomate pelado",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Triturar a mano o con la licuadora a pulsos cortos. NO licuar liso: que quede con pedazos"
+   },
+   {
+    "items": [
+     {
+      "cant": 10,
+      "ing": "Sal",
+      "u": "g"
+     },
+     {
+      "cant": 20,
+      "ing": "Tomate seco en polvo",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 2 — Agregar y mezclar bien. Reposar 10 minutos, volver a mezclar y probar. Refrigerar"
+   }
+  ],
+  "usos": [],
+  "nota": "Para La Marzzana. Salsa CRUDA: NO cocinar; NO lleva azúcar, pasta de tomate, cebolla ni pimentón. Dura 2-3 días en nevera; NO congelar. El tomate seco en polvo arranca en 2 % (20 g por kilo de tomate pelado): si sabe a tomate secado al sol, bajarlo; si el color sigue pálido, subirlo hasta 3 %. Sal 1 % del tomate, ajustar al gusto. Albahaca en hoja fresca y aceite de oliva van sobre la pizza, nunca en la salsa.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)",
+   "05/11/2026: área confirmada por Alban (Marzzana)"
+  ]
+ },
+ {
+  "code": "SE-TOMATE-PELADO",
+  "nombre": "Tomate pelado",
+  "area": "Marzzana",
+  "subgrupo": "Comida de sal",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 490,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 854,
+      "ing": "Tomate crudo",
+      "u": "g"
+     }
+    ],
+    "titulo": "Calentar agua. Marcar una cruz en la base y escaldar 20-30 s; pasar a agua fría. Quitar la piel y despepar"
+   }
+  ],
+  "usos": [],
+  "nota": "Rendimiento: 854 g de tomate (8 unidades) = 490 g sin piel ni pepa (merma 43 %). Por cada 1 kg de tomate pelado que se necesite, comprar 1,75 kg de tomate crudo. GUARDAR el agua de escaldar: se usa en la salsa cocida y en la crema de tomate.",
+  "validada": "",
+  "historial": [
+   "antes de oct-2026: aprobada (recuperada de Producción)",
+   "05/11/2026: área confirmada por Alban (Marzzana)"
+  ]
+ },
+ {
+  "code": "SE-TOP-QUESO",
+  "nombre": "Topping",
+  "area": "Reposteria",
+  "subgrupo": "Topping",
+  "estado": "confirmada",
+  "duda_area": "",
+  "rinde": 1000,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 66,
+      "ing": "Mantequilla",
+      "u": "g"
+     },
+     {
+      "cant": 66,
+      "ing": "Margarina",
+      "u": "g"
+     },
+     {
+      "cant": 219,
+      "ing": "Azúcar XXX",
+      "u": "g"
+     }
+    ],
+    "titulo": "Paso 1 — Cremar mantequilla + margarina + azúcar XXX"
+   },
+   {
+    "items": [
+     {
+      "cant": 645,
+      "ing": "Queso crema",
+      "u": "g"
+     },
+     {
+      "cant": 4,
+      "ing": "Esencia de vainilla",
+      "u": "ml"
+     }
+    ],
+    "titulo": "Paso 2 — Incorporar queso crema y vainilla; batir hasta liso"
+   }
+  ],
+  "usos": [
+   {
+    "cant": 700,
+    "producto": "Red velvet 1/4 libra",
+    "u": "g"
+   },
+   {
+    "cant": 900,
+    "producto": "Red velvet 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 1100,
+    "producto": "Red velvet 1/2 libra doble topping",
+    "u": "g"
+   },
+   {
+    "cant": 1100,
+    "producto": "Red velvet 1 libra",
+    "u": "g"
+   },
+   {
+    "cant": 2200,
+    "producto": "Red velvet 1 libra doble topping",
+    "u": "g"
+   },
+   {
+    "cant": 2200,
+    "producto": "Red velvet 2 libras",
+    "u": "g"
+   },
+   {
+    "cant": 100,
+    "producto": "Zanahoria 1/4 libra",
+    "u": "g"
+   },
+   {
+    "cant": 200,
+    "producto": "Zanahoria 1/2 libra",
+    "u": "g"
+   },
+   {
+    "cant": 300,
+    "producto": "Zanahoria 1 libra",
+    "u": "g"
+   },
+   {
+    "cant": 825,
+    "producto": "Tres leches Milo PM",
+    "u": "g"
+   },
+   {
+    "cant": 825,
+    "producto": "Tres leches Milo",
+    "u": "g"
+   },
+   {
+    "cant": 825,
+    "producto": "Tres leches Arequipe PM",
+    "u": "g"
+   },
+   {
+    "cant": 825,
+    "producto": "Tres leches Arequipe",
+    "u": "g"
+   },
+   {
+    "cant": 825,
+    "producto": "Tres leches arequipe PM",
+    "u": "g"
+   },
+   {
+    "cant": 825,
+    "producto": "Tres leches arequipe",
+    "u": "g"
+   },
+   {
+    "cant": 30,
+    "producto": "Red velvet Mini",
+    "u": "g"
+   },
+   {
+    "cant": 33,
+    "producto": "Parfait de frutas",
+    "u": "g"
+   },
+   {
+    "cant": 33,
+    "producto": "Parfait de frutas *V*",
+    "u": "g"
+   }
+  ],
+  "nota": "",
+  "validada": "2026-09-13",
+  "historial": [
+   "2026-09-13: aprobada (recuperada de Producción)"
+  ]
+ },
+ {
+  "code": "ZAN-05LB",
+  "nombre": "Torta de Zanahoria 1/2 lb",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1300,
+      "ing": "Batido de Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 200,
+      "ing": "Topping de Queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ },
+ {
+  "code": "ZAN-1LB",
+  "nombre": "Torta de Zanahoria 1 lb",
+  "area": "Reposteria",
+  "subgrupo": "Reposteria",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "items": [
+     {
+      "cant": 1600,
+      "ing": "Batido de Zanahoria",
+      "u": "g"
+     },
+     {
+      "cant": 300,
+      "ing": "Topping de Queso crema",
+      "u": "g"
+     }
+    ],
+    "titulo": "Ingredientes"
+   }
+  ],
+  "usos": [],
+  "nota": "Cuándo: dia anterior",
+  "validada": "",
+  "historial": [
+   "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
+  ]
+ }
+]
