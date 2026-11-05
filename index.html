@@ -2960,6 +2960,10 @@ function bkAdminEl(){
 var ENS_AREAS = {Panaderia:"Panadería", Reposteria:"Repostería", "Comida de sal":"Comida de sal", Marzzana:"La Marzzana"};
 // Alban 5 nov: el admin elige área y subcategoría de cada fórmula (estado/RECETARIO_AJUSTES = {aj:{code:{area,sub}}})
 var ENS_AJ = {};
+var ENS_Q = "";   // Alban 5 nov: búsqueda del recetario (también la usa el buscador de arriba de Fórmulas)
+function ensPalabras(t){ return normTxt(t).split(/\s+/).filter(Boolean); }
+function ensCoincide(f, ws){ const t = normTxt([f.nombre, f.code, f.subgrupo, ENS_AREAS[f.area] || f.area, ...(f.pasos || []).flatMap(p => (p.items || []).map(i => i.ing))].join(" ")); return ws.every(w => t.includes(w) || t.includes(w.replace(/e?s$/, ""))); }
+function ensCuenta(){ const ws = ensPalabras(ENS_Q); if(!ENS_REC || !ws.length) return 0; const ar = ensAreasFam(); return ENS_REC.filter(f => ar.includes(f.area) && ensCoincide(f, ws)).length; }
 var ENS_SUBS = {Panaderia: ["Panes", "Croissant y hojaldre", "Rellenos", "Rellenos hojaldre", "Pasabocas"],
   Reposteria: ["Dulcería", "Galletas", "Tartas", "Tortas", "Batido", "Topping & Cremas", "Mise en place"],
   "Comida de sal": ["Rellenos hojaldre", "Plato fuerte", "Componente de plato", "Salsas y bases", "Quiche", "Sándwich & wraps", "Pasabocas", "Bebida"],
@@ -3047,14 +3051,16 @@ function ensSeccionEl(){
     if(!ENS_REC){ box.innerHTML = `<div style="padding:13px 16px;font-size:0.9rem;color:${C.inkSoft};">🧪 Cargando el recetario…</div>`; return; }
     const lista = ENS_REC.filter(f => areas.includes(f.area)).slice().sort((x, y) => (ensSub(x) || "~").localeCompare(ensSub(y) || "~", "es") || x.nombre.localeCompare(y.nombre, "es"));   // agrupadas por subcategoría
     const grupos = {por_ensayar: [], por_aprobar: [], confirmada: []};
-    lista.forEach(f => (grupos[ensEstado(f)] || grupos.por_ensayar).push(f));
+    const qw = ensPalabras(ENS_Q);
+    (qw.length ? lista.filter(f => ensCoincide(f, qw)) : lista).forEach(f => (grupos[ensEstado(f)] || grupos.por_ensayar).push(f));
     const k = areas.join("|"); if(ENS_ABIERTO[k] == null) ENS_ABIERTO[k] = grupos.por_ensayar.length > 0;
+    if(qw.length) ENS_ABIERTO[k] = true;
     const platos = lista.filter(f => f.tipo === "plato");
     const item = f => { const s = ENS_EST[f.code] || {}, est = ensEstado(f);
       return `<button type="button" data-ens="${escH(f.code)}" style="text-align:left;font-family:'Work Sans',sans-serif;background:#fff;border:1.5px solid ${C.line};border-radius:12px;padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <span style="display:flex;flex-direction:column;gap:2px;min-width:0;"><span style="font-weight:700;font-size:0.98rem;color:${C.ink};">${f.tipo === "plato" ? "🍽️ " : ""}${escH(f.nombre)}</span>
         <span style="font-size:0.75rem;color:${C.inkSoft};">${areas.length > 1 ? escH(ENS_AREAS[f.area] || f.area) + " · " : ""}${escH(ensSub(f))}${est === "por_ensayar" && s.comentario ? ` · <b style="color:#A3252B;">↩ Alban: ${escH(s.comentario)}</b>` : ""}</span></span>${ensTag(est)}</button>`; };
-    const sec = (t, l, key) => { if(!l.length) return ""; const ab = ENS_GRUPO[k + key] != null ? ENS_GRUPO[k + key] : key !== "confirmada";
+    const sec = (t, l, key) => { if(!l.length) return ""; const ab = qw.length ? true : ENS_GRUPO[k + key] != null ? ENS_GRUPO[k + key] : key !== "confirmada";
       return `<div style="margin-top:12px;"><button type="button" data-grp="${key}" style="background:none;border:none;padding:4px 0;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${C.inkSoft};cursor:pointer;">${ab ? "▾" : "▸"} ${t} (${l.length})</button>
         ${ab ? `<div style="display:grid;gap:8px;margin-top:6px;">${l.map(item).join("")}</div>` : ""}</div>`; };
     box.innerHTML = `<div class="ens-h" style="padding:13px 16px;background:#FBE6E4;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">
@@ -3063,23 +3069,20 @@ function ensSeccionEl(){
         <span style="font-size:1.1rem;color:#A3252B;font-weight:700;">${ENS_ABIERTO[k] ? "▾" : "▸"}</span></div>
       ${ENS_ABIERTO[k] ? `<div style="padding:4px 14px 14px;">
         <div style="font-size:0.84rem;color:${C.inkSoft};margin-top:8px;line-height:1.45;">Cada fórmula nueva llega <b>por ensayar</b>: hazla, anota lo que pasó y envíala. Alban la aprueba y queda <b>confirmada</b>.</div>
-        <input type="search" class="ens-q" placeholder="🔎 Buscar en el recetario…" style="margin-top:10px;width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 13px;border:1.5px solid ${C.line};border-radius:12px;">
+        <input type="search" class="ens-q" value="${escH(ENS_Q)}" placeholder="🔎 Buscar en el recetario…" style="margin-top:10px;width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 13px;border:1.5px solid ${C.line};border-radius:12px;">
         ${platos.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">${platos.map(p => `<button type="button" data-armar="${escH(p.code)}" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;background:#2E7D4F;color:#fff;border:none;border-radius:100px;padding:9px 14px;cursor:pointer;">🍽️ Armar pedido: ${escH(p.nombre)}</button>`).join("")}</div>` : ""}
-        <div class="ens-lst">${sec("Por ensayar", grupos.por_ensayar, "por_ensayar")}${sec("Por aprobar", grupos.por_aprobar, "por_aprobar")}${sec("Confirmadas", grupos.confirmada, "confirmada")}</div>
+        <div class="ens-lst">${qw.length && !grupos.por_ensayar.length && !grupos.por_aprobar.length && !grupos.confirmada.length ? `<div style="padding:12px 2px;color:${C.inkSoft};font-style:italic;">Nada en el recetario con “${escH(ENS_Q)}”.</div>` : ""}${sec("Por ensayar", grupos.por_ensayar, "por_ensayar")}${sec("Por aprobar", grupos.por_aprobar, "por_aprobar")}${sec("Confirmadas", grupos.confirmada, "confirmada")}</div>
       </div>` : ""}`;
     box.querySelector(".ens-h").onclick = () => { ENS_ABIERTO[k] = !ENS_ABIERTO[k]; pintar(); };
     box.querySelectorAll("[data-grp]").forEach(b => b.onclick = () => { const key = b.dataset.grp, cur = ENS_GRUPO[k + key] != null ? ENS_GRUPO[k + key] : key !== "confirmada"; ENS_GRUPO[k + key] = !cur; pintar(); });
     box.querySelectorAll("[data-ens]").forEach(b => b.onclick = () => ensAbrir(ENS_REC.find(f => f.code === b.dataset.ens)));
     box.querySelectorAll("[data-armar]").forEach(b => b.onclick = () => ensArmar(ENS_REC.find(f => f.code === b.dataset.armar)));
     const q = box.querySelector(".ens-q");
-    if(q) q.oninput = () => { const t = normTxt(q.value);
-      box.querySelectorAll("[data-ens]").forEach(b => { const f = ENS_REC.find(x => x.code === b.dataset.ens);
-        const txt = normTxt([f.nombre, f.code, f.subgrupo, ...(f.pasos || []).flatMap(p => (p.items || []).map(i => i.ing))].join(" "));
-        b.style.display = !t || txt.includes(t) ? "flex" : "none"; }); };
+    if(q) q.oninput = () => { ENS_Q = q.value; pintar(); const n = box.querySelector(".ens-q"); if(n){ n.focus(); try{ n.setSelectionRange(n.value.length, n.value.length); }catch(e){} } };
   };
   box._pintar = pintar;
   pintar();
-  ensCargar().then(() => { if(box.isConnected) pintar(); });
+  ensCargar().then(() => { if(box.isConnected) pintar(); const no = document.getElementById("form-none"); if(no && ensCuenta()) no.style.display = "none"; });
   return box;
 }
 function ensRepintar(){ const b = document.getElementById("ens-sec"); if(b && b._pintar) b._pintar(); }
@@ -3567,8 +3570,9 @@ function renderFormulas(){
   const filtrar = ()=>{
     const words = normTxt(FORM_Q).split(/\s+/).filter(Boolean);
     let n = 0;
-    cards.forEach(c=>{ const ok = words.every(w=>c.dataset.search.includes(w)); c.style.display = ok ? "block" : "none"; if(ok) n++; });
-    if(none) none.style.display = n ? "none" : "block";
+    cards.forEach(c=>{ const ok = words.every(w=>c.dataset.search.includes(w) || c.dataset.search.includes(w.replace(/e?s$/, ""))); c.style.display = ok ? "block" : "none"; if(ok) n++; });
+    if(typeof ensRepintar === "function"){ ENS_Q = FORM_Q; ensRepintar(); }   // Alban 5 nov: el buscador de arriba también busca en el recetario
+    if(none) none.style.display = n || (typeof ensCuenta === "function" && ensCuenta()) ? "none" : "block";
   };
   if(q){ q.value = FORM_Q; q.oninput = ()=>{ FORM_Q = q.value; filtrar(); }; }
   filtrar();
