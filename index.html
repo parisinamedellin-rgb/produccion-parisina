@@ -2958,6 +2958,21 @@ function bkAdminEl(){
 // El operador hace el ensayo con el dedo; se envía al programa de planillas (PLAN_API, tipo "ensayo") → correo a parisina.medellin.
 // Sin internet: queda en la tablet (localStorage "ens_cola") y se reenvía solo.
 var ENS_AREAS = {Panaderia:"Panadería", Reposteria:"Repostería", "Comida de sal":"Comida de sal", Marzzana:"La Marzzana"};
+// Alban 5 nov: el admin elige área y subcategoría de cada fórmula (estado/RECETARIO_AJUSTES = {aj:{code:{area,sub}}})
+var ENS_AJ = {};
+var ENS_SUBS = {Panaderia: ["Panes", "Croissant y hojaldre", "Rellenos", "Pasabocas"],
+  Reposteria: ["Dulcería", "Galletas", "Tartas", "Tortas", "Batido", "Topping & Cremas", "Mise en place"],
+  "Comida de sal": ["Plato fuerte", "Componente de plato", "Salsas y bases", "Quiche", "Sándwich & wraps", "Pasabocas", "Bebida"],
+  Marzzana: ["Pizza", "Salsas y bases"]};
+function ensEsAdmin(){ try{ if(typeof planYo === "function" && (planYo() || {}).admin) return true; }catch(e){} try{ if(ADM) return true; }catch(e){} return false; }
+function ensAplicarAj(){ (ENS_REC || []).forEach(f => { const a = ENS_AJ[f.code]; if(!a) return; if(a.area) f.area = a.area; if(a.sub != null) f.subgrupo = a.sub; }); }
+function ensSub(f){ const s = f.subgrupo || ""; return ENS_AREAS[s] || /^(Panaderia|Reposteria|Comida de sal|Marzzana)$/.test(s) ? "" : s; }
+async function ensGuardarAj(code, cambio){
+  ENS_AJ[code] = Object.assign({}, ENS_AJ[code] || {}, cambio); ensAplicarAj();
+  try{ if(DB){ let cur = {}; try{ const g = await DB.doc("estado/RECETARIO_AJUSTES").get(); cur = (g.exists && g.data() && g.data().aj) || {}; }catch(e){}
+    cur[code] = ENS_AJ[code]; ENS_AJ = Object.assign(cur, ENS_AJ); await DB.doc("estado/RECETARIO_AJUSTES").set({aj: cur}); return true; } }catch(e){}
+  alert("No se pudo guardar. Revisa internet."); return false;
+}
 var ENS_REC = null, ENS_EST = {}, ENS_CARGA = null, ENS_T = 0, ENS_ABIERTO = {}, ENS_GRUPO = {};
 function ensApi(){ try{ return PLAN_API; }catch(e){ return ""; } }
 function ensPersonal(){ try{ return PERSONAL; }catch(e){ return []; } }
@@ -2972,6 +2987,8 @@ function ensCargar(forzar){
   ENS_CARGA = (async () => {
     try{ const r = await fetch("formulas_recetario.json?t=" + Date.now(), {cache: "no-store"}); if(r.ok){ ENS_REC = await r.json(); try{ localStorage.setItem("ens_rec_cache", JSON.stringify(ENS_REC)); }catch(e){} } }catch(e){}
     if(!ENS_REC){ try{ ENS_REC = JSON.parse(localStorage.getItem("ens_rec_cache") || "null"); }catch(e){} }
+    try{ if(DB){ const g = await DB.doc("estado/RECETARIO_AJUSTES").get(); if(g.exists && g.data() && g.data().aj) ENS_AJ = g.data().aj; } }catch(e){}
+    ensAplicarAj();
     const api = ensApi();
     if(api){ try{ const r = await fetch(api + "?estados=1&t=" + Date.now(), {credentials: "omit"}); const j = await r.json(); if(j && j.ok){ ENS_EST = j.estados || {}; lsSet("ens_est_cache", JSON.stringify(ENS_EST)); } }
       catch(e){ try{ ENS_EST = JSON.parse(lsGet("ens_est_cache") || "{}"); }catch(x){} } }
@@ -3024,7 +3041,7 @@ function ensSeccionEl(){
   box.setAttribute("style", `margin-top:14px;background:${C.paper};border:1.5px solid #A3252B;border-radius:14px;overflow:hidden;`);
   const pintar = () => {
     if(!ENS_REC){ box.innerHTML = `<div style="padding:13px 16px;font-size:0.9rem;color:${C.inkSoft};">🧪 Cargando el recetario…</div>`; return; }
-    const lista = ENS_REC.filter(f => areas.includes(f.area));
+    const lista = ENS_REC.filter(f => areas.includes(f.area)).slice().sort((x, y) => (ensSub(x) || "~").localeCompare(ensSub(y) || "~", "es") || x.nombre.localeCompare(y.nombre, "es"));   // agrupadas por subcategoría
     const grupos = {por_ensayar: [], por_aprobar: [], confirmada: []};
     lista.forEach(f => (grupos[ensEstado(f)] || grupos.por_ensayar).push(f));
     const k = areas.join("|"); if(ENS_ABIERTO[k] == null) ENS_ABIERTO[k] = grupos.por_ensayar.length > 0;
@@ -3032,7 +3049,7 @@ function ensSeccionEl(){
     const item = f => { const s = ENS_EST[f.code] || {}, est = ensEstado(f);
       return `<button type="button" data-ens="${escH(f.code)}" style="text-align:left;font-family:'Work Sans',sans-serif;background:#fff;border:1.5px solid ${C.line};border-radius:12px;padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;">
         <span style="display:flex;flex-direction:column;gap:2px;min-width:0;"><span style="font-weight:700;font-size:0.98rem;color:${C.ink};">${f.tipo === "plato" ? "🍽️ " : ""}${escH(f.nombre)}</span>
-        <span style="font-size:0.75rem;color:${C.inkSoft};">${areas.length > 1 ? escH(ENS_AREAS[f.area] || f.area) + " · " : ""}${escH(f.subgrupo || "")}${est === "por_ensayar" && s.comentario ? ` · <b style="color:#A3252B;">↩ Alban: ${escH(s.comentario)}</b>` : ""}</span></span>${ensTag(est)}</button>`; };
+        <span style="font-size:0.75rem;color:${C.inkSoft};">${areas.length > 1 ? escH(ENS_AREAS[f.area] || f.area) + " · " : ""}${escH(ensSub(f))}${est === "por_ensayar" && s.comentario ? ` · <b style="color:#A3252B;">↩ Alban: ${escH(s.comentario)}</b>` : ""}</span></span>${ensTag(est)}</button>`; };
     const sec = (t, l, key) => { if(!l.length) return ""; const ab = ENS_GRUPO[k + key] != null ? ENS_GRUPO[k + key] : key !== "confirmada";
       return `<div style="margin-top:12px;"><button type="button" data-grp="${key}" style="background:none;border:none;padding:4px 0;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${C.inkSoft};cursor:pointer;">${ab ? "▾" : "▸"} ${t} (${l.length})</button>
         ${ab ? `<div style="display:grid;gap:8px;margin-top:6px;">${l.map(item).join("")}</div>` : ""}</div>`; };
@@ -3090,7 +3107,10 @@ function ensAbrir(f0){
   const pintar = () => {
     cont.innerHTML = `${ensBtnCerrar()}
       <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.45rem;margin:14px 0 4px;">${f.tipo === "plato" ? "🍽️ " : ""}${escH(f.nombre)}</h2>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.82rem;color:${C.inkSoft};">${ensTag(est)} <span style="font-family:'IBM Plex Mono',monospace;">${escH(f.code)}</span> · ${escH(ENS_AREAS[f.area] || f.area)}${f.subgrupo ? " · " + escH(f.subgrupo) : ""}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.82rem;color:${C.inkSoft};">${ensTag(est)} <span style="font-family:'IBM Plex Mono',monospace;">${escH(f.code)}</span> · ${escH(ENS_AREAS[f.area] || f.area)}${ensSub(f) ? " · " + escH(ensSub(f)) : ""}</div>
+      ${ensEsAdmin() ? `<div style="margin-top:12px;background:#fff;border:1.5px dashed ${C.line};border-radius:12px;padding:10px 12px;"><div style="font-size:0.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:${C.inkSoft};">⚙️ Área (solo admin)</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${Object.keys(ENS_AREAS).map(a => `<button type="button" data-aa="${escH(a)}" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;padding:8px 12px;border-radius:100px;border:1.5px solid ${C.ink};background:${f0.area === a ? C.ink : "#fff"};color:${f0.area === a ? C.bg : C.ink};cursor:pointer;">${escH(ENS_AREAS[a])}</button>`).join("")}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">${(ENS_SUBS[f0.area] || []).map(x => `<button type="button" data-as="${escH(x)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;padding:6px 11px;border-radius:100px;border:1.5px solid ${C.line};background:${ensSub(f0) === x ? "#2E7D4F" : "#fff"};color:${ensSub(f0) === x ? "#fff" : C.ink};cursor:pointer;">${escH(x)}</button>`).join("")}</div></div>` : ""}
       ${est === "por_ensayar" && s.comentario ? `<div style="margin-top:10px;background:#FBE6E4;border:1.5px solid #A3252B;border-radius:12px;padding:10px 12px;font-size:0.92rem;">↩ <b>Alban:</b> ${escH(s.comentario)}</div>` : ""}
       ${est === "por_ensayar" ? `<button type="button" class="ens-hacer" style="margin-top:14px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.15rem;font-weight:700;background:#A3252B;color:#fff;border:none;border-radius:14px;padding:16px;cursor:pointer;">🧪 Hacer ensayo</button>` : ""}
       ${est === "por_aprobar" ? `<div style="margin-top:14px;background:#FFF1D6;border:1.5px solid #9A6212;border-radius:12px;padding:12px;font-size:0.95rem;">⏳ Ensayo enviado. <b>Alban lo revisa.</b></div>` : ""}
@@ -3106,6 +3126,8 @@ function ensAbrir(f0){
     const h = cont.querySelector(".ens-hacer"); if(h) h.onclick = () => { ov.remove(); ensForm(f0); };
     const a = cont.querySelector(".ens-armar"); if(a) a.onclick = () => { ov.remove(); ensArmar(f0); };
     cont.querySelectorAll("[data-k]").forEach(b => b.onclick = () => { k = Number(b.dataset.k); pintar(); });
+    cont.querySelectorAll("[data-aa]").forEach(b => b.onclick = async () => { if(b.dataset.aa === f0.area) return; await ensGuardarAj(f0.code, {area: b.dataset.aa, sub: ""}); f.area = f0.area; f.subgrupo = f0.subgrupo; pintar(); });
+    cont.querySelectorAll("[data-as]").forEach(b => b.onclick = async () => { await ensGuardarAj(f0.code, {sub: ensSub(f0) === b.dataset.as ? "" : b.dataset.as}); f.subgrupo = f0.subgrupo; pintar(); });
   };
   pintar();
 }
