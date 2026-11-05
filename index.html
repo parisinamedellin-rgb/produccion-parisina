@@ -2172,6 +2172,17 @@ function renderHome(){
       </span>`;
     kB.onclick = ()=>{ activeCat = "CALC"; render(); window.scrollTo(0,0); };
     grid.appendChild(kB); }
+  // Alban 5 nov: tarjeta "Timers" (varios temporizadores a la vez)
+  { const colT = {a:"#14213D"}, nT = TMR.filter(t => t.c ? t.ini : (t.fin || t.son)).length;
+    const tB = document.createElement("button");
+    tB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colT.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    tB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">⏲️</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:${colT.a};">Timers</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">${nT ? `<b style="color:#B3261E;">${nT} corriendo</b> · ` : ""}Varios a la vez · recetas del horno</span>
+      </span>`;
+    tB.onclick = ()=>{ tmrAudio(); activeCat = "TIMER"; render(); window.scrollTo(0,0); };
+    grid.appendChild(tB); }
   // Alban 24 oct: tarjeta "Comprar" → laparisina.co/compras
   { const colC = PALETTE.Logistica || PALETTE.ALL;
     const cB = document.createElement("a");
@@ -5391,6 +5402,7 @@ function ponerTitulo(){
     else if(activeCat === "ADMIN") t = "Admin";
     else if(activeCat === "MSG") t = "Mensaje a cocina";
     else if(activeCat === "CALC") t = "Calculadora";
+    else if(activeCat === "TIMER") t = "Timers";
     else if(activeCat === "SANIDAD") t = "Sanidad";
     else if(activeCat !== "HOME"){ const f = famObj(); t = f.key === "ALL" ? "Todo" : f.label; }
     document.title = t ? t + " · Parisina" : "Producción Parisina";
@@ -5403,6 +5415,7 @@ function render(){
   if(activeCat === "HOME"){ renderHome(); return; }
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
   if(activeCat === "CALC"){ if(!document.querySelector("[data-calc]")) renderCalc(); return; }
+  if(activeCat === "TIMER"){ if(!document.querySelector("[data-tmr]")) renderTimer(); return; }   // Alban 5 nov
   if(activeCat === "SANIDAD"){ if(!document.querySelector("[data-san]")) renderSanidad(); return; }   // Alban 24 oct: sanidad   // Alban 24 oct: calculadora   // Alban 21 oct: mensajes a cocina (no se repinta solo)
   if(activeCat === "ADMIN"){ if(!document.querySelector("[data-adm]")) renderAdmin(); return; }   // Admin: no se repinta solo (no borra lo que se está escribiendo)
   if(activeDate < TODAY_ISO && !conAyer()) activeDate = dates.find(d => d === TODAY_ISO) || dates[0];   // "Ayer" solo existe en Panadería
@@ -6382,6 +6395,215 @@ function renderCalc(){
       const b = /^\d$/.test(k) ? k : map[k]; if(!b) return; ev.preventDefault();
       const el = box.querySelector(`[data-k="${b}"]`); if(el) el.click(); }); }
   pintar();
+}
+// ============================================================
+// ⏲️ TIMERS (Alban 5 nov 2026): varios temporizadores a la vez + cronómetro, con recetas del horno
+// por etapas (ej. Red velvet 55 min → 32 min → enfriar 2 h). Siguen corriendo aunque se cambie de página
+// (se guardan en el equipo) y suenan en cualquier pantalla.
+// ============================================================
+const TMR_PRESETS = [
+  {g:"🍰 Repostería", n:"Masa bomba", e:[[5,"Horno a 220 °C"],[25,"Bajar a 180 °C · NO abrir el horno"]]},
+  {g:"🍰 Repostería", n:"Cookies red velvet", e:[[26,"180 °C arriba / 160 °C abajo · desde congelado"]]},
+  {g:"🍰 Repostería", n:"Galletas macadamia", e:[[20,"180 °C arriba y abajo · desde congelado"]]},
+  {g:"🍰 Repostería", n:"Galletas avena", e:[[18,"180 °C arriba y abajo"]]},
+  {g:"🍰 Repostería", n:"Galletas chocolate", e:[[15,"180 °C arriba y abajo"]]},
+  {g:"🍰 Repostería", n:"Galletas mantequilla", e:[[18,"180 °C arriba y abajo"]]},
+  {g:"🥣 Batido", n:"Red velvet", e:[[55,"165 °C arriba / 175 °C abajo"],[32,"170 °C arriba / 175 °C abajo"],[120,"Enfriar antes de desmoldar"]]},
+  {g:"🥣 Batido", n:"Chocolate", e:[[40,"145 °C"],[60,"Subir a 165 °C"]]},
+  {g:"🥣 Batido", n:"María Luisa", e:[[120,"150 °C arriba / 160 °C abajo"]]},
+  {g:"🥣 Batido", n:"Zanahoria", e:[[70,"175 °C arriba y abajo"]]},
+  {g:"🥣 Batido", n:"Bizcochuelo", e:[[75,"175 °C arriba y abajo"]]},
+  {g:"🥣 Batido", n:"Joconda", e:[[20,"180 °C arriba y abajo"]]},
+  {g:"🧼 Sanidad", n:"Suma Eden · huevo / fruta blanda", e:[[1,"Desinfección 1 ml por litro"]]},
+  {g:"🧼 Sanidad", n:"Suma Eden · hojas / vegetales", e:[[5,"Desinfección 1 ml por litro"]]},
+  {g:"🧼 Sanidad", n:"Suma Sanitizer", e:[[10,"Dejar actuar mínimo 10 min"]]},
+  {g:"🧼 Sanidad", n:"Suma Grill · hornos", e:[[15,"⚠️ Guantes, gafas y tapabocas"]]}
+];
+const TMR_COLS = ["#D9731A","#2F6DB5","#7B4FB5","#2E8B57","#B23A2E","#3C8DAD","#B8901E","#8C5A2B"];
+let TMR = [], TMR_FAV = [];
+try{ TMR = JSON.parse(localStorage.getItem("timers_v1") || "[]") || []; }catch(e){ TMR = []; }
+try{ TMR_FAV = JSON.parse(localStorage.getItem("timers_fav") || "[]") || []; }catch(e){ TMR_FAV = []; }
+function tmrGuardar(){ try{ localStorage.setItem("timers_v1", JSON.stringify(TMR)); localStorage.setItem("timers_fav", JSON.stringify(TMR_FAV)); }catch(e){} }
+function tmrFmt(ms){ ms = Math.max(0, ms); const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : String(m).padStart(2, "0")) + ":" + String(x).padStart(2, "0"); }
+function tmrFmtC(ms){ const s = Math.floor(Math.max(0, ms) / 1000), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60, d = Math.floor(Math.max(0, ms) % 1000 / 100);
+  return (h ? h + ":" + String(m).padStart(2, "0") : String(m).padStart(2, "0")) + ":" + String(x).padStart(2, "0") + "," + d; }
+function tmrResta(t){ return t.fin ? t.fin - Date.now() : (t.rest || 0); }
+function tmrNuevo(n, e){
+  const usados = TMR.map(t => t.col), col = TMR_COLS.find(c => !usados.includes(c)) || TMR_COLS[TMR.length % TMR_COLS.length], dur = e[0][0] * 60000;
+  TMR.push({id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), n: n || "Timer", e, i: 0, dur, fin: Date.now() + dur, col});
+  tmrGuardar(); tmrAudio(); tmrTick(true);
+}
+function tmrCrono(n){ TMR.push({id: Date.now().toString(36), n: n || "Cronómetro", c: true, ini: Date.now(), col: "#14213D"}); tmrGuardar(); tmrTick(true); }
+function tmrBuscar(id){ return TMR.find(t => t.id === id); }
+function tmrPausa(id){ const t = tmrBuscar(id); if(!t) return;
+  if(t.c){ if(t.ini){ t.acum = (t.acum || 0) + Date.now() - t.ini; t.ini = null; } else t.ini = Date.now(); }
+  else if(t.fin){ t.rest = t.fin - Date.now(); t.fin = null; } else if(!t.son && !t.ok){ t.fin = Date.now() + (t.rest || 0); t.rest = 0; }
+  tmrGuardar(); tmrTick(true); }
+function tmrMas(id, min){ const t = tmrBuscar(id); if(!t || t.c) return;
+  if(t.son || t.ok){ t.son = false; t.ok = false; t.fin = Date.now() + min * 60000; t.dur = min * 60000; }
+  else if(t.fin) { t.fin += min * 60000; t.dur += min * 60000; } else { t.rest = (t.rest || 0) + min * 60000; t.dur += min * 60000; }
+  tmrGuardar(); tmrTick(true); }
+function tmrReiniciar(id){ const t = tmrBuscar(id); if(!t) return;
+  if(t.c){ t.acum = 0; t.ini = Date.now(); } else { t.i = 0; t.son = false; t.ok = false; t.dur = t.e[0][0] * 60000; t.fin = Date.now() + t.dur; t.rest = 0; }
+  tmrGuardar(); tmrTick(true); }
+function tmrQuitar(id){ TMR = TMR.filter(t => t.id !== id); tmrGuardar(); tmrTick(true); }
+function tmrSiguiente(id){ const t = tmrBuscar(id); if(!t) return;
+  if(t.i + 1 < t.e.length){ t.i++; t.son = false; t.dur = t.e[t.i][0] * 60000; t.fin = Date.now() + t.dur; }
+  else { t.son = false; t.ok = Date.now(); t.fin = null; }
+  tmrGuardar(); tmrTick(true); }
+// ---- sonido (WebAudio: se activa con el primer toque) ----
+let TMR_AC = null;
+function tmrAudio(){ try{ if(!TMR_AC) TMR_AC = new (window.AudioContext || window.webkitAudioContext)(); if(TMR_AC.state === "suspended") TMR_AC.resume(); }catch(e){} }
+function tmrBip(){
+  try{ tmrAudio(); if(!TMR_AC) return; const t0 = TMR_AC.currentTime;
+    [0, 0.18, 0.36].forEach((d, k) => { const o = TMR_AC.createOscillator(), g = TMR_AC.createGain(); o.type = "square"; o.frequency.value = k === 2 ? 1320 : 990;
+      g.gain.setValueAtTime(0.0001, t0 + d); g.gain.exponentialRampToValueAtTime(0.35, t0 + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d + 0.15);
+      o.connect(g); g.connect(TMR_AC.destination); o.start(t0 + d); o.stop(t0 + d + 0.16); });
+  }catch(e){}
+  try{ navigator.vibrate && navigator.vibrate([300, 120, 300]); }catch(e){}
+}
+let TMR_WL = null;
+async function tmrWake(on){ try{ if(on && !TMR_WL && navigator.wakeLock && !document.hidden){ TMR_WL = await navigator.wakeLock.request("screen"); TMR_WL.addEventListener("release", ()=>{ TMR_WL = null; }); }
+  else if(!on && TMR_WL){ TMR_WL.release(); TMR_WL = null; } }catch(e){} }
+// ---- el reloj de todos los timers (corre siempre, en cualquier pantalla) ----
+let TMR_ULT_BIP = 0;
+function tmrTick(forzar){
+  const ahora = Date.now(); let cambio = !!forzar;
+  TMR.forEach(t => { if(!t.c && t.fin && t.fin <= ahora && !t.son){ t.son = true; t.fin = null; t.rest = 0; t.sonDesde = ahora; cambio = true;
+    try{ if(window.Notification && Notification.permission === "granted") new Notification("⏲️ " + t.n + " · ¡listo!", {body: t.e[t.i][1] || "", tag: t.id}); }catch(e){} } });
+  if(cambio) tmrGuardar();
+  const sonando = TMR.filter(t => t.son), activos = TMR.filter(t => t.c ? t.ini : (t.fin || t.son));
+  window.TMR_ACTIVO = activos.length > 0;
+  tmrWake(activos.length > 0);
+  if(sonando.length && ahora - TMR_ULT_BIP > 1100){ TMR_ULT_BIP = ahora; tmrBip(); }
+  tmrPintarAlarma(sonando); tmrPintarBarra(); tmrPintarLista(cambio);
+}
+setInterval(()=>tmrTick(false), 250);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) tmrTick(true); });
+function tmrPintarAlarma(sonando){
+  let ov = document.getElementById("tmr-alarma");
+  if(!sonando.length){ if(ov) ov.remove(); return; }
+  const firma = sonando.map(t => t.id + t.i).join(",");
+  if(ov && ov.dataset.f === firma){ ov.style.background = Math.floor(Date.now() / 500) % 2 ? "#B3261E" : "#7A1A14"; return; }
+  if(!ov){ ov = document.createElement("div"); ov.id = "tmr-alarma"; document.body.appendChild(ov); }
+  ov.dataset.f = firma;
+  ov.setAttribute("style", "position:fixed;inset:0;z-index:9500;background:#B3261E;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;font-family:'Work Sans',sans-serif;overflow:auto;");
+  ov.innerHTML = `<div style="font-size:4rem;line-height:1;">⏰</div>` + sonando.map(t => { const sig = t.i + 1 < t.e.length ? t.e[t.i + 1] : null;
+    return `<div style="background:rgba(255,255,255,.12);border-radius:20px;padding:16px 18px;width:100%;max-width:460px;">
+      <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;">${escH(t.n)} · ¡listo!</div>
+      ${t.e.length > 1 ? `<div style="font-size:1rem;opacity:.9;margin-top:2px;">Terminó la etapa ${t.i + 1} de ${t.e.length}</div>` : ""}
+      <div style="display:grid;gap:10px;margin-top:14px;">
+        ${sig ? `<button type="button" data-sig="${t.id}" style="font-family:'Work Sans',sans-serif;font-size:1.25rem;font-weight:800;border:none;border-radius:16px;padding:16px;background:#fff;color:#B3261E;cursor:pointer;">▶ Siguiente: ${sig[0]} min<span style="display:block;font-size:0.9rem;font-weight:600;">${escH(sig[1] || "")}</span></button>` :
+          `<button type="button" data-sig="${t.id}" style="font-family:'Work Sans',sans-serif;font-size:1.3rem;font-weight:800;border:none;border-radius:16px;padding:16px;background:#fff;color:#B3261E;cursor:pointer;">✓ Apagar</button>`}
+        <div style="display:flex;gap:8px;">${[1, 3, 5].map(m => `<button type="button" data-mas="${t.id}" data-m="${m}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;border:2px solid #fff;border-radius:14px;padding:11px 6px;background:transparent;color:#fff;cursor:pointer;">+${m} min</button>`).join("")}</div>
+      </div></div>`; }).join("");
+  ov.querySelectorAll("[data-sig]").forEach(b => b.onclick = ()=>tmrSiguiente(b.dataset.sig));
+  ov.querySelectorAll("[data-mas]").forEach(b => b.onclick = ()=>tmrMas(b.dataset.mas, +b.dataset.m));
+}
+function tmrPintarBarra(){
+  let bar = document.getElementById("tmr-barra");
+  const vivos = TMR.filter(t => t.c ? true : !t.ok).sort((a, b) => (a.c ? 9e15 : tmrResta(a)) - (b.c ? 9e15 : tmrResta(b)));
+  if(!vivos.length || activeCat === "TIMER"){ if(bar) bar.remove(); return; }
+  if(!bar){ bar = document.createElement("button"); bar.type = "button"; bar.id = "tmr-barra"; document.body.appendChild(bar);
+    bar.onclick = ()=>{ tmrAudio(); activeCat = "TIMER"; render(); window.scrollTo(0, 0); }; }
+  bar.setAttribute("style", "position:fixed;right:12px;bottom:12px;z-index:9000;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 24px);border:none;border-radius:100px;padding:10px 16px;background:#14213D;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.3);cursor:pointer;");
+  const t = vivos[0], v = t.c ? tmrFmtC((t.acum || 0) + (t.ini ? Date.now() - t.ini : 0)).slice(0, -2) : tmrFmt(tmrResta(t));
+  bar.innerHTML = `<span>⏲️</span><span style="font-family:'Work Sans',sans-serif;font-weight:700;max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(t.n)}</span><span>${t.fin || t.c ? "" : "⏸ "}${v}</span>${vivos.length > 1 ? `<span style="background:#fff;color:#14213D;border-radius:100px;padding:1px 8px;font-size:0.8rem;">+${vivos.length - 1}</span>` : ""}`;
+}
+function tmrPintarLista(estructura){
+  const box = document.querySelector("[data-tmr] .tmr-lst"); if(!box) return;
+  const orden = TMR.slice().sort((a, b) => (b.son ? 1 : 0) - (a.son ? 1 : 0) || (a.ok ? 1 : 0) - (b.ok ? 1 : 0) || (a.c ? 9e15 : tmrResta(a)) - (b.c ? 9e15 : tmrResta(b)));
+  const firma = orden.map(t => t.id + "|" + t.i + "|" + !!t.fin + "|" + !!t.ini + "|" + !!t.son + "|" + !!t.ok).join(",");
+  if(estructura || box.dataset.f !== firma){
+    box.dataset.f = firma;
+    box.innerHTML = orden.length ? orden.map(t => {
+      const bt = (cls, txt, x) => `<button type="button" class="${cls}" data-id="${t.id}" ${x || ""} style="flex:1;min-width:0;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px solid ${t.col};border-radius:12px;padding:10px 4px;background:#fff;color:${t.col};cursor:pointer;">${txt}</button>`;
+      const etapa = !t.c && t.e.length > 1 ? `Etapa ${Math.min(t.i + 1, t.e.length)} de ${t.e.length}` : (t.c ? "Cronómetro" : "Temporizador");
+      return `<div class="tmr-card" data-id="${t.id}" style="background:#fff;border:2px solid ${t.son ? "#B3261E" : t.col};border-radius:20px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <svg viewBox="0 0 100 100" style="width:84px;height:84px;flex:none;transform:rotate(-90deg);"><circle cx="50" cy="50" r="44" fill="none" stroke="#EEE6D8" stroke-width="10"/><circle class="tmr-arc" cx="50" cy="50" r="44" fill="none" stroke="${t.col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(t.n)}</div>
+            <div style="font-size:0.78rem;font-weight:700;color:${t.col};text-transform:uppercase;letter-spacing:.04em;">${etapa}</div>
+            ${!t.c && t.e[t.i] && t.e[t.i][1] ? `<div style="font-size:0.82rem;color:${C.inkSoft};margin-top:2px;">${escH(t.e[t.i][1])}</div>` : ""}
+            <div class="tmr-v" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:2.1rem;line-height:1.1;margin-top:2px;"></div>
+            ${!t.c && t.i + 1 < t.e.length ? `<div style="font-size:0.78rem;color:${C.inkSoft};">Después: ${t.e.slice(t.i + 1).map(x => x[0] + " min").join(" → ")}</div>` : ""}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${t.ok ? bt("tmr-re", "↺ Otra vez") : t.son ? bt("tmr-sig", t.i + 1 < t.e.length ? "▶ Siguiente" : "✓ Apagar") : bt("tmr-pa", (t.c ? t.ini : t.fin) ? "⏸ Pausa" : "▶ Seguir")}
+          ${t.c ? bt("tmr-re", "↺ Cero") : bt("tmr-mas", "+1 min", 'data-m="1"') + bt("tmr-mas", "+5", 'data-m="5"')}
+          ${bt("tmr-x", "✕")}
+        </div></div>`; }).join("")
+      : `<div style="color:${C.inkSoft};font-size:0.95rem;text-align:center;padding:18px 6px;">No hay timers corriendo. Elige una receta o escribe los minutos ☝️</div>`;
+    box.querySelectorAll(".tmr-pa").forEach(b => b.onclick = ()=>{ tmrAudio(); tmrPausa(b.dataset.id); });
+    box.querySelectorAll(".tmr-mas").forEach(b => b.onclick = ()=>tmrMas(b.dataset.id, +b.dataset.m));
+    box.querySelectorAll(".tmr-re").forEach(b => b.onclick = ()=>{ tmrAudio(); tmrReiniciar(b.dataset.id); });
+    box.querySelectorAll(".tmr-sig").forEach(b => b.onclick = ()=>tmrSiguiente(b.dataset.id));
+    box.querySelectorAll(".tmr-x").forEach(b => b.onclick = ()=>{ const t = tmrBuscar(b.dataset.id); if(t && (t.fin || t.ini) && !b.dataset.ok){ b.dataset.ok = "1"; b.textContent = "¿Quitar?"; setTimeout(()=>{ if(document.body.contains(b)){ delete b.dataset.ok; b.textContent = "✕"; } }, 3000); return; } tmrQuitar(b.dataset.id); });
+  }
+  orden.forEach(t => { const card = box.querySelector(`.tmr-card[data-id="${t.id}"]`); if(!card) return;
+    const v = card.querySelector(".tmr-v"), arc = card.querySelector(".tmr-arc");
+    if(t.c){ const ms = (t.acum || 0) + (t.ini ? Date.now() - t.ini : 0); v.textContent = tmrFmtC(ms); arc.style.strokeDashoffset = String(276.5 * (1 - (ms % 60000) / 60000)); }
+    else if(t.son){ v.textContent = "¡LISTO!"; v.style.color = "#B3261E"; arc.style.strokeDashoffset = "276.5"; }
+    else if(t.ok){ v.textContent = "✓ Terminado"; v.style.fontSize = "1.3rem"; v.style.color = "#2E6B3A"; arc.style.strokeDashoffset = "276.5"; }
+    else { const r = tmrResta(t); v.textContent = tmrFmt(r); v.style.color = r < 60000 ? "#B3261E" : ""; arc.style.strokeDashoffset = String(276.5 * (1 - Math.max(0, Math.min(1, r / (t.dur || 1))))); }
+  });
+}
+function renderTimer(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const w = document.createElement("div"); w.setAttribute("data-tmr", "1");
+  const chip = (txt, attrs, on) => `<button type="button" ${attrs} style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px solid ${on ? C.gold : C.line};border-radius:100px;padding:9px 14px;background:${on ? C.goldSoft : "#fff"};color:${C.ink};cursor:pointer;">${txt}</button>`;
+  const grupos = [...new Set(TMR_PRESETS.map(p => p.g))];
+  w.innerHTML = `<button type="button" class="t-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>
+    <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:6px 0 4px;">⏲️ Timers</h2>
+    <div style="font-size:0.85rem;color:${C.inkSoft};margin-bottom:12px;">Varios a la vez. Siguen corriendo aunque cambies de pantalla y suenan donde estés.</div>
+    <div class="tmr-lst" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;"></div>
+    <div style="margin-top:16px;background:${C.paper};border:1.5px solid ${C.line};border-radius:18px;padding:14px;">
+      <div style="font-weight:800;font-size:1.05rem;">➕ Nuevo timer</div>
+      <input type="text" class="t-nom" placeholder="¿Qué es? (ej. Croissants horno 2)" style="margin-top:8px;width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:11px 12px;border:1.5px solid ${C.line};border-radius:12px;background:#fff;color:${C.ink};">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${[1, 3, 5, 10, 15, 20, 25, 30, 45, 60].map(m => chip(m + " min", `data-min="${m}"`)).join("")}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+        <input type="text" inputmode="decimal" class="t-min" placeholder="min" style="width:5em;font-family:'IBM Plex Mono',monospace;font-size:1.1rem;padding:10px;border:1.5px solid ${C.line};border-radius:12px;text-align:center;background:#fff;color:${C.ink};">
+        <span style="font-weight:700;">:</span>
+        <input type="text" inputmode="numeric" class="t-seg" placeholder="seg" style="width:4.5em;font-family:'IBM Plex Mono',monospace;font-size:1.1rem;padding:10px;border:1.5px solid ${C.line};border-radius:12px;text-align:center;background:#fff;color:${C.ink};">
+        <button type="button" class="t-go" style="flex:1;min-width:120px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:800;border:none;border-radius:12px;padding:12px;background:${C.gold};color:#fff;cursor:pointer;">▶ Empezar</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <button type="button" class="t-cro" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px solid #14213D;border-radius:12px;padding:10px;background:#fff;color:#14213D;cursor:pointer;">⏱ Cronómetro</button>
+        <button type="button" class="t-fav" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px solid ${C.gold};border-radius:12px;padding:10px;background:#fff;color:${C.ink};cursor:pointer;">★ Guardar como favorito</button>
+      </div>
+      <div class="t-msg" style="font-size:0.85rem;color:#B3261E;margin-top:6px;"></div>
+    </div>
+    <div class="t-favs"></div>
+    <div style="margin-top:16px;">
+      <div style="font-weight:800;font-size:1.05rem;">📖 Recetas del horno y sanidad</div>
+      <div style="font-size:0.8rem;color:${C.inkSoft};margin-bottom:6px;">Un toque y empieza. Las de varias etapas te avisan cuándo cambiar.</div>
+      ${grupos.map(g => `<div style="font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};margin:10px 0 6px;">${g}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">${TMR_PRESETS.map((p, i) => p.g !== g ? "" : chip(`${escH(p.n)} <span style="font-weight:500;color:${C.inkSoft};">${p.e.map(x => x[0]).join("+")}′</span>`, `data-pre="${i}"`)).join("")}</div>`).join("")}
+    </div>
+    <div style="margin-top:14px;font-size:0.78rem;color:${C.inkSoft};"><button type="button" class="t-not" style="font-size:0.78rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0;">🔔 Activar avisos del celular</button> · deja el volumen alto: suena hasta que lo apagues.</div>`;
+  main.appendChild(w);
+  const nom = w.querySelector(".t-nom"), msg = w.querySelector(".t-msg");
+  const leer = () => { const m = parseFloat(String(w.querySelector(".t-min").value).replace(",", ".")) || 0, s = parseFloat(w.querySelector(".t-seg").value) || 0; return m + s / 60; };
+  const limpiar = () => { nom.value = ""; w.querySelector(".t-min").value = ""; w.querySelector(".t-seg").value = ""; msg.textContent = ""; };
+  w.querySelectorAll("[data-min]").forEach(b => b.onclick = ()=>{ const m = +b.dataset.min; tmrNuevo(nom.value.trim() || m + " min", [[m, ""]]); limpiar(); });
+  w.querySelector(".t-go").onclick = ()=>{ const m = leer(); if(!(m > 0)){ msg.textContent = "Escribe los minutos (o toca uno de arriba)."; return; } tmrNuevo(nom.value.trim() || tmrFmt(m * 60000), [[m, ""]]); limpiar(); };
+  w.querySelector(".t-cro").onclick = ()=>{ tmrAudio(); tmrCrono(nom.value.trim()); limpiar(); };
+  w.querySelectorAll("[data-pre]").forEach(b => b.onclick = ()=>{ const p = TMR_PRESETS[+b.dataset.pre]; tmrNuevo(p.n, p.e.map(x => x.slice())); });
+  const pintarFav = () => { const f = w.querySelector(".t-favs");
+    f.innerHTML = TMR_FAV.length ? `<div style="margin-top:14px;font-weight:800;font-size:1.05rem;">★ Mis favoritos</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">${TMR_FAV.map((x, i) => `<span style="display:inline-flex;align-items:center;border:1.5px solid ${C.gold};border-radius:100px;background:${C.goldSoft};overflow:hidden;"><button type="button" data-fv="${i}" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:none;padding:9px 6px 9px 14px;cursor:pointer;color:${C.ink};">${escH(x.n)} <span style="font-weight:500;color:${C.inkSoft};">${tmrFmt(x.m * 60000)}</span></button><button type="button" data-fx="${i}" title="Quitar" style="border:none;background:none;padding:9px 12px 9px 6px;cursor:pointer;color:${C.inkSoft};font-size:0.9rem;">✕</button></span>`).join("")}</div>` : "";
+    f.querySelectorAll("[data-fv]").forEach(b => b.onclick = ()=>{ const x = TMR_FAV[+b.dataset.fv]; tmrNuevo(x.n, [[x.m, ""]]); });
+    f.querySelectorAll("[data-fx]").forEach(b => b.onclick = ()=>{ TMR_FAV.splice(+b.dataset.fx, 1); tmrGuardar(); pintarFav(); }); };
+  w.querySelector(".t-fav").onclick = ()=>{ const m = leer(), n = nom.value.trim(); if(!(m > 0) || !n){ msg.textContent = "Para guardar un favorito escribe el nombre y los minutos."; return; }
+    TMR_FAV.push({n, m}); tmrGuardar(); limpiar(); pintarFav(); };
+  w.querySelector(".t-not").onclick = ()=>{ tmrAudio(); tmrBip(); try{ if(window.Notification) Notification.requestPermission(); }catch(e){} };
+  w.querySelector(".t-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0, 0); };
+  w.addEventListener("pointerdown", tmrAudio, {once: true});
+  pintarFav(); tmrTick(true);
 }
 // ============================================================
 // 🧼 SANIDAD (Alban 24 oct 2026): tarjeta en la portada. Quien entra con su código ve
@@ -7476,7 +7698,7 @@ bootDb();
   let pendiente = false;
   const escribiendo = ()=>{ const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox"; };
   const recargar = ()=>{
-    if(escribiendo() || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
+    if(escribiendo() || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO || window.TMR_ACTIVO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
     try{ sessionStorage.setItem("auto_recarga", String(Date.now())); }catch(e){}
     location.reload();
   };
