@@ -6401,24 +6401,29 @@ function renderCalc(){
 // por etapas (ej. Red velvet 55 min → 32 min → enfriar 2 h). Siguen corriendo aunque se cambie de página
 // (se guardan en el equipo) y suenan en cualquier pantalla.
 // ============================================================
+// Alban 5 nov: recetas por área (a = área), etapas [minutos, nota, °C arriba, °C abajo]. Se pueden editar (quedan en estado/TIMERS para todos).
 const TMR_PRESETS = [
-  {g:"🍰 Repostería", n:"Masa bomba", e:[[5,"Horno a 220 °C"],[25,"Bajar a 180 °C · NO abrir el horno"]]},
-  {g:"🍰 Repostería", n:"Cookies red velvet", e:[[26,"180 °C arriba / 160 °C abajo · desde congelado"]]},
-  {g:"🍰 Repostería", n:"Galletas macadamia", e:[[20,"180 °C arriba y abajo · desde congelado"]]},
-  {g:"🍰 Repostería", n:"Galletas avena", e:[[18,"180 °C arriba y abajo"]]},
-  {g:"🍰 Repostería", n:"Galletas chocolate", e:[[15,"180 °C arriba y abajo"]]},
-  {g:"🍰 Repostería", n:"Galletas mantequilla", e:[[18,"180 °C arriba y abajo"]]},
-  {g:"🥣 Batido", n:"Red velvet", e:[[55,"165 °C arriba / 175 °C abajo"],[32,"170 °C arriba / 175 °C abajo"],[120,"Enfriar antes de desmoldar"]]},
-  {g:"🥣 Batido", n:"Chocolate", e:[[40,"145 °C"],[60,"Subir a 165 °C"]]},
-  {g:"🥣 Batido", n:"María Luisa", e:[[120,"150 °C arriba / 160 °C abajo"]]},
-  {g:"🥣 Batido", n:"Zanahoria", e:[[70,"175 °C arriba y abajo"]]},
-  {g:"🥣 Batido", n:"Bizcochuelo", e:[[75,"175 °C arriba y abajo"]]},
-  {g:"🥣 Batido", n:"Joconda", e:[[20,"180 °C arriba y abajo"]]},
-  {g:"🧼 Sanidad", n:"Suma Eden · huevo / fruta blanda", e:[[1,"Desinfección 1 ml por litro"]]},
-  {g:"🧼 Sanidad", n:"Suma Eden · hojas / vegetales", e:[[5,"Desinfección 1 ml por litro"]]},
-  {g:"🧼 Sanidad", n:"Suma Sanitizer", e:[[10,"Dejar actuar mínimo 10 min"]]},
-  {g:"🧼 Sanidad", n:"Suma Grill · hornos", e:[[15,"⚠️ Guantes, gafas y tapabocas"]]}
+  {a:"Reposteria", n:"Masa bomba", e:[[5,"Precalentar",220,220],[25,"NO abrir el horno",180,180]]},
+  {a:"Reposteria", n:"Cookies red velvet", e:[[26,"Desde congelado",180,160]]},
+  {a:"Reposteria", n:"Galletas macadamia", e:[[20,"Desde congelado",180,180]]},
+  {a:"Reposteria", n:"Galletas avena", e:[[18,"",180,180]]},
+  {a:"Reposteria", n:"Galletas chocolate", e:[[15,"",180,180]]},
+  {a:"Reposteria", n:"Galletas mantequilla", e:[[18,"",180,180]]},
+  {a:"Batido", n:"Red velvet", e:[[55,"",165,175],[32,"",170,175],[120,"Enfriar antes de desmoldar"]]},
+  {a:"Batido", n:"Chocolate", e:[[40,"",145,145],[60,"",165,165]]},
+  {a:"Batido", n:"María Luisa", e:[[120,"",150,160]]},
+  {a:"Batido", n:"Zanahoria", e:[[70,"",175,175]]},
+  {a:"Batido", n:"Bizcochuelo", e:[[75,"",175,175]]},
+  {a:"Batido", n:"Joconda", e:[[20,"",180,180]]}
 ];
+const TMR_AREAS = [["Panaderia","🥐 Panadería"],["Comida de sal","🍽️ Comida de sal"],["Reposteria","🍰 Repostería"],["Batido","🥣 Batido"],["Logistica","🚚 Logística"]];
+let TMR_REC = null, TMR_VER_OTRAS = false, TMR_EDIT = null;   // TMR_REC: recetas (del servidor o las de arriba)
+function tmrRecetas(){ return TMR_REC || TMR_PRESETS; }
+async function tmrRecCargar(){ try{ if(!DB) return; const sn = await DB.doc("estado/TIMERS").get(); const d = sn.exists && sn.data(); if(d && Array.isArray(d.rec)) TMR_REC = d.rec; }catch(e){} }
+async function tmrRecGuardar(lista){ TMR_REC = lista; try{ if(DB) await DB.doc("estado/TIMERS").set({rec: lista}); }catch(e){} }
+function tmrMiArea(){ try{ const y = typeof planYo === "function" ? planYo() : null; if(y && y.area) return y.area; }catch(e){} const m = lsGet("mi_area"); return TMR_AREAS.some(a => a[0] === m) ? m : ""; }
+function tmrTemp(st){ return st && (st[2] || st[3]) ? `🔥 ${st[2] || "–"}° arriba · ${st[3] || "–"}° abajo` : ""; }
+function tmrNota(st){ return [tmrTemp(st), st && st[1]].filter(Boolean).join(" · "); }
 const TMR_COLS = ["#D9731A","#2F6DB5","#7B4FB5","#2E8B57","#B23A2E","#3C8DAD","#B8901E","#8C5A2B"];
 let TMR = [], TMR_FAV = [];
 try{ TMR = JSON.parse(localStorage.getItem("timers_v1") || "[]") || []; }catch(e){ TMR = []; }
@@ -6471,7 +6476,7 @@ let TMR_ULT_BIP = 0;
 function tmrTick(forzar){
   const ahora = Date.now(); let cambio = !!forzar;
   TMR.forEach(t => { if(!t.c && t.fin && t.fin <= ahora && !t.son){ t.son = true; t.fin = null; t.rest = 0; t.sonDesde = ahora; cambio = true;
-    try{ if(window.Notification && Notification.permission === "granted") new Notification("⏲️ " + t.n + " · ¡listo!", {body: t.e[t.i][1] || "", tag: t.id}); }catch(e){} } });
+    try{ if(window.Notification && Notification.permission === "granted") new Notification("⏲️ " + t.n + " · ¡listo!", {body: tmrNota(t.e[t.i + 1] || []) || "", tag: t.id}); }catch(e){} } });
   if(cambio) tmrGuardar();
   const sonando = TMR.filter(t => t.son), activos = TMR.filter(t => t.c ? t.ini : (t.fin || t.son));
   window.TMR_ACTIVO = activos.length > 0;
@@ -6494,7 +6499,7 @@ function tmrPintarAlarma(sonando){
       <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.9rem;">${escH(t.n)} · ¡listo!</div>
       ${t.e.length > 1 ? `<div style="font-size:1rem;opacity:.9;margin-top:2px;">Terminó la etapa ${t.i + 1} de ${t.e.length}</div>` : ""}
       <div style="display:grid;gap:10px;margin-top:14px;">
-        ${sig ? `<button type="button" data-sig="${t.id}" style="font-family:'Work Sans',sans-serif;font-size:1.25rem;font-weight:800;border:none;border-radius:16px;padding:16px;background:#fff;color:#B3261E;cursor:pointer;">▶ Siguiente: ${sig[0]} min<span style="display:block;font-size:0.9rem;font-weight:600;">${escH(sig[1] || "")}</span></button>` :
+        ${sig ? `<button type="button" data-sig="${t.id}" style="font-family:'Work Sans',sans-serif;font-size:1.25rem;font-weight:800;border:none;border-radius:16px;padding:16px;background:#fff;color:#B3261E;cursor:pointer;">▶ Siguiente: ${sig[0]} min<span style="display:block;font-size:0.9rem;font-weight:600;">${escH(tmrNota(sig))}</span></button>` :
           `<button type="button" data-sig="${t.id}" style="font-family:'Work Sans',sans-serif;font-size:1.3rem;font-weight:800;border:none;border-radius:16px;padding:16px;background:#fff;color:#B3261E;cursor:pointer;">✓ Apagar</button>`}
         <div style="display:flex;gap:8px;">${[1, 3, 5].map(m => `<button type="button" data-mas="${t.id}" data-m="${m}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;border:2px solid #fff;border-radius:14px;padding:11px 6px;background:transparent;color:#fff;cursor:pointer;">+${m} min</button>`).join("")}</div>
       </div></div>`; }).join("");
@@ -6526,7 +6531,7 @@ function tmrPintarLista(estructura){
           <div style="flex:1;min-width:0;">
             <div style="font-weight:800;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(t.n)}</div>
             <div style="font-size:0.78rem;font-weight:700;color:${t.col};text-transform:uppercase;letter-spacing:.04em;">${etapa}</div>
-            ${!t.c && t.e[t.i] && t.e[t.i][1] ? `<div style="font-size:0.82rem;color:${C.inkSoft};margin-top:2px;">${escH(t.e[t.i][1])}</div>` : ""}
+            ${!t.c && t.e[t.i] && tmrNota(t.e[t.i]) ? `<div style="font-size:0.85rem;font-weight:600;color:${C.ink};margin-top:2px;">${escH(tmrNota(t.e[t.i]))}</div>` : ""}
             <div class="tmr-v" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:2.1rem;line-height:1.1;margin-top:2px;"></div>
             ${!t.c && t.i + 1 < t.e.length ? `<div style="font-size:0.78rem;color:${C.inkSoft};">Después: ${t.e.slice(t.i + 1).map(x => x[0] + " min").join(" → ")}</div>` : ""}
           </div>
@@ -6556,8 +6561,8 @@ function renderTimer(){
   ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
   const main = document.getElementById("main"); main.innerHTML = "";
   const w = document.createElement("div"); w.setAttribute("data-tmr", "1");
+  TMR_EDIT = null;
   const chip = (txt, attrs, on) => `<button type="button" ${attrs} style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px solid ${on ? C.gold : C.line};border-radius:100px;padding:9px 14px;background:${on ? C.goldSoft : "#fff"};color:${C.ink};cursor:pointer;">${txt}</button>`;
-  const grupos = [...new Set(TMR_PRESETS.map(p => p.g))];
   w.innerHTML = `<button type="button" class="t-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>
     <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:6px 0 4px;">⏲️ Timers</h2>
     <div style="font-size:0.85rem;color:${C.inkSoft};margin-bottom:12px;">Varios a la vez. Siguen corriendo aunque cambies de pantalla y suenan donde estés.</div>
@@ -6566,6 +6571,10 @@ function renderTimer(){
       <div style="font-weight:800;font-size:1.05rem;">➕ Nuevo timer</div>
       <input type="text" class="t-nom" placeholder="¿Qué es? (ej. Croissants horno 2)" style="margin-top:8px;width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:11px 12px;border:1.5px solid ${C.line};border-radius:12px;background:#fff;color:${C.ink};">
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">${[1, 3, 5, 10, 15, 20, 25, 30, 45, 60].map(m => chip(m + " min", `data-min="${m}"`)).join("")}</div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;font-size:0.9rem;font-weight:700;">🔥 Horno
+        <input type="text" inputmode="numeric" class="t-arr" placeholder="arriba" style="width:5.5em;font-family:'IBM Plex Mono',monospace;font-size:1rem;padding:9px;border:1.5px solid ${C.line};border-radius:12px;text-align:center;background:#fff;color:${C.ink};"> °C
+        <input type="text" inputmode="numeric" class="t-aba" placeholder="abajo" style="width:5.5em;font-family:'IBM Plex Mono',monospace;font-size:1rem;padding:9px;border:1.5px solid ${C.line};border-radius:12px;text-align:center;background:#fff;color:${C.ink};"> °C
+      </div>
       <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
         <input type="text" inputmode="decimal" class="t-min" placeholder="min" style="width:5em;font-family:'IBM Plex Mono',monospace;font-size:1.1rem;padding:10px;border:1.5px solid ${C.line};border-radius:12px;text-align:center;background:#fff;color:${C.ink};">
         <span style="font-weight:700;">:</span>
@@ -6579,31 +6588,85 @@ function renderTimer(){
       <div class="t-msg" style="font-size:0.85rem;color:#B3261E;margin-top:6px;"></div>
     </div>
     <div class="t-favs"></div>
-    <div style="margin-top:16px;">
-      <div style="font-weight:800;font-size:1.05rem;">📖 Recetas del horno y sanidad</div>
-      <div style="font-size:0.8rem;color:${C.inkSoft};margin-bottom:6px;">Un toque y empieza. Las de varias etapas te avisan cuándo cambiar.</div>
-      ${grupos.map(g => `<div style="font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};margin:10px 0 6px;">${g}</div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;">${TMR_PRESETS.map((p, i) => p.g !== g ? "" : chip(`${escH(p.n)} <span style="font-weight:500;color:${C.inkSoft};">${p.e.map(x => x[0]).join("+")}′</span>`, `data-pre="${i}"`)).join("")}</div>`).join("")}
-    </div>
+    <div class="t-rec" style="margin-top:16px;"></div>
     <div style="margin-top:14px;font-size:0.78rem;color:${C.inkSoft};"><button type="button" class="t-not" style="font-size:0.78rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:0;">🔔 Activar avisos del celular</button> · deja el volumen alto: suena hasta que lo apagues.</div>`;
   main.appendChild(w);
   const nom = w.querySelector(".t-nom"), msg = w.querySelector(".t-msg");
+  const temps = () => { const a = parseFloat(w.querySelector(".t-arr").value) || 0, b = parseFloat(w.querySelector(".t-aba").value) || 0; return [a || "", b || ""]; };
+  const etapa = m => { const [a, b] = temps(); return a || b ? [m, "", a, b] : [m, ""]; };
   const leer = () => { const m = parseFloat(String(w.querySelector(".t-min").value).replace(",", ".")) || 0, s = parseFloat(w.querySelector(".t-seg").value) || 0; return m + s / 60; };
-  const limpiar = () => { nom.value = ""; w.querySelector(".t-min").value = ""; w.querySelector(".t-seg").value = ""; msg.textContent = ""; };
-  w.querySelectorAll("[data-min]").forEach(b => b.onclick = ()=>{ const m = +b.dataset.min; tmrNuevo(nom.value.trim() || m + " min", [[m, ""]]); limpiar(); });
-  w.querySelector(".t-go").onclick = ()=>{ const m = leer(); if(!(m > 0)){ msg.textContent = "Escribe los minutos (o toca uno de arriba)."; return; } tmrNuevo(nom.value.trim() || tmrFmt(m * 60000), [[m, ""]]); limpiar(); };
+  const limpiar = () => { nom.value = ""; ["t-min","t-seg","t-arr","t-aba"].forEach(c => w.querySelector("." + c).value = ""); msg.textContent = ""; };
+  w.querySelectorAll("[data-min]").forEach(b => b.onclick = ()=>{ const m = +b.dataset.min; tmrNuevo(nom.value.trim() || m + " min", [etapa(m)]); limpiar(); });
+  w.querySelector(".t-go").onclick = ()=>{ const m = leer(); if(!(m > 0)){ msg.textContent = "Escribe los minutos (o toca uno de arriba)."; return; } tmrNuevo(nom.value.trim() || tmrFmt(m * 60000), [etapa(m)]); limpiar(); };
   w.querySelector(".t-cro").onclick = ()=>{ tmrAudio(); tmrCrono(nom.value.trim()); limpiar(); };
-  w.querySelectorAll("[data-pre]").forEach(b => b.onclick = ()=>{ const p = TMR_PRESETS[+b.dataset.pre]; tmrNuevo(p.n, p.e.map(x => x.slice())); });
+  // ---- 📖 recetas: primero las del área de quien entró; las otras escondidas; se pueden editar ----
+  const pintarRec = () => {
+    const r = w.querySelector(".t-rec"), mia = tmrMiArea(), L = tmrRecetas();
+    const fila = (p, i) => chip(`${escH(p.n)} <span style="font-weight:500;color:${C.inkSoft};">${p.e.map(x => x[0]).join("+")}′${p.e[0] && (p.e[0][2] || p.e[0][3]) ? " · " + (p.e[0][2] || "–") + "/" + (p.e[0][3] || "–") + "°" : ""}</span>`, `data-pre="${i}"`);
+    const grupo = (a, t) => { const it = L.map((p, i) => [p, i]).filter(([p]) => p.a === a); return `<div style="font-size:0.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};margin:10px 0 6px;">${t}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${it.length ? it.map(([p, i]) => fila(p, i)).join("") : `<span style="font-size:0.85rem;color:${C.inkSoft};">Todavía no hay recetas. Toca ✏️ Editar para agregar.</span>`}</div>`; };
+    const otras = TMR_AREAS.filter(a => a[0] !== mia && L.some(p => p.a === a[0]));
+    r.innerHTML = `<div style="display:flex;align-items:center;gap:8px;"><div style="flex:1;font-weight:800;font-size:1.05rem;">📖 ${mia ? "Recetas de " + escH((TMR_AREAS.find(a => a[0] === mia) || [, mia])[1]) : "Recetas del horno"}</div>
+        <button type="button" class="t-ed" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:700;border:1.5px solid ${C.line};border-radius:10px;padding:7px 12px;background:#fff;color:${C.ink};cursor:pointer;">✏️ Editar</button></div>
+      <div style="font-size:0.8rem;color:${C.inkSoft};">Un toque y empieza. Las de varias etapas te avisan cuándo cambiar la temperatura.</div>
+      ${mia ? grupo(mia, (TMR_AREAS.find(a => a[0] === mia) || [, mia])[1]) : ""}
+      ${otras.length ? `<button type="button" class="t-otras" style="margin-top:12px;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:none;color:${C.inkSoft};cursor:pointer;padding:0;">${TMR_VER_OTRAS || !mia ? "▾" : "▸"} Otras áreas (${otras.map(a => a[1].replace(/^\S+\s/, "")).join(", ")})</button>
+        ${TMR_VER_OTRAS || !mia ? otras.map(a => grupo(a[0], a[1])).join("") : ""}` : ""}`;
+    r.querySelectorAll("[data-pre]").forEach(b => b.onclick = ()=>{ const p = L[+b.dataset.pre]; tmrNuevo(p.n, p.e.map(x => x.slice())); });
+    const o = r.querySelector(".t-otras"); if(o) o.onclick = ()=>{ TMR_VER_OTRAS = !TMR_VER_OTRAS; pintarRec(); };
+    r.querySelector(".t-ed").onclick = ()=>{ TMR_EDIT = L.map(p => JSON.parse(JSON.stringify(p))); pintarEd(); };
+  };
+  // editor de recetas (para todos los equipos: se guarda en el servidor)
+  const pintarEd = () => {
+    const r = w.querySelector(".t-rec"), mia = tmrMiArea(), inp = `font-family:'IBM Plex Mono',monospace;font-size:0.95rem;padding:7px;border:1.5px solid ${C.line};border-radius:9px;background:#fff;color:${C.ink};box-sizing:border-box;`;
+    const ver = TMR_EDIT.map((p, i) => [p, i]).filter(([p]) => !mia || TMR_VER_OTRAS || p.a === mia);
+    r.innerHTML = `<div style="font-weight:800;font-size:1.05rem;">✏️ Editar recetas</div>
+      <div style="font-size:0.8rem;color:${C.inkSoft};margin-bottom:8px;">Minutos y temperatura del horno (arriba / abajo) de cada etapa. Al guardar, cambia para todos.</div>
+      ${ver.map(([p, i]) => `<div style="background:#fff;border:1.5px solid ${C.line};border-radius:14px;padding:10px;margin-top:8px;" data-r="${i}">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <input class="r-n" value="${escH(p.n)}" placeholder="Nombre" style="${inp}flex:1;min-width:150px;font-family:'Work Sans',sans-serif;font-weight:700;">
+          <select class="r-a" style="${inp}font-family:'Work Sans',sans-serif;">${TMR_AREAS.map(a => `<option value="${a[0]}"${a[0] === p.a ? " selected" : ""}>${a[1]}</option>`).join("")}</select>
+          <button type="button" class="r-x" style="border:1.5px solid #B3261E;color:#B3261E;background:#fff;border-radius:9px;padding:6px 10px;cursor:pointer;font-weight:700;">🗑</button>
+        </div>
+        ${p.e.map((st, k) => `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:0.82rem;" data-k="${k}">
+          <b style="width:4.2em;">Etapa ${k + 1}</b>
+          <input class="e-m" value="${st[0] || ""}" inputmode="decimal" style="${inp}width:4.2em;text-align:center;"> min
+          <input class="e-a" value="${st[2] || ""}" inputmode="numeric" placeholder="arriba" style="${inp}width:4.8em;text-align:center;">
+          <input class="e-b" value="${st[3] || ""}" inputmode="numeric" placeholder="abajo" style="${inp}width:4.8em;text-align:center;"> °C
+          <input class="e-t" value="${escH(st[1] || "")}" placeholder="nota (opcional)" style="${inp}flex:1;min-width:120px;font-family:'Work Sans',sans-serif;">
+          ${p.e.length > 1 ? `<button type="button" class="e-x" style="border:none;background:none;color:${C.inkSoft};cursor:pointer;">✕</button>` : ""}</div>`).join("")}
+        <button type="button" class="e-mas" style="margin-top:6px;font-size:0.82rem;font-weight:700;border:1.5px dashed ${C.line};background:#fff;border-radius:9px;padding:6px 10px;cursor:pointer;color:${C.ink};">+ etapa</button>
+      </div>`).join("")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        <button type="button" class="r-nueva" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:1.5px dashed ${C.gold};border-radius:12px;padding:10px;background:#fff;color:${C.ink};cursor:pointer;">+ Nueva receta</button>
+        <button type="button" class="r-ok" style="flex:1;font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:800;border:none;border-radius:12px;padding:10px;background:${C.gold};color:#fff;cursor:pointer;">💾 Guardar</button>
+        <button type="button" class="r-no" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;border:none;background:none;color:${C.inkSoft};cursor:pointer;text-decoration:underline;">Cancelar</button>
+      </div><div class="r-msg" style="font-size:0.85rem;margin-top:6px;"></div>`;
+    const leerTodo = () => r.querySelectorAll("[data-r]").forEach(c => { const p = TMR_EDIT[+c.dataset.r]; p.n = c.querySelector(".r-n").value.trim(); p.a = c.querySelector(".r-a").value;
+      p.e = [...c.querySelectorAll("[data-k]")].map(d => { const num = q => parseFloat(String(d.querySelector(q).value).replace(",", ".")) || ""; const t = d.querySelector(".e-t").value.trim(), a = num(".e-a"), b = num(".e-b");
+        return a || b ? [num(".e-m"), t, a, b] : [num(".e-m"), t]; }); });
+    r.querySelectorAll("[data-r]").forEach(c => { const i = +c.dataset.r;
+      c.querySelector(".r-x").onclick = ()=>{ leerTodo(); TMR_EDIT.splice(i, 1); pintarEd(); };
+      c.querySelector(".e-mas").onclick = ()=>{ leerTodo(); TMR_EDIT[i].e.push([10, ""]); pintarEd(); };
+      c.querySelectorAll(".e-x").forEach(x => x.onclick = ()=>{ leerTodo(); TMR_EDIT[i].e.splice(+x.closest("[data-k]").dataset.k, 1); pintarEd(); }); });
+    r.querySelector(".r-nueva").onclick = ()=>{ leerTodo(); TMR_EDIT.push({a: mia || "Panaderia", n: "", e: [[15, "", 180, 180]]}); pintarEd(); };
+    r.querySelector(".r-no").onclick = ()=>{ TMR_EDIT = null; pintarRec(); };
+    r.querySelector(".r-ok").onclick = async ()=>{ leerTodo(); const m = r.querySelector(".r-msg");
+      const mal = TMR_EDIT.find(p => !p.n || !p.e.length || p.e.some(e => !(e[0] > 0)));
+      if(mal){ m.style.color = "#B3261E"; m.textContent = "⚠️ Cada receta necesita nombre y minutos en cada etapa."; return; }
+      m.style.color = C.inkSoft; m.textContent = "Guardando…"; await tmrRecGuardar(TMR_EDIT); TMR_EDIT = null; pintarRec(); };
+  };
   const pintarFav = () => { const f = w.querySelector(".t-favs");
-    f.innerHTML = TMR_FAV.length ? `<div style="margin-top:14px;font-weight:800;font-size:1.05rem;">★ Mis favoritos</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">${TMR_FAV.map((x, i) => `<span style="display:inline-flex;align-items:center;border:1.5px solid ${C.gold};border-radius:100px;background:${C.goldSoft};overflow:hidden;"><button type="button" data-fv="${i}" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:none;padding:9px 6px 9px 14px;cursor:pointer;color:${C.ink};">${escH(x.n)} <span style="font-weight:500;color:${C.inkSoft};">${tmrFmt(x.m * 60000)}</span></button><button type="button" data-fx="${i}" title="Quitar" style="border:none;background:none;padding:9px 12px 9px 6px;cursor:pointer;color:${C.inkSoft};font-size:0.9rem;">✕</button></span>`).join("")}</div>` : "";
-    f.querySelectorAll("[data-fv]").forEach(b => b.onclick = ()=>{ const x = TMR_FAV[+b.dataset.fv]; tmrNuevo(x.n, [[x.m, ""]]); });
+    f.innerHTML = TMR_FAV.length ? `<div style="margin-top:14px;font-weight:800;font-size:1.05rem;">★ Mis favoritos</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">${TMR_FAV.map((x, i) => `<span style="display:inline-flex;align-items:center;border:1.5px solid ${C.gold};border-radius:100px;background:${C.goldSoft};overflow:hidden;"><button type="button" data-fv="${i}" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border:none;background:none;padding:9px 6px 9px 14px;cursor:pointer;color:${C.ink};">${escH(x.n)} <span style="font-weight:500;color:${C.inkSoft};">${tmrFmt(x.m * 60000)}${x.ta || x.tb ? " · " + (x.ta || "–") + "/" + (x.tb || "–") + "°" : ""}</span></button><button type="button" data-fx="${i}" title="Quitar" style="border:none;background:none;padding:9px 12px 9px 6px;cursor:pointer;color:${C.inkSoft};font-size:0.9rem;">✕</button></span>`).join("")}</div>` : "";
+    f.querySelectorAll("[data-fv]").forEach(b => b.onclick = ()=>{ const x = TMR_FAV[+b.dataset.fv]; tmrNuevo(x.n, [x.ta || x.tb ? [x.m, "", x.ta, x.tb] : [x.m, ""]]); });
     f.querySelectorAll("[data-fx]").forEach(b => b.onclick = ()=>{ TMR_FAV.splice(+b.dataset.fx, 1); tmrGuardar(); pintarFav(); }); };
   w.querySelector(".t-fav").onclick = ()=>{ const m = leer(), n = nom.value.trim(); if(!(m > 0) || !n){ msg.textContent = "Para guardar un favorito escribe el nombre y los minutos."; return; }
-    TMR_FAV.push({n, m}); tmrGuardar(); limpiar(); pintarFav(); };
+    const [ta, tb] = temps(); TMR_FAV.push({n, m, ta, tb}); tmrGuardar(); limpiar(); pintarFav(); };
   w.querySelector(".t-not").onclick = ()=>{ tmrAudio(); tmrBip(); try{ if(window.Notification) Notification.requestPermission(); }catch(e){} };
   w.querySelector(".t-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0, 0); };
   w.addEventListener("pointerdown", tmrAudio, {once: true});
-  pintarFav(); tmrTick(true);
+  pintarFav(); pintarRec(); tmrTick(true);
+  tmrRecCargar().then(()=>{ if(document.body.contains(w) && !TMR_EDIT) pintarRec(); });
 }
 // ============================================================
 // 🧼 SANIDAD (Alban 24 oct 2026): tarjeta en la portada. Quien entra con su código ve
