@@ -3131,6 +3131,7 @@ function ensAbrir(f0, desdeForm){
       ${est === "por_aprobar" ? `<div style="margin-top:14px;background:#FFF1D6;border:1.5px solid #9A6212;border-radius:12px;padding:12px;font-size:0.95rem;">⏳ Ensayo enviado. <b>Alban lo revisa.</b></div>` : ""}
       ${f.tipo === "plato" ? `<button type="button" class="ens-armar" style="margin-top:12px;width:100%;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:#2E7D4F;color:#fff;border:none;border-radius:14px;padding:13px;cursor:pointer;">🍽️ Armar pedido</button>` : ""}
       <div style="margin-top:14px;font-size:0.9rem;"><b>Rinde:</b> ${f.rinde !== "" && f.rinde != null ? ensF(ensR(Number(f.rinde) * k, 2)) + " " + escH(f.unidad || "") : "—"}${f.proteina ? ` · <b>Proteína:</b> ${escH(f.proteina)}` : ""}</div>
+      ${est === "confirmada" && (f.pasos || []).some(p => (p.items || []).length) ? `<button type="button" class="ens-modo" style="margin-top:12px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:800;background:#5B2A1C;color:#fff;border:none;border-radius:14px;padding:14px;cursor:pointer;">▶️ Modo paso a paso</button>` : ""}
       ${est === "confirmada" ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">${[0.5, 1, 2, 3].map(x => `<button type="button" data-k="${x}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;padding:9px 16px;border-radius:100px;border:1.5px solid #2E7D4F;background:${x === k ? "#2E7D4F" : "#fff"};color:${x === k ? "#fff" : "#2E7D4F"};cursor:pointer;">×${String(x).replace(".", ",")}</button>`).join("")}</div>` : ""}
       ${f.tipo === "plato" ? `<div style="margin-top:12px;display:grid;gap:6px;">${(f.componentes || []).map(c => `<div style="background:#fff;border:1px solid ${C.line};border-radius:12px;padding:10px 12px;font-size:0.9rem;"><b>${escH(c.rol)}</b>${c.min === 0 ? " (opcional)" : ""}${c.max > 1 ? ` (hasta ${c.max})` : ""}: ${c.opciones.map(o => { const cf = ENS_REC.find(x => x.code === o.code); return escH(cf ? cf.nombre : o.code) + (o.code === c.base ? " (base)" : "") + " " + (cf ? ensTag(ensEstado(cf)) : ""); }).join(" · ")}</div>`).join("")}</div>` : ""}
       ${ensPasosHTML(f, k)}
@@ -3141,6 +3142,7 @@ function ensAbrir(f0, desdeForm){
     const h = cont.querySelector(".ens-hacer"); if(h) h.onclick = () => { ov.remove(); ensForm(f0); };
     const a = cont.querySelector(".ens-armar"); if(a) a.onclick = () => { ov.remove(); ensArmar(f0); };
     cont.querySelectorAll("[data-k]").forEach(b => b.onclick = () => { k = Number(b.dataset.k); pintar(); });
+    const md = cont.querySelector(".ens-modo"); if(md) md.onclick = () => batModo({id: f.nombre, group: f.area, note: f.nota || "", recipe: {steps: (f.pasos || []).map(p => ({title: p.titulo, items: (p.items || []).map(i => [i.ing, ensN(i.cant) || 0, i.u || "g"])}))}}, k);
     cont.querySelectorAll("[data-aa]").forEach(b => b.onclick = async () => { if(b.dataset.aa === f0.area) return; await ensGuardarAj(f0.code, {area: b.dataset.aa, sub: ""}); f.area = f0.area; f.subgrupo = f0.subgrupo; pintar(); });
     cont.querySelectorAll("[data-as]").forEach(b => b.onclick = async () => { await ensGuardarAj(f0.code, {sub: ensSub(f0) === b.dataset.as ? "" : b.dataset.as}); f.subgrupo = f0.subgrupo; pintar(); });
   };
@@ -3490,7 +3492,20 @@ var BAT_PROC = {
     {n: "Uso en los moldes", txt: "Molde limpio y seco → agitar bien el desmoldante → con brocha aplicar una capa delgada en base y paredes → inclinar el molde para quitar el exceso."}],
     obs: ["Solo para moldes.", "Mezclar bien antes de cada uso.", "No usar en exceso: una capa fina es suficiente.", "No reemplaza el engrasado con mantequilla u otros métodos en las recetas que lo indiquen."]}
 };
+// Alban 6 nov: el mismo formato para TODAS las fórmulas. Sin ficha de proceso, los pasos son los de la receta registrada.
+function batPasoTit(t){ t = String(t || "").replace(/^Paso\s*\d+\s*[—–-]\s*/i, "").trim(); if(t.length <= 48) return {n: t || "Ingredientes", txt: ""};
+  const c = t.split(/(?<=[.;:])\s+|,\s+/)[0]; return {n: c.length <= 48 ? c.replace(/[.;:]$/, "") : t.slice(0, 45) + "…", txt: t}; }
+function batProc(def){
+  if(BAT_PROC[def.id]) return BAT_PROC[def.id];
+  if(!def._proc){ const nd = normTxt(def.id);
+    const tm = typeof tmrRecetas === "function" ? tmrRecetas().find(x => { const nx = normTxt(x.n); return nx && (nd.includes(nx) || nx.includes(nd)); }) : null;
+    def._proc = {gen: true, tmrObj: tm || null, pasos: def.recipe.steps.map(st => { const h = batPasoTit(st.title), m = String(st.title || "").match(/(\d+(?:[.,]\d+)?)\s*min/i);
+      return {n: h.n, txt: h.txt, items0: st.items, t: m ? [[Number(m[1].replace(",", ".")), h.n]] : null}; }), obs: []}; }
+  return def._proc;
+}
+function batTmr(def){ const pr = batProc(def); if(pr.tmrObj) return pr.tmrObj; return pr.tmr && typeof tmrRecetas === "function" ? tmrRecetas().find(x => x.a === "Batido" && x.n === pr.tmr) : null; }
 function batItems(def){   // reparte los ingredientes REGISTRADOS en los pasos de la ficha (lo que no aparezca va en "Otros")
+  if(!BAT_PROC[def.id]) return batProc(def).pasos.map(p => ({...p, items: p.items0}));
   const pr = BAT_PROC[def.id], todos = def.recipe.steps.flatMap(s => s.items), usados = new Set();
   const pasos = pr.pasos.map(p => ({...p, items: (p.ing || []).map(n => { const it = todos.find(x => x[0] === n && !usados.has(x)); if(it) usados.add(it); return it; }).filter(Boolean)}));
   const resto = todos.filter(x => !usados.has(x));
@@ -3498,23 +3513,22 @@ function batItems(def){   // reparte los ingredientes REGISTRADOS en los pasos d
   return pasos;
 }
 function batCant(q, u, k){ const v = q * k; return q === 0 ? "al gusto" : (u === "unid" ? fmtN(Math.ceil(v - 1e-9)) : v >= 10 ? fmtN(Math.round(v)) : (v % 1 ? fmtN(Math.round(v * 10) / 10) : fmtN(v))); }
-function batHerrBadge(def, grande){ const pr = BAT_PROC[def.id], h = pr && BAT_HERR[pr.herr]; if(!h) return "";
+function batHerrBadge(def, grande){ const pr = batProc(def), h = pr && BAT_HERR[pr.herr]; if(!h) return "";
   return `<span style="display:inline-block;white-space:nowrap;background:${h[2]};color:#fff;font-weight:800;font-size:${grande ? "0.95rem" : "0.72rem"};letter-spacing:.03em;border-radius:100px;padding:${grande ? "6px 12px" : "3px 9px"};">${h[0]} ${h[1]}</span>`; }
 function batPasosHTML(def, k){
-  const pr = BAT_PROC[def.id], pasos = batItems(def), tmr = pr.tmr && typeof tmrRecetas === "function" ? tmrRecetas().find(x => x.a === "Batido" && x.n === pr.tmr) : null;
+  const pr = batProc(def), pasos = batItems(def), tmr = batTmr(def);
   return `${pasos.map((p, i) => `<div style="padding:8px 16px;background:#5B2A1C;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <span style="background:#fff;color:#5B2A1C;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;">${i + 1}</span>
       <span style="font-weight:700;font-size:0.92rem;">${escH(p.n)}</span>${p.v ? `<span style="margin-left:auto;background:#F5C76B;color:#3a2a00;border-radius:6px;padding:2px 7px;font-size:0.74rem;font-weight:700;">${escH(p.v)}</span>` : ""}</div>
-    ${p.items.length ? `<ul style="list-style:none;margin:0;padding:0;">${p.items.map(([nm, q, u]) => `<li style="display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid ${C.line};"><span style="flex:1;font-size:0.95rem;">${nm}</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1rem;background:${k !== 1 ? "#FBF3DA" : C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:4.5em;text-align:right;">${batCant(q, u, k)} <span style="font-size:0.75rem;color:${C.inkSoft};">${u}</span></span></li>`).join("")}</ul>` : `<div style="padding:7px 16px;font-size:0.85rem;color:${C.inkSoft};border-bottom:1px solid ${C.line};">${escH(p.txt || "")}</div>`}`).join("")}
+    ${p.items.length ? `<ul style="list-style:none;margin:0;padding:0;">${p.items.map(([nm, q, u]) => `<li style="display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid ${C.line};"><span style="flex:1;font-size:0.95rem;">${nm}</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1rem;background:${k !== 1 ? "#FBF3DA" : C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:4.5em;text-align:right;">${batCant(q, u, k)} <span style="font-size:0.75rem;color:${C.inkSoft};">${u}</span></span></li>`).join("")}</ul>` : `<div style="padding:7px 16px;font-size:0.85rem;color:${C.inkSoft};border-bottom:1px solid ${C.line};">${escH(p.txt || "")}</div>`}${p.items.length && pr.gen && p.txt ? `<div style="padding:7px 16px;font-size:0.85rem;color:${C.inkSoft};border-bottom:1px solid ${C.line};">${escH(p.txt)}</div>` : ""}`).join("")}
     ${pr.obs && pr.obs.length ? `<div style="padding:10px 16px;background:#FFF4EC;font-size:0.84rem;line-height:1.5;border-bottom:1px solid ${C.line};"><b>⚠️ Observaciones:</b> ${pr.obs.map(escH).join(" · ")}</div>` : ""}
     <div style="padding:12px 16px;display:grid;gap:8px;">
       ${tmr ? `<button type="button" data-batacc="tmr" data-bat="${escH(def.id)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#1F2A37;color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer;">⏱️ Timer de horneo · ${tmr.e.map(e => e[0] + " min").join(" + ")}</button>` : ""}
-      <div style="display:flex;gap:8px;"><button type="button" data-batacc="modo" data-bat="${escH(def.id)}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#5B2A1C;color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer;">▶️ Modo batido</button>
-      ${pr.ficha ? `<button type="button" data-batacc="ficha" data-bat="${escH(def.id)}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#fff;color:#5B2A1C;border:1.5px solid #5B2A1C;border-radius:12px;padding:13px;cursor:pointer;">🖼️ Ver ficha</button>` : ""}</div></div>`;
+      <button type="button" data-batacc="modo" data-bat="${escH(def.id)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#5B2A1C;color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer;">▶️ ${def.group === "Batido" ? "Modo batido" : "Modo paso a paso"}</button></div>`;
 }
-function batModo(def){
-  const pr = BAT_PROC[def.id]; if(!pr) return;
-  const k = FORM_K[def.id] || 1, pasos = batItems(def), h = BAT_HERR[pr.herr];
+function batModo(def, kk){
+  const pr = batProc(def); if(!pr) return;
+  const k = kk || FORM_K[def.id] || 1, pasos = batItems(def), h = BAT_HERR[pr.herr];
   const ov = ensOverlay(), cont = ov.querySelector(".ens-in");
   let i = 0;
   const big = (bg, fg, bd) => `font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:800;border-radius:14px;padding:15px;cursor:pointer;background:${bg};color:${fg};border:${bd || "none"};`;
@@ -3523,9 +3537,9 @@ function batModo(def){
     cont.innerHTML = `${ensBtnCerrar("Salir")}
       <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;"><b style="font-family:'Fraunces',serif;font-size:1.25rem;">${escH(def.id.replace(/^Batido /, ""))}${k !== 1 ? ` · ×${fmtN(Math.round(k * 100) / 100)}` : ""}</b>${h ? `<span style="background:${h[2]};color:#fff;font-weight:800;border-radius:100px;padding:6px 12px;font-size:0.9rem;">${h[0]} ${h[3].toUpperCase()}</span>` : ""}</div>
       <div style="display:flex;gap:4px;margin:12px 0 6px;">${pasos.map((_, j) => `<i style="flex:1;height:8px;border-radius:4px;background:${j < i ? "#2E7D4F" : j === i ? "#8A2E1F" : C.line};"></i>`).join("")}</div>
-      ${fin ? `<div style="text-align:center;padding:40px 10px;"><div style="font-size:4rem;">✅</div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;">Batido terminado</div>
+      ${fin ? `<div style="text-align:center;padding:40px 10px;"><div style="font-size:4rem;">✅</div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;">${def.group === "Batido" ? "Batido terminado" : "¡Listo!"}</div>
           ${def.note ? `<div style="margin-top:14px;text-align:left;background:#FFF4EC;border:1.5px solid #8A3B12;border-radius:12px;padding:12px;font-size:0.95rem;line-height:1.5;">🔥 ${escH(def.note)}${pr.horno ? "<br>" + escH(pr.horno) : ""}</div>` : ""}
-          <div style="display:grid;gap:10px;margin-top:16px;">${BAT_PROC[def.id].tmr ? `<button type="button" class="bm-tmr" style="${big("#1F2A37", "#fff")}">⏱️ Iniciar timer de horneo</button>` : ""}<button type="button" class="bm-x" style="${big("#2E7D4F", "#fff")}">Listo</button></div></div>`
+          <div style="display:grid;gap:10px;margin-top:16px;">${batTmr(def) ? `<button type="button" class="bm-tmr" style="${big("#1F2A37", "#fff")}">⏱️ Iniciar timer de horneo</button>` : ""}<button type="button" class="bm-x" style="${big("#2E7D4F", "#fff")}">Listo</button></div></div>`
       : `<div style="font-size:0.85rem;font-weight:800;letter-spacing:.05em;color:${C.inkSoft};">PASO ${i + 1} DE ${pasos.length}</div>
       <div style="background:#fff;border:2px solid #5B2A1C;border-radius:18px;padding:16px;margin-top:8px;">
         <div style="font-size:1.6rem;font-weight:800;line-height:1.2;">${escH(p.n)}</div>
@@ -3546,7 +3560,7 @@ function batModo(def){
   };
   pintar();
 }
-function batTimerHorno(def){ const pr = BAT_PROC[def.id], t = pr && pr.tmr ? tmrRecetas().find(x => x.a === "Batido" && x.n === pr.tmr) : null; if(t) tmrNuevo(t.n, t.e.map(e => e.slice())); }
+function batTimerHorno(def){ const t = batTmr(def); if(t) tmrNuevo(t.n, t.e.map(e => e.slice())); }
 function batFicha(def){
   const pr = BAT_PROC[def.id]; const ov = ensOverlay(), cont = ov.querySelector(".ens-in");
   cont.innerHTML = `${ensBtnCerrar()}<div style="margin-top:12px;font-size:0.85rem;color:#8A3B12;">⚠️ Las cantidades correctas son las de la fórmula de la página; la ficha es para ver el proceso.</div>
@@ -3558,7 +3572,7 @@ try{ document.addEventListener("click", e => { const b = e.target && e.target.cl
   if(b.dataset.batacc === "modo") batModo(def); else if(b.dataset.batacc === "ficha") batFicha(def);
   else if(b.dataset.batacc === "tmr"){ batTimerHorno(def); b.textContent = "⏱️ Timer de horneo corriendo (abajo)"; } }); }catch(e){}
 function formPasosHTML(def, k){
-  if(typeof BAT_PROC !== "undefined" && BAT_PROC[def.id]) return batPasosHTML(def, k);   // Alban 6 nov: batidos por pasos
+  if(typeof batPasosHTML === "function") return batPasosHTML(def, k);   // Alban 6 nov: todas las fórmulas en formato por pasos
   return def.recipe.steps.map(st2=>`
     <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
     <ul style="list-style:none;margin:0;padding:0;">${st2.items.map(([nm,q,u])=>{
@@ -3651,7 +3665,7 @@ function renderFormulas(){
         </div>` : ""}
         ${def.ajustable ? "" : formEscHTML(def)}
         <div class="f-tit" style="${def.ajustable ? "display:none;" : ""}padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
-        <div class="f-pasos">${BAT_PROC[def.id] ? batPasosHTML(def, FORM_K[def.id] || 1) : pasos}</div>
+        <div class="f-pasos">${batPasosHTML(def, def.ajustable ? 1 : (FORM_K[def.id] || 1))}</div>
         ${def.note ? `<div style="padding:14px 16px;border-top:1px solid ${C.line};">${notaHTML(def.note)}</div>` : ""}
         ${usaEn.length ? `<div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
           <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Se usa en</div>
@@ -3675,13 +3689,8 @@ function renderFormulas(){
         const b0 = ajBase(def), n = FORM_N[def.id] || b0, k = n / b0;
         if(document.activeElement !== fn) fn.value = n;
         const tit = def.ajustable.base ? `Receta con ${fmtN(n)} g de ${def.ajustable.base.toLowerCase()} — sale ≈ ${fmtN(Math.round(def.recipe.per*k))} ${unit}` : `Receta — ${fmtN(n)} ${unit}`;
-        fp.innerHTML = `<div style="padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${tit}</div>` + def.recipe.steps.map(st2=>`
-          <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
-          <ul style="list-style:none;margin:0;padding:0;">${st2.items.map(([nm,q,u])=>{
-            const v = q*k, shown = q === 0 ? "al gusto" : (v >= 10 ? fmtN(Math.round(v)) : (v % 1 ? fmtN(Math.round(v*10)/10) : fmtN(v)));
-            return `<li style="display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid ${C.line};">
-              <span style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:3.4em;text-align:center;">${shown}</span>
-              <span style="flex:1;font-size:0.95rem;">${nm}${q === 0 ? "" : ` <span style="color:${C.inkSoft};font-size:0.8rem;">(${u})</span>`}</span></li>`;}).join("")}</ul>`).join("");
+        FORM_K[def.id] = k;   // Alban 6 nov: el modo paso a paso usa esta cantidad
+        fp.innerHTML = `<div style="padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${tit}</div>` + batPasosHTML(def, k);
       };
       const a = def.ajustable;
       const cur = ()=> FORM_N[def.id] || ajBase(def);
