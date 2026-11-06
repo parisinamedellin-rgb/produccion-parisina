@@ -1083,6 +1083,15 @@ const FORMULA_DEFS = [
         ["Maní triturado", 120, "g"]]},
     ]}
   },
+  {
+    // Alban 6 nov: ficha Desmoldante (27/06/26). Para engrasar moldes de batidos.
+    id: "Desmoldante", code: "SE-DESMOLDANTE", group: "Batido",
+    channels: { total: [] }, outputs: [],
+    note: "Rinde aprox. 1.900 ml. Guardar a temperatura ambiente en recipiente cerrado. No refrigerar. Mezclar bien antes de cada uso.",
+    recipe: { per: 1900, of: "total", steps: [
+      {title:"Ingredientes", items:[["Harina Haz de Oros", 600, "g"], ["Fécula de maíz", 300, "g"], ["Aceite vegetal", 1000, "ml"]]},
+    ]}
+  },
 ];
 
 // FORMULA_SUBS y FORMULA_DETAIL_FN se arman solos a partir de FORMULA_DEFS.
@@ -3421,7 +3430,135 @@ function formEscHTML(def){
     </div>
     <div class="fe-msg" style="font-size:0.8rem;margin-top:6px;color:${C.inkSoft};"></div></div>`;
 }
+// ==== BATIDO: fórmula por pasos + modo batido (Alban 6 nov 2026) ====
+// Los PROCESOS salen de las fichas técnicas (orden estricto, herramienta, velocidades y tiempos).
+// Las CANTIDADES son las registradas en FORMULA_DEFS (las de la ficha pueden estar desactualizadas).
+// t = [[minutos, nota], ...] → botón de timer en el modo batido. ing = nombres exactos de la receta registrada.
+var BAT_HERR = {escudo: ["🛡️", "ESCUDO", "#8A3B12", "Usar escudo (pala), no globo"], globo: ["🎈", "GLOBO", "#2F6DB5", "Usar globo, no pala"]};
+var BAT_PROC = {
+  "Batido Maria Luisa": {herr: "escudo", tmr: "María Luisa", ficha: "maria-luisa", horno: "Preferiblemente en horno 3.", pasos: [
+    {n: "Engrasar los moldes", txt: "Engrasar muy bien los moldes con margarina, desmoldante o manteca."},
+    {n: "Cremar margarina y azúcar", v: "Mínima 30 s + mediana 14 min", t: [[0.5, "Velocidad mínima"], [14, "Velocidad mediana"]], ing: ["Margarina", "Azúcar común"], txt: "Colocar la margarina y el azúcar. Batir 30 segundos en velocidad mínima y luego 14 minutos en velocidad mediana."},
+    {n: "Huevos uno a uno", v: "Mínima + mediana 5 min", t: [[5, "Velocidad mediana"]], ing: ["Huevos AA"], txt: "Adicionar los huevos uno a uno en velocidad mínima. Luego batir 5 minutos en velocidad mediana."},
+    {n: "Intercalar sólido con líquido", v: "Mínima", ing: ["Harina Haz de Oros", "Polvo de hornear", "Leche en polvo", "Leche líquida", "Esencia de naranja"], txt: "Intercalar la harina, el polvo de hornear y la leche en polvo con la leche líquida y la esencia de naranja hasta obtener una mezcla homogénea."},
+    {n: "Finalizar con la rayadura de limón", v: "Mediana 2 min", t: [[2, "Velocidad mediana"]], ing: ["Limón Tahití"], txt: "Agregar la rayadura de limón y batir 2 minutos en velocidad mediana."},
+    {n: "Aplanar con una espátula", txt: "Aplanar la mezcla con una espátula de codo en el molde, cuando la mezcla está cruda."}],
+    obs: ["Usar escudo, no globo.", "Tener la mise en place completa antes de iniciar.", "Incorporar el huevo uno a uno.", "Intercalar sólidos con líquidos a velocidad mínima.", "No sobrebatir una vez integrada la mezcla.", "No dar golpes a los moldes antes de hornear."]},
+  "Batido chocolate": {herr: "globo", tmr: "Chocolate", ficha: "chocolate", horno: "Esperar el enfriamiento completo antes de desmoldar, cortar, empacar y rotular.", pasos: [
+    {n: "Engrasar los moldes", txt: "Engrasar los moldes uniformemente con desmoldante o manteca antes de servir el batido."},
+    {n: "Base de huevos y azúcar", v: "Globo 6 min", t: [[6, "Huevos y azúcar con globo"]], ing: ["Huevos AA", "Azúcar común"], txt: "Agregar los huevos y el azúcar. Batir con globo 6 minutos hasta punto de nieve."},
+    {n: "Incorporar la leche", ing: ["Leche líquida"], txt: "Agregar la leche lentamente en forma de hilo, solo integrando, sin bajar el huevo."},
+    {n: "Incorporar los secos", ing: ["Harina Haz de Oros", "Polvo de hornear", "Sal"], txt: "Agregar la harina, el polvo de hornear y la sal con el globo, sin sobrebatir la mezcla."},
+    {n: "Incorporar el aceite", ing: ["Aceite vegetal"], txt: "Incorporar el aceite lentamente en forma de hilo, solo integrando y sin sobrebatir."},
+    {n: "Integración final: líquidos calientes", ing: ["Café en polvo", "Agua", "Esencia de vainilla", "Color caramelo", "Cocoa"], txt: "Premezclar aparte el café, el agua, la vainilla, el color caramelo y la cocoa. Agregar los líquidos calientes al final y homogeneizar totalmente. Limpiar paredes y fondo del bowl con miserable plástica."}],
+    obs: ["Montar con globo.", "Incorporar la leche, luego los secos y luego el aceite, por separado.", "Los secos sin sobrebatir.", "Los líquidos calientes van al final.", "La mezcla debe quedar totalmente homogénea, sin grumos.", "Engrasar los moldes antes de servir el batido."]},
+  "Batido red velvet": {herr: "globo", tmr: "Red velvet", ficha: "red-velvet", horno: "Esperar el enfriamiento completo (unas 2 horas) para desmoldar y cortar.", pasos: [
+    {n: "Engrasar los moldes", txt: "Engrasar los moldes uniformemente con desmoldante o manteca antes de iniciar el proceso."},
+    {n: "Base de aceite y azúcares", v: "Globo · mínima 30 s", t: [[0.5, "Velocidad mínima"]], ing: ["Aceite vegetal", "Azúcar común", "Azúcar morena"], txt: "Agregar el aceite, el azúcar común y el azúcar morena. Batir con globo a velocidad mínima 30 segundos."},
+    {n: "Incorporar el huevo", v: "Uno a uno + máxima 8 min", t: [[8, "Velocidad máxima"]], ing: ["Huevos AA"], txt: "Agregar los huevos uno a uno. Luego batir a velocidad máxima 8 minutos."},
+    {n: "Intercalar secos y líquidos", v: "Mínima", ing: ["Harina Haz de Oros", "Fécula de maíz", "Cocoa", "Polvo de hornear", "Bicarbonato", "Sal", "Leche líquida", "Vinagre blanco", "Colorante en polvo"], txt: "A velocidad mínima, intercalar los secos (harina, fécula, cocoa, polvo de hornear, bicarbonato y sal) con los líquidos (leche, vinagre y colorante) hasta una mezcla homogénea."}],
+    obs: ["Utilizar globo, no pala.", "Tener la mise en place completa antes de iniciar.", "Incorporar el huevo uno a uno.", "Intercalar sólidos con líquidos a velocidad mínima.", "No sobrebatir una vez integrada la mezcla."]},
+  "Batido zanahoria": {herr: "escudo", tmr: "Zanahoria", ficha: "zanahoria", horno: "Esperar el enfriamiento completo antes de desmoldar. La zanahoria se conserva entera: no se corta.", pasos: [
+    {n: "Engrasar los moldes", txt: "Engrasar los moldes uniformemente con desmoldante o manteca y enharinar ligeramente."},
+    {n: "Base de azúcares", v: "Pala · mínima 2 min", t: [[2, "Velocidad mínima"]], ing: ["Azúcar morena", "Azúcar común", "Huevos AA"], txt: "Agregar el azúcar morena, el azúcar común y los huevos. Batir con pala a velocidad mínima 2 minutos."},
+    {n: "Incorporar el aceite", v: "Mínima 1 min", t: [[1, "Velocidad mínima"]], ing: ["Aceite vegetal"], txt: "Agregar el aceite lentamente en forma de hilo. Batir a velocidad mínima 1 minuto."},
+    {n: "Incorporar los secos", v: "3 adiciones + media 2 min", t: [[2, "Velocidad media"]], ing: ["Harina Haz de Oros", "Polvo de hornear", "Bicarbonato", "Canela en polvo", "Clavos en polvo", "Nuez moscada", "Sal"], txt: "Agregar en tres adiciones la harina, el polvo de hornear, el bicarbonato, la canela, los clavos, la nuez moscada y la sal. Luego batir a velocidad media 2 minutos."},
+    {n: "Integración final", v: "Mínima", ing: ["Zanahoria", "Almendras", "Leche líquida"], txt: "Agregar la zanahoria rallada fina (seca) y la almendra; integrar a velocidad mínima. Por último, la leche, mezclando solo hasta homogeneizar."}],
+    obs: ["Utilizar pala, no globo.", "La zanahoria rallada fina y completamente seca.", "El aceite en forma de hilo, para mantener la emulsión.", "Los secos en tres tandas, para evitar grumos.", "No sobrebatir después de la zanahoria y la leche.", "Verificar la temperatura del horno antes de hornear."]},
+  "Bizcochuelo": {herr: "globo", tmr: "Bizcochuelo", ficha: "bizcochuelo", horno: "Esperar el enfriamiento completo antes de desmoldar. El bizcochuelo se guarda entero: no se corta.", pasos: [
+    {n: "Engrasar los moldes", txt: "Engrasar los moldes ligeramente con desmoldante o mantequilla. Tener lista la mise en place de todos los pasos."},
+    {n: "Separar claras y yemas", ing: ["Huevos AA"], txt: "Separar las claras de las yemas cuidadosamente y reservar."},
+    {n: "Batido de claras", v: "Globo · mediana 2 min + máxima 8 min", t: [[2, "Velocidad mediana"], [8, "Velocidad máxima"]], ing: ["Azúcar común"], txt: "Agregar las claras y el azúcar. Batir con globo a velocidad mediana 2 minutos y luego a velocidad máxima 8 minutos."},
+    {n: "Agregar las yemas", v: "Mediana", txt: "Incorporar las yemas y batir a velocidad mediana hasta homogeneizar."},
+    {n: "Secos, fuera de la batidora", ing: ["Harina Haz de Oros", "Fécula de maíz"], txt: "Sacar el bol de la batidora. Incorporar la harina y la fécula con espátula de silicona (miserable), con movimientos envolventes suaves, sin desgasificar ni bajar la mezcla."},
+    {n: "Llenar los moldes", txt: "Verter la mezcla en los moldes sin aplastarla ni dar golpes. Alisar solo la superficie con una espátula, muy delicadamente."}],
+    obs: ["Globo hasta antes de la harina y la fécula.", "Terminar con espátula de silicona y movimientos envolventes.", "No sobremezclar después de los secos.", "Tener la mise en place de todos los pasos antes de iniciar."]},
+  "Joconda (Ópera)": {herr: "globo", tmr: "Joconda", ficha: "joconda", horno: "", pasos: [
+    {n: "Preparar la lata", txt: "Colocar tapetes de silicona en la base de la lata. No engrasar la base. Aplicar desmoldante en los laterales. Reservar."},
+    {n: "Con la batidora (globo)", v: "Mínima 30 s + máxima 13 min", t: [[0.5, "Velocidad mínima"], [13, "Velocidad máxima"]], ing: ["Claras", "Huevos AA", "Azúcar común", "Azúcar XXX"], txt: "Con el globo, batir a velocidad mínima 30 segundos y luego a velocidad máxima 13 minutos."},
+    {n: "Harina", v: "Mínima · 4 tandas", ing: ["Harina Haz de Oros"], txt: "Incorporar la harina a velocidad mínima en 4 tandas."},
+    {n: "Extender y alisar", txt: "Verter la mezcla en la lata con los tapetes de silicona y alisar la superficie con una espátula."},
+    {n: "Maní triturado", ing: ["Maní triturado"], txt: "Incorporar el maní triturado."},
+    {n: "Llevar al horno", txt: "Hornear según los datos de horneado de la fórmula."}],
+    obs: ["Tapetes de silicona en la base de la lata; no engrasar la base.", "Desmoldante en los laterales antes de iniciar."]},
+  "Desmoldante": {herr: "globo", ficha: "desmoldante", horno: "", pasos: [
+    {n: "Mezclar los polvos", ing: ["Harina Haz de Oros", "Fécula de maíz"], txt: "En un bowl seco, mezclar la harina y la fécula hasta integrar completamente."},
+    {n: "Agregar el aceite", ing: ["Aceite vegetal"], txt: "Adicionar el aceite poco a poco sobre la mezcla de polvos."},
+    {n: "Mezclar hasta una mezcla uniforme", txt: "Batir con globo o espátula hasta lograr una mezcla líquida, homogénea y sin grumos."},
+    {n: "Filtrar (opcional)", txt: "Para una textura más fina, pasar la mezcla por un colador."},
+    {n: "Listo para usar", txt: "Usar de inmediato o guardar en recipiente cerrado, a temperatura ambiente. No refrigerar."},
+    {n: "Uso en los moldes", txt: "Molde limpio y seco → agitar bien el desmoldante → con brocha aplicar una capa delgada en base y paredes → inclinar el molde para quitar el exceso."}],
+    obs: ["Solo para moldes.", "Mezclar bien antes de cada uso.", "No usar en exceso: una capa fina es suficiente.", "No reemplaza el engrasado con mantequilla u otros métodos en las recetas que lo indiquen."]}
+};
+function batItems(def){   // reparte los ingredientes REGISTRADOS en los pasos de la ficha (lo que no aparezca va en "Otros")
+  const pr = BAT_PROC[def.id], todos = def.recipe.steps.flatMap(s => s.items), usados = new Set();
+  const pasos = pr.pasos.map(p => ({...p, items: (p.ing || []).map(n => { const it = todos.find(x => x[0] === n && !usados.has(x)); if(it) usados.add(it); return it; }).filter(Boolean)}));
+  const resto = todos.filter(x => !usados.has(x));
+  if(resto.length) pasos.push({n: "Otros ingredientes", items: resto});
+  return pasos;
+}
+function batCant(q, u, k){ const v = q * k; return q === 0 ? "al gusto" : (u === "unid" ? fmtN(Math.ceil(v - 1e-9)) : v >= 10 ? fmtN(Math.round(v)) : (v % 1 ? fmtN(Math.round(v * 10) / 10) : fmtN(v))); }
+function batHerrBadge(def, grande){ const pr = BAT_PROC[def.id], h = pr && BAT_HERR[pr.herr]; if(!h) return "";
+  return `<span style="display:inline-block;white-space:nowrap;background:${h[2]};color:#fff;font-weight:800;font-size:${grande ? "0.95rem" : "0.72rem"};letter-spacing:.03em;border-radius:100px;padding:${grande ? "6px 12px" : "3px 9px"};">${h[0]} ${h[1]}</span>`; }
+function batPasosHTML(def, k){
+  const pr = BAT_PROC[def.id], pasos = batItems(def), tmr = pr.tmr && typeof tmrRecetas === "function" ? tmrRecetas().find(x => x.a === "Batido" && x.n === pr.tmr) : null;
+  return `${pasos.map((p, i) => `<div style="padding:8px 16px;background:#5B2A1C;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="background:#fff;color:#5B2A1C;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:800;">${i + 1}</span>
+      <span style="font-weight:700;font-size:0.92rem;">${escH(p.n)}</span>${p.v ? `<span style="margin-left:auto;background:#F5C76B;color:#3a2a00;border-radius:6px;padding:2px 7px;font-size:0.74rem;font-weight:700;">${escH(p.v)}</span>` : ""}</div>
+    ${p.items.length ? `<ul style="list-style:none;margin:0;padding:0;">${p.items.map(([nm, q, u]) => `<li style="display:flex;align-items:center;gap:12px;padding:8px 16px;border-bottom:1px solid ${C.line};"><span style="flex:1;font-size:0.95rem;">${nm}</span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1rem;background:${k !== 1 ? "#FBF3DA" : C.bg};border:1px solid ${C.line};border-radius:8px;padding:3px 10px;min-width:4.5em;text-align:right;">${batCant(q, u, k)} <span style="font-size:0.75rem;color:${C.inkSoft};">${u}</span></span></li>`).join("")}</ul>` : `<div style="padding:7px 16px;font-size:0.85rem;color:${C.inkSoft};border-bottom:1px solid ${C.line};">${escH(p.txt || "")}</div>`}`).join("")}
+    ${pr.obs && pr.obs.length ? `<div style="padding:10px 16px;background:#FFF4EC;font-size:0.84rem;line-height:1.5;border-bottom:1px solid ${C.line};"><b>⚠️ Observaciones:</b> ${pr.obs.map(escH).join(" · ")}</div>` : ""}
+    <div style="padding:12px 16px;display:grid;gap:8px;">
+      ${tmr ? `<button type="button" data-batacc="tmr" data-bat="${escH(def.id)}" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#1F2A37;color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer;">⏱️ Timer de horneo · ${tmr.e.map(e => e[0] + " min").join(" + ")}</button>` : ""}
+      <div style="display:flex;gap:8px;"><button type="button" data-batacc="modo" data-bat="${escH(def.id)}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#5B2A1C;color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer;">▶️ Modo batido</button>
+      ${pr.ficha ? `<button type="button" data-batacc="ficha" data-bat="${escH(def.id)}" style="flex:1;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:800;background:#fff;color:#5B2A1C;border:1.5px solid #5B2A1C;border-radius:12px;padding:13px;cursor:pointer;">🖼️ Ver ficha</button>` : ""}</div></div>`;
+}
+function batModo(def){
+  const pr = BAT_PROC[def.id]; if(!pr) return;
+  const k = FORM_K[def.id] || 1, pasos = batItems(def), h = BAT_HERR[pr.herr];
+  const ov = ensOverlay(), cont = ov.querySelector(".ens-in");
+  let i = 0;
+  const big = (bg, fg, bd) => `font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:800;border-radius:14px;padding:15px;cursor:pointer;background:${bg};color:${fg};border:${bd || "none"};`;
+  const pintar = () => {
+    const fin = i >= pasos.length, p = pasos[i] || {};
+    cont.innerHTML = `${ensBtnCerrar("Salir")}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;"><b style="font-family:'Fraunces',serif;font-size:1.25rem;">${escH(def.id.replace(/^Batido /, ""))}${k !== 1 ? ` · ×${fmtN(Math.round(k * 100) / 100)}` : ""}</b>${h ? `<span style="background:${h[2]};color:#fff;font-weight:800;border-radius:100px;padding:6px 12px;font-size:0.9rem;">${h[0]} ${h[3].toUpperCase()}</span>` : ""}</div>
+      <div style="display:flex;gap:4px;margin:12px 0 6px;">${pasos.map((_, j) => `<i style="flex:1;height:8px;border-radius:4px;background:${j < i ? "#2E7D4F" : j === i ? "#8A2E1F" : C.line};"></i>`).join("")}</div>
+      ${fin ? `<div style="text-align:center;padding:40px 10px;"><div style="font-size:4rem;">✅</div><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;">Batido terminado</div>
+          ${def.note ? `<div style="margin-top:14px;text-align:left;background:#FFF4EC;border:1.5px solid #8A3B12;border-radius:12px;padding:12px;font-size:0.95rem;line-height:1.5;">🔥 ${escH(def.note)}${pr.horno ? "<br>" + escH(pr.horno) : ""}</div>` : ""}
+          <div style="display:grid;gap:10px;margin-top:16px;">${BAT_PROC[def.id].tmr ? `<button type="button" class="bm-tmr" style="${big("#1F2A37", "#fff")}">⏱️ Iniciar timer de horneo</button>` : ""}<button type="button" class="bm-x" style="${big("#2E7D4F", "#fff")}">Listo</button></div></div>`
+      : `<div style="font-size:0.85rem;font-weight:800;letter-spacing:.05em;color:${C.inkSoft};">PASO ${i + 1} DE ${pasos.length}</div>
+      <div style="background:#fff;border:2px solid #5B2A1C;border-radius:18px;padding:16px;margin-top:8px;">
+        <div style="font-size:1.6rem;font-weight:800;line-height:1.2;">${escH(p.n)}</div>
+        ${p.v ? `<div style="margin-top:10px;"><span style="background:#F5C76B;color:#3a2a00;border-radius:8px;padding:6px 10px;font-weight:800;font-size:1rem;">⚙️ ${escH(p.v)}</span></div>` : ""}
+        ${p.items.length ? `<div style="margin-top:12px;display:grid;gap:6px;">${p.items.map(([nm, q, u]) => `<div style="display:flex;align-items:baseline;gap:12px;border-bottom:1px solid ${C.line};padding:6px 0;"><span style="font-family:'IBM Plex Mono',monospace;font-weight:800;font-size:1.9rem;min-width:4.2em;">${batCant(q, u, k)}<span style="font-size:0.95rem;"> ${u}</span></span><span style="font-size:1.1rem;font-weight:600;">${nm}</span></div>`).join("")}</div>` : ""}
+        ${p.txt ? `<div style="font-size:1.05rem;color:#3d362c;margin-top:12px;line-height:1.45;">${escH(p.txt)}</div>` : ""}
+        ${p.t ? `<button type="button" class="bm-t" style="${big("#1F2A37", "#fff")}width:100%;margin-top:14px;">⏱️ Iniciar ${p.t.map(x => x[0] < 1 ? Math.round(x[0] * 60) + " s" : x[0] + " min").join(" + ")}</button>` : ""}
+      </div>
+      <div style="display:flex;gap:10px;margin-top:14px;"><button type="button" class="bm-a" style="${big("#fff", C.ink, "1.5px solid " + C.line)}flex:1;"${i ? "" : " disabled"}>← Anterior</button><button type="button" class="bm-s" style="${big("#2E7D4F", "#fff")}flex:2;">✓ Hecho, siguiente</button></div>
+      ${pr.obs && pr.obs.length ? `<div style="margin-top:14px;font-size:0.9rem;color:${C.inkSoft};line-height:1.5;">⚠️ ${pr.obs.map(escH).join(" · ")}</div>` : ""}`}`;
+    cont.querySelector(".ens-x").onclick = ov._cerrar;
+    const q = s => cont.querySelector(s);
+    if(q(".bm-a")) q(".bm-a").onclick = () => { if(i > 0){ i--; pintar(); } };
+    if(q(".bm-s")) q(".bm-s").onclick = () => { i++; pintar(); ov.scrollTop = 0; };
+    if(q(".bm-t")) q(".bm-t").onclick = () => { tmrNuevo(def.id.replace(/^Batido /, "") + " · paso " + (i + 1), p.t.map(x => [x[0], x[1] || ""])); q(".bm-t").textContent = "⏱️ Timer corriendo (abajo)"; };
+    if(q(".bm-tmr")) q(".bm-tmr").onclick = () => { batTimerHorno(def); q(".bm-tmr").textContent = "⏱️ Timer de horneo corriendo"; };
+    if(q(".bm-x")) q(".bm-x").onclick = ov._cerrar;
+  };
+  pintar();
+}
+function batTimerHorno(def){ const pr = BAT_PROC[def.id], t = pr && pr.tmr ? tmrRecetas().find(x => x.a === "Batido" && x.n === pr.tmr) : null; if(t) tmrNuevo(t.n, t.e.map(e => e.slice())); }
+function batFicha(def){
+  const pr = BAT_PROC[def.id]; const ov = ensOverlay(), cont = ov.querySelector(".ens-in");
+  cont.innerHTML = `${ensBtnCerrar()}<div style="margin-top:12px;font-size:0.85rem;color:#8A3B12;">⚠️ Las cantidades correctas son las de la fórmula de la página; la ficha es para ver el proceso.</div>
+    <img src="fichas/${pr.ficha}.jpg" alt="Ficha" style="width:100%;margin-top:10px;border-radius:10px;border:1px solid ${C.line};" onerror="this.outerHTML='<div style=&quot;padding:30px 10px;text-align:center;&quot;>La ficha todavía no está subida.</div>'">`;
+  cont.querySelector(".ens-x").onclick = ov._cerrar;
+}
+try{ document.addEventListener("click", e => { const b = e.target && e.target.closest && e.target.closest("[data-batacc]"); if(!b) return;
+  const def = FORMULA_DEFS.find(d => d.id === b.dataset.bat); if(!def) return; e.stopPropagation();
+  if(b.dataset.batacc === "modo") batModo(def); else if(b.dataset.batacc === "ficha") batFicha(def);
+  else if(b.dataset.batacc === "tmr"){ batTimerHorno(def); b.textContent = "⏱️ Timer de horneo corriendo (abajo)"; } }); }catch(e){}
 function formPasosHTML(def, k){
+  if(typeof BAT_PROC !== "undefined" && BAT_PROC[def.id]) return batPasosHTML(def, k);   // Alban 6 nov: batidos por pasos
   return def.recipe.steps.map(st2=>`
     <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
     <ul style="list-style:none;margin:0;padding:0;">${st2.items.map(([nm,q,u])=>{
@@ -3497,7 +3634,7 @@ function renderFormulas(){
     card.innerHTML = `
       <div class="f-head" style="padding:13px 16px;background:${C.accentSoft};display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">
         <span style="display:flex;flex-direction:column;gap:2px;">
-          <span style="font-size:1rem;font-weight:700;color:${C.accent};">${def.id} ${alerta}</span>
+          <span style="font-size:1rem;font-weight:700;color:${C.accent};">${def.id} ${batHerrBadge(def)} ${alerta}</span>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${GROUP_LABEL[def.group] || def.group} · ${base}</span>
         </span>
         <span class="f-chev" style="font-size:1.1rem;color:${C.accent};font-weight:700;">▸</span>
@@ -3514,7 +3651,7 @@ function renderFormulas(){
         </div>` : ""}
         ${def.ajustable ? "" : formEscHTML(def)}
         <div class="f-tit" style="${def.ajustable ? "display:none;" : ""}padding:10px 16px 2px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">Receta — ${esStock ? fmtN(def.stock.batch) + " " + (def.stock.unit || "g") : fmtN(def.recipe.per) + " " + unit}</div>
-        <div class="f-pasos">${pasos}</div>
+        <div class="f-pasos">${BAT_PROC[def.id] ? batPasosHTML(def, FORM_K[def.id] || 1) : pasos}</div>
         ${def.note ? `<div style="padding:14px 16px;border-top:1px solid ${C.line};">${notaHTML(def.note)}</div>` : ""}
         ${usaEn.length ? `<div style="padding:12px 16px;border-top:1px solid ${C.line};font-size:0.8rem;color:${C.inkSoft};line-height:1.6;">
           <div style="font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:0.7rem;margin-bottom:4px;">Se usa en</div>
