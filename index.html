@@ -21,7 +21,7 @@
   <main id="main" style="padding-top:8px;"></main>
 
   <footer style="margin-top:40px;padding-top:16px;border-top:1px solid #E4DBC9;font-size:0.78rem;color:#6B6255;line-height:1.5;">
-    <span id="afinar-adm">Parisina</span>
+    <span>Parisina</span>
   </footer>
   <iframe name="hidden_iframe" style="display:none;"></iframe>
 </div>
@@ -1816,7 +1816,17 @@ function renderAdmin(){
   if(!ADM){ main.appendChild(admLogin()); return; }
   if(ADM_ST.per === "personas"){ main.appendChild(admPerChips()); main.appendChild(usrAdminEl()); return; }   // Alban 22 oct: pestaña 👥 Personas al lado de Año
   main.appendChild(admPanel());
-  main.appendChild(bkAdminEl());   // Alban 5 nov: backup
+}
+// Alban 6 nov: Backup sale de Admin y va como tarjeta en el inicio
+function renderBackup(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const w = document.createElement("div"); w.setAttribute("data-bk", "1");
+  w.innerHTML = `<button type="button" class="bk-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>`;
+  w.querySelector(".bk-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  if(usrEsAdmin()) w.appendChild(bkAdminEl()); else { const x = document.createElement("div"); x.style.marginTop = "14px"; x.textContent = "Solo para el administrador."; w.appendChild(x); }
+  main.appendChild(w);
 }
 function admLogin(){
   const box = document.createElement("form");
@@ -2015,6 +2025,10 @@ const usrCod = u => String((u && u.cod) || "").trim();
 function usrActivo(){ return usrLista().some(u=>usrCod(u)); }
 function usrYo(){ let c = null; try{ c = localStorage.getItem("usuario_cod"); }catch(e){} if(!c) return null; return usrLista().find(u=>usrCod(u) && usrCod(u) === c) || null; }
 function usrPuede(fam){ if(!usrActivo()) return true; const u = usrYo(); if(!u) return false; const a = u.acc || []; return a.includes("ALL") || a.includes(fam) || (fam === "Aseo" && pedNorm(u.nom).startsWith("arelis")); }   // Alban 4 nov: Arelis ve Control de aseo
+// Alban 6 nov: herramientas del inicio (Timer, Sanidad, Calculadora, Comprar) por persona; u.noh = las que NO ve
+const USR_HERR = [["TIMER","⏲️ Timer"],["SANIDAD","🧼 Sanidad"],["CALC","🧮 Calculadora"],["COMPRAR","🛒 Comprar"]];
+function usrHerr(k){ if(!usrActivo()) return true; const u = usrYo(); if(!u) return true; return !(u.noh || []).includes(k); }
+function usrEsAdmin(){ if(!usrActivo()) return true; const u = usrYo(); return !!u && (/gerente/i.test(String(u.puesto || "")) || pedNorm(u.nom) === "alban"); }
 function usrNecesitaLogin(){ return usrActivo() && !usrYo(); }
 function bootUsuarios(){
   if(!DB) return;
@@ -2061,7 +2075,7 @@ function renderLogin(){
   adm.setAttribute("style", "margin-top:18px;text-align:center;");
   adm.innerHTML = `<button type="button" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:8px;">🔒 Admin</button>`;
   adm.querySelector("button").onclick = ()=>{ activeCat = "ADMIN"; render(); window.scrollTo(0,0); };
-  main.appendChild(adm);
+  // Alban 6 nov: Admin ya no va en el login; es una tarjeta en el inicio del admin
   setTimeout(()=>{ const i = box.querySelector(".uc"); if(i && i.focus) i.focus(); }, 50);
 }
 let USR_ED = null, USR_MSG = "";
@@ -2090,12 +2104,16 @@ function usrAdminEl(){
         <button type="button" class="ux" title="Quitar" style="border:none;background:${C.bg};color:#B3261E;border-radius:8px;padding:8px 11px;cursor:pointer;">✕</button></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">${USR_AREAS.map(([k, l])=>{ const on = (u.acc || []).includes(k);
         return `<button type="button" data-a="${escH(k)}" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:6px 10px;border-radius:100px;cursor:pointer;border:1.5px solid ${(PALETTE[k] || PALETTE.ALL).a};background:${on ? (PALETTE[k] || PALETTE.ALL).a : "#fff"};color:${on ? "#fff" : (PALETTE[k] || PALETTE.ALL).a};">${on ? "✓ " : ""}${l}</button>`; }).join("")}
+        ${USR_HERR.map(([k, l])=>{ const on = !(u.noh || []).includes(k);
+        return `<button type="button" data-h="${escH(k)}" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:6px 10px;border-radius:100px;cursor:pointer;border:1.5px solid #14213D;background:${on ? "#14213D" : "#fff"};color:${on ? "#fff" : "#14213D"};">${on ? "✓ " : ""}${escH(l)}</button>`; }).join("")}
         <button type="button" class="um2" title="Le pueden mandar mensajes directos (Mensajes › Personas)" style="font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;padding:6px 10px;border-radius:100px;cursor:pointer;border:1.5px dashed #B23A2E;background:${u.msg ? "#B23A2E" : "#fff"};color:${u.msg ? "#fff" : "#B23A2E"};">${u.msg ? "✓ " : ""}📣 Recibe mensajes</button></div>`;
     r.querySelector(".un").oninput = e=>{ u.nom = e.target.value; };
     r.querySelector(".uk").oninput = e=>{ u.cod = e.target.value.trim(); };
     r.querySelector(".up").oninput = e=>{ u.puesto = e.target.value; };
     r.querySelector(".um2").onclick = ()=>{ u.msg = !u.msg; USR_MSG = ""; renderAdmin(); };
     r.querySelector(".ux").onclick = ()=>{ if(!confirmar(`¿Quitar a ${u.nom || "esta persona"}?`)) return; USR_ED.splice(i, 1); USR_MSG = ""; renderAdmin(); };
+    r.querySelectorAll("button[data-h]").forEach(b=>{ b.onclick = ()=>{ const h = b.dataset.h, no = u.noh || (u.noh = []);
+      if(no.includes(h)) u.noh = no.filter(x=>x !== h); else no.push(h); USR_MSG = ""; renderAdmin(); }; });
     r.querySelectorAll("button[data-a]").forEach(b=>{ b.onclick = ()=>{ const a = b.dataset.a, acc = u.acc || (u.acc = []);
       if(acc.includes(a)) u.acc = acc.filter(x=>x !== a); else acc.push(a); USR_MSG = ""; renderAdmin(); }; });
     ul.appendChild(r);
@@ -2103,7 +2121,7 @@ function usrAdminEl(){
   wrap.querySelector(".ua").onclick = ()=>{ USR_ED.push({id: "u" + Date.now(), nom: "", cod: "", acc: ["Rotular"]}); USR_MSG = ""; renderAdmin(); };
   wrap.querySelector(".ug").onclick = async ()=>{
     const m = wrap.querySelector(".um");
-    const l = USR_ED.map(u=>({id: u.id, nom: String(u.nom || "").trim().replace(/\s+/g, " "), puesto: String(u.puesto || "").trim(), msg: !!u.msg, cod: usrCod(u), acc: (u.acc || []).filter(a=>USR_AREAS.some(x=>x[0] === a))}));
+    const l = USR_ED.map(u=>({id: u.id, nom: String(u.nom || "").trim().replace(/\s+/g, " "), puesto: String(u.puesto || "").trim(), msg: !!u.msg, cod: usrCod(u), acc: (u.acc || []).filter(a=>USR_AREAS.some(x=>x[0] === a)), noh: (u.noh || []).filter(h=>USR_HERR.some(x=>x[0] === h))}));
     if(l.some(u=>!u.nom)){ m.style.color = "#B23A2E"; m.textContent = "⚠️ Falta el nombre de una persona."; return; }
     const cods = l.map(u=>u.cod).filter(Boolean);
     if(new Set(cods).size !== cods.length){ m.style.color = "#B23A2E"; m.textContent = "⚠️ Hay dos personas con el mismo código."; return; }
@@ -2148,7 +2166,25 @@ function renderHome(){
   todo.innerHTML = `<button style="font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:8px;">Ver todo</button>`;
   todo.querySelector("button").onclick = ()=>entrarFam(FAM_ALL);
   if(!usrPuede("ALL")) todo.querySelector("button").style.display = "none";   // "Ver todo" solo para quien tiene Todo
-  // Alban 23 oct: "Admin" ya no se ve; se entra tocando la palabra "afinar" del pie de página.
+  // Alban 6 nov: tarjeta "Admin" solo para el gerente (Alban)
+  if(usrEsAdmin()) { const aB = document.createElement("button");
+    aB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${C.ink};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    aB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🔒</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Admin</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Ventas · Personas</span>
+      </span>`;
+    aB.onclick = ()=>{ activeCat = "ADMIN"; render(); window.scrollTo(0,0); };
+    grid.appendChild(aB);
+    const bB = document.createElement("button");
+    bB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${C.ink};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    bB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">💾</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Backup</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Descargar · restaurar</span>
+      </span>`;
+    bB.onclick = ()=>{ activeCat = "BACKUP"; render(); window.scrollTo(0,0); };
+    grid.appendChild(bB); }
   // Alban 23 oct: "Mensajes" va como tarjeta grande, igual que las categorías
   { const colM = PALETTE.Oficina || PALETTE.ALL;
     const msgB = document.createElement("button");
@@ -2161,7 +2197,7 @@ function renderHome(){
     msgB.onclick = ()=>{ activeCat = "MSG"; render(); window.scrollTo(0,0); };
     grid.appendChild(msgB); }
   // Alban 24 oct: tarjeta "Sanidad" (tareas de aseo del equipo)
-  if(!(typeof planYo === "function" && planYo() && planYo().area)) { const colS = PALETTE["Comida de sal"];   // Alban 1 nov: quien tiene área ve Sanidad dentro de su área
+  if(usrHerr("SANIDAD") && !(typeof planYo === "function" && planYo() && planYo().area)) { const colS = PALETTE["Comida de sal"];   // Alban 1 nov: quien tiene área ve Sanidad dentro de su área
     const sB = document.createElement("button");
     sB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colS.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
     sB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🧼</span>
@@ -2172,7 +2208,7 @@ function renderHome(){
     sB.onclick = ()=>{ SAN_AREA = null; activeCat = "SANIDAD"; render(); window.scrollTo(0,0); };
     grid.appendChild(sB); }
   // Alban 24 oct: tarjeta "Calculadora" para todos
-  { const colK = PALETTE.ALL;
+  if(usrHerr("CALC")) { const colK = PALETTE.ALL;
     const kB = document.createElement("button");
     kB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colK.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
     kB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🧮</span>
@@ -2183,7 +2219,7 @@ function renderHome(){
     kB.onclick = ()=>{ activeCat = "CALC"; render(); window.scrollTo(0,0); };
     grid.appendChild(kB); }
   // Alban 5 nov: tarjeta "Timers" (varios temporizadores a la vez)
-  { const colT = {a:"#14213D"}, nT = TMR.filter(t => t.c ? t.ini : (t.fin || t.son)).length;
+  if(usrHerr("TIMER")) { const colT = {a:"#14213D"}, nT = TMR.filter(t => t.c ? t.ini : (t.fin || t.son)).length;
     const tB = document.createElement("button");
     tB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colT.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
     tB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">⏲️</span>
@@ -2194,7 +2230,7 @@ function renderHome(){
     tB.onclick = ()=>{ tmrAudio(); activeCat = "TIMER"; render(); window.scrollTo(0,0); };
     grid.appendChild(tB); }
   // Alban 24 oct: tarjeta "Comprar" → laparisina.co/compras
-  { const colC = PALETTE.Logistica || PALETTE.ALL;
+  if(usrHerr("COMPRAR")) { const colC = PALETTE.Logistica || PALETTE.ALL;
     const cB = document.createElement("a");
     cB.href = "https://laparisina.co/compras"; cB.target = "_blank"; cB.rel = "noopener";
     cB.setAttribute("style", `text-decoration:none;text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${colC.a};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;box-sizing:border-box;`);
@@ -6119,6 +6155,7 @@ function ponerTitulo(){
     else if(activeCat === "MSG") t = "Mensaje a cocina";
     else if(activeCat === "CALC") t = "Calculadora";
     else if(activeCat === "TIMER") t = "Timers";
+    else if(activeCat === "BACKUP") t = "Backup";
     else if(activeCat === "SANIDAD") t = "Sanidad";
     else if(activeCat !== "HOME"){ const f = famObj(); t = f.key === "ALL" ? "Todo" : f.label; }
     document.title = t ? t + " · Parisina" : "Producción Parisina";
@@ -6150,7 +6187,8 @@ function render(){
   if(activeCat === "HOME"){ renderHome(); return; }
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
   if(activeCat === "CALC"){ if(!document.querySelector("[data-calc]")) renderCalc(); return; }
-  if(activeCat === "TIMER"){ if(!document.querySelector("[data-tmr]")) renderTimer(); return; }   // Alban 5 nov
+  if(activeCat === "TIMER"){ if(!document.querySelector("[data-tmr]")) renderTimer(); return; }
+  if(activeCat === "BACKUP"){ if(!document.querySelector("[data-bk]")) renderBackup(); return; }   // Alban 5 nov
   if(activeCat === "SANIDAD"){ if(!document.querySelector("[data-san]")) renderSanidad(); return; }   // Alban 24 oct: sanidad   // Alban 24 oct: calculadora   // Alban 21 oct: mensajes a cocina (no se repinta solo)
   if(activeCat === "ADMIN"){ if(!document.querySelector("[data-adm]")) renderAdmin(); return; }   // Admin: no se repinta solo (no borra lo que se está escribiendo)
   if(activeDate < TODAY_ISO && !conAyer()) activeDate = dates.find(d => d === TODAY_ISO) || dates[0];   // "Ayer" solo existe en Panadería
@@ -8485,7 +8523,7 @@ if(typeof location !== "undefined" && /^https?:$/.test(location.protocol || "") 
 render();
 bootDb();
 // Alban 23 oct: acceso escondido al Admin (tocar "afinar" en el pie de página)
-{ const af = document.getElementById("afinar-adm"); if(af) af.onclick = ()=>{ activeCat = "ADMIN"; render(); window.scrollTo(0,0); }; }
+
 // ---- Alban 19 oct: la tablet se queda abierta y muestra datos viejos (ej. desaparecieron 13 brownies hasta refrescar).
 // En la web (GitHub): cada 3 min y al volver a la pestaña, se mira si hay una versión nueva publicada
 // ("Datos actualizados") o si cambió el día; si sí, la página se recarga sola (sin interrumpir si alguien está escribiendo).
