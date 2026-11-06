@@ -5959,7 +5959,26 @@ function ponerTitulo(){
     document.title = t ? t + " · Parisina" : "Producción Parisina";
   }catch(e){}
 }
+// Alban 5 nov: reloj fijo arriba (hora de Medellín), siempre visible para los operadores
+function relojIniciar(){
+  try{ if(MSG_EMBED) return; }catch(e){}
+  if(typeof location === "undefined" || !/^(https?|file):$/.test(location.protocol || "") || !document.body || !document.body.prepend || document.getElementById("reloj-bar")) return;
+  const bar = document.createElement("div"); bar.id = "reloj-bar";
+  bar.setAttribute("style", "position:fixed;top:0;left:0;right:0;z-index:8000;background:#1F2A37;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.2);");
+  bar.innerHTML = `<div style="max-width:920px;margin:0 auto;padding:7px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:'Work Sans',sans-serif;"><span class="rl-d" style="font-size:0.92rem;opacity:.85;"></span><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:1.6rem;letter-spacing:.02em;white-space:nowrap;"><span class="rl-h"></span><span class="rl-s" style="font-size:0.9rem;opacity:.7;"></span> <span class="rl-a" style="font-size:0.95rem;"></span></span></div>`;
+  const sp = document.createElement("div"); sp.id = "reloj-sp"; sp.style.height = "50px";
+  document.body.prepend(sp); document.body.prepend(bar);
+  const fD = new Intl.DateTimeFormat("es-CO", {timeZone: "America/Bogota", weekday: "long", day: "numeric", month: "short"});
+  const fH = new Intl.DateTimeFormat("en-US", {timeZone: "America/Bogota", hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true});
+  const d = bar.querySelector(".rl-d"), h = bar.querySelector(".rl-h"), sg = bar.querySelector(".rl-s"), a = bar.querySelector(".rl-a");
+  const tick = () => { const now = new Date(), p = {}; fH.formatToParts(now).forEach(x => p[x.type] = x.value);
+    h.textContent = p.hour + ":" + p.minute; sg.textContent = ":" + p.second; a.textContent = /p/i.test(p.dayPeriod || "") ? "p.m." : "a.m.";
+    d.textContent = fD.format(now).replace(",", "").replace(".", ""); };
+  tick(); setInterval(tick, 1000);
+}
+try{ relojIniciar(); }catch(e){}
 function render(){
+  try{ const hd = document.querySelector("#page > header"); if(hd && !MSG_EMBED) hd.style.display = activeCat === "HOME" ? "" : "none"; }catch(e){}   // Alban 5 nov: dentro de una categoría no va el título
   setTimeout(ponerTitulo, 0);
   setTimeout(adelRecordatorio, 0);   // Alban 30 oct
   if(usrNecesitaLogin() && activeCat !== "ADMIN" && activeCat !== "MSG"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
