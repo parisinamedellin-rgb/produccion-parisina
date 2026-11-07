@@ -2977,7 +2977,7 @@ function bkAdminEl(){
   const ult = lsGet("bk_ultimo");
   const btn = `font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;border-radius:12px;padding:11px 16px;cursor:pointer;`;
   box.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.15rem;">💾 Backup</div>
-    <div style="font-size:0.84rem;color:${C.inkSoft};margin-top:2px;line-height:1.45;">Descarga un .zip con la página completa, todos los datos y el recetario. Sirve si se cae internet, GitHub o Claude. También deja una copia en Drive.${ult ? `<br>Último backup en este equipo: <b>${escH(ult.replace("_", " "))}</b>` : ""}</div>
+    <div style="font-size:0.84rem;color:${C.inkSoft};margin-top:2px;line-height:1.45;">Descarga un .zip con la página completa, todos los datos y el recetario. Sirve si se cae internet, GitHub o Claude. También deja una copia en Drive › La Parisina SAS › Produccion Parisina Backup.<br>🌙 Cada noche a las 11:30 p.m. se guarda solo un backup automático en esa carpeta (se guardan 60 días).${ult ? `<br>Último backup en este equipo: <b>${escH(ult.replace("_", " "))}</b>` : ""}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
       <button type="button" class="bk-d" style="${btn}background:${C.ink};color:${C.bg};border:none;">⬇️ Descargar backup</button>
       <button type="button" class="bk-r" style="${btn}background:#fff;color:#A3252B;border:1.5px solid #A3252B;">♻️ Restaurar desde un backup</button>
@@ -7498,6 +7498,9 @@ function sanPlanEstado(w){
 function sanCheckHTML(fam, gente, col){
   if(!gente.length) return "";
   const yo = typeof usrYo === "function" ? usrYo() : null;
+  // Alban 6 nov: quien no tiene puesto de aseo (ej. Jonaiker, mensajero) no ve el check de otro ni el aviso de planillas; cierra normal en el reloj
+  if(yo && !(typeof planYo === "function" && (planYo() || {}).admin) && !gente.some(p => aseoNorm(p.nom) === aseoNorm(yo.nom)))
+    return `<div style="margin-top:14px;background:#EEF6EE;border:1.5px solid #2E7D4F;border-radius:14px;padding:12px 14px;font-size:0.95rem;">✅ <b>${escH(yo.nom)}, tú no tienes check de aseo.</b> Lo hace: ${escH(gente.map(p => p.nom).join(", "))}.<br>Puedes cerrar tu turno normal en el reloj.</div>`;
   if(!SAN_QUIEN || !gente.some(p => p.nom === SAN_QUIEN)){
     const mio = yo ? gente.find(p => aseoNorm(p.nom) === aseoNorm(yo.nom)) : null;
     SAN_QUIEN = mio ? mio.nom : (gente.length === 1 ? gente[0].nom : null);
