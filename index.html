@@ -1867,18 +1867,19 @@ function renderAdmin(){
   main.innerHTML = "";
   const top = document.createElement("div");
   top.setAttribute("style", "margin-top:22px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;");
-  top.innerHTML = `<button type="button" class="adm-back" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;background:${C.paper};border:1.5px solid ${C.line};border-radius:100px;padding:8px 16px;cursor:pointer;color:${C.ink};">← Categorías</button>
-    <span style="display:flex;flex-direction:column;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;">🔒 Admin · Ventas</span>
+  top.innerHTML = `<button type="button" class="adm-back" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;background:${C.paper};border:1.5px solid ${C.line};border-radius:100px;padding:8px 16px;cursor:pointer;color:${C.ink};">← Inicio</button>
+    <span style="display:flex;flex-direction:column;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;">${ADM_ST.per === "personas" ? "👥 Acceso a usuarios" : "💰 Ventas"}</span>
       <span style="font-size:0.78rem;color:${C.inkSoft};">🕐 Última actualización: <b style="color:${C.ink};">${escH(((document.querySelector("#stamp-excel b") || {}).textContent || "").trim() || "—")}</b></span></span>
     ${ADM ? `<button type="button" class="adm-out" style="margin-left:auto;font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Cerrar sesión</button>` : ""}`;
   main.appendChild(top);
   top.querySelector(".adm-back").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
   if(top.querySelector(".adm-out")) top.querySelector(".adm-out").onclick = ()=>{ ADM = null; renderAdmin(); };
+  if(ADM_ST.per === "personas" && (ADM || (usrActivo() && usrEsAdmin()))){ main.appendChild(usrAdminEl()); return; }   // Alban 8 nov: tarjeta "Acceso a usuarios"
   if(typeof VENTAS_ENC === "undefined" || typeof ADMIN_KEY === "undefined"){
     const x = document.createElement("div"); x.style.marginTop = "18px"; x.textContent = "Todavía no hay ventas cargadas en esta versión de la página."; main.appendChild(x); return;
   }
   if(!ADM){ main.appendChild(admLogin()); return; }
-  if(ADM_ST.per === "personas"){ main.appendChild(admPerChips()); main.appendChild(usrAdminEl()); return; }   // Alban 22 oct: pestaña 👥 Personas al lado de Año
+  if(ADM_ST.per === "personas"){ main.appendChild(usrAdminEl()); return; }
   main.appendChild(admPanel());
 }
 // Alban 6 nov: Backup sale de Admin y va como tarjeta en el inicio
@@ -1897,22 +1898,27 @@ function admLogin(){
   box.setAttribute("style", `margin-top:22px;max-width:380px;background:${C.paper};border:1.5px solid ${C.line};border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;`);
   const inp = `width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:10px 12px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:${C.ink};`;
   box.innerHTML = `<div style="font-size:0.9rem;color:${C.inkSoft};">Solo para administración. Las cifras están cifradas y se abren con tu correo y contraseña.</div>
-    <label style="font-size:0.8rem;font-weight:600;">Correo<input class="adm-e" type="email" autocomplete="username" required style="${inp}margin-top:4px;"></label>
+    <label style="font-size:0.8rem;font-weight:600;">Correo<input class="adm-e" type="email" autocomplete="username" required value="${escH(lsGet("adm_email") || "")}" style="${inp}margin-top:4px;"></label>
     <label style="font-size:0.8rem;font-weight:600;">Contraseña<input class="adm-p" type="password" autocomplete="current-password" required style="${inp}margin-top:4px;"></label>
     <div class="adm-msg" style="font-size:0.85rem;color:#B23A2E;min-height:1em;">${ADM_ERR}</div>
-    <button type="submit" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:${C.bg};border:none;border-radius:12px;padding:12px;cursor:pointer;">Entrar</button>`;
+    <button type="submit" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:${C.bg};border:none;border-radius:12px;padding:12px;cursor:pointer;">Entrar</button>
+    ${ADM_ST.volver ? `<button type="button" class="adm-luego" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;background:none;border:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;padding:6px;">Ahora no</button>` : ""}`;
+  if(box.querySelector(".adm-luego")) box.querySelector(".adm-luego").onclick = ()=>{ ADM_ST.volver = false; activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  setTimeout(()=>{ const i = box.querySelector(lsGet("adm_email") ? ".adm-p" : ".adm-e"); if(i && i.focus) i.focus(); }, 60);
   box.onsubmit = async e=>{
     e.preventDefault();
     const msg = box.querySelector(".adm-msg"); msg.style.color = C.inkSoft; msg.textContent = "Abriendo…";
     try{ ADM = await admAbrir(box.querySelector(".adm-e").value, box.querySelector(".adm-p").value); ADM_ERR = ""; ADM_ST.ref = null;
          try{ const al = (typeof msgPers === "function" ? msgPers() : []).find(p => /alban/i.test(p[1])); if(al && !lsGet("mi_persona")) lsSet("mi_persona", al[0]); }catch(e){}   // Alban 22 oct: entrar a Admin = este equipo es de Alban (recibe sus mensajes)
+         lsSet("adm_email", box.querySelector(".adm-e").value.trim());
+         if(ADM_ST.volver){ ADM_ST.volver = false; activeCat = "HOME"; render(); window.scrollTo(0,0); return; }   // Alban 8 nov: tras el código, la contraseña y de vuelta al inicio con sus tarjetas
          renderAdmin(); }
     catch(err){ ADM = null; msg.style.color = "#B23A2E"; msg.textContent = "Correo o contraseña incorrectos."; }
   };
   return box;
 }
 // Alban 22 oct: Día · Semana · Mes · Año · 👥 Personas
-const ADM_PERS = [["dia","Día"],["semana","Semana"],["mes","Mes"],["ano","Año"],["personas","👥 Personas"]];
+const ADM_PERS = [["dia","Día"],["semana","Semana"],["mes","Mes"],["ano","Año"]];   // Alban 8 nov: Personas pasa a su propia tarjeta en el inicio
 const admChip = (k, t, cur, cls) => `<button type="button" class="${cls}" data-k="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:600;padding:7px 14px;border-radius:100px;cursor:pointer;border:1.5px solid ${C.ink};background:${cur ? C.ink : C.paper};color:${cur ? C.bg : C.ink};">${t}</button>`;
 function admIrPer(k){ if(k === "personas"){ ADM_ST.per = "personas"; renderAdmin(); window.scrollTo(0,0); return; }
   ADM_ST.per = k; ADM_ST.evo = k; ADM_ST.ref = hoyISO(); renderAdmin(); }
@@ -2130,7 +2136,9 @@ function renderLogin(){
     const u = usrLista().find(x=>usrCod(x) && usrCod(x) === c);
     if(!u){ box.querySelector(".ue").textContent = "Ese código no está registrado. Pídele a Alban que lo agregue."; return; }
     try{ localStorage.setItem("usuario_cod", c); }catch(x){}
-    activeCat = "HOME"; render(); window.scrollTo(0,0);
+    activeCat = "HOME";
+    if(usrEsAdmin() && !ADM && typeof VENTAS_ENC !== "undefined"){ activeCat = "ADMIN"; ADM_ST.per = "dia"; ADM_ST.volver = true; }   // Alban 8 nov
+    render(); window.scrollTo(0,0);
     const a = (u.acc || []).find(x=>x !== "ALL" && x !== "Rotular") || "ALL";
     avisoImportante(()=>saludoAlEntrar(a, true));
   };
@@ -2235,11 +2243,20 @@ function renderHome(){
     aB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${C.ink};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
     aB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🔒</span>
       <span style="display:flex;flex-direction:column;gap:3px;">
-        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Admin</span>
-        <span style="font-size:0.8rem;color:${C.inkSoft};">Ventas · Personas</span>
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Ventas</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Día · Semana · Mes · Año${ADM ? "" : " · 🔒"}</span>
       </span>`;
-    aB.onclick = ()=>{ activeCat = "ADMIN"; render(); window.scrollTo(0,0); };
+    aB.querySelector("span").textContent = "💰";
+    aB.onclick = ()=>{ if(ADM_ST.per === "personas") ADM_ST.per = "dia"; activeCat = "ADMIN"; render(); window.scrollTo(0,0); };
     grid.appendChild(aB);
+    const uB = aB.cloneNode(true);
+    uB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">👥</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Acceso a usuarios</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Personas · códigos · áreas</span>
+      </span>`;
+    uB.onclick = ()=>{ ADM_ST.per = "personas"; activeCat = "ADMIN"; render(); window.scrollTo(0,0); };
+    grid.appendChild(uB);
     const bB = document.createElement("button");
     bB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${C.ink};border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
     bB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">💾</span>
