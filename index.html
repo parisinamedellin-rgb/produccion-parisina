@@ -1271,6 +1271,7 @@ async function bootDb(){
     bootEmp();
     bootRotProd();
     bootUsuarios();
+    bootMarz();
     if(activeCat === "MSG") msgRepintar();   // 22 oct: en el iframe de pedidos-equipo, Mensajes se pintó antes de tener la base
   }catch(err){ console.warn("Sin base de datos:", err); }
 }
@@ -1405,11 +1406,73 @@ function adelRecordatorio(){ const _r = document.getElementById("adel-rec"); if(
   el.querySelectorAll("button[data-adelr]").forEach(b => b.onclick = () => { marcar(b.dataset.adelr, true); flushDb(); render(); adelRecordatorio(); });
 }
 // (31 oct) sin setInterval: colgaba la publicación automática (smoke.js)
+// 🍕 Para La Marzzana (Alban 8 nov): el cierre de turno de la caja (POS La Marzzana) manda lo que Panadería y Comida de sal
+// deben hacer → doc estado/MARZ-<fecha> {fecha, hora, resp, lista:[{area, n, urg}]}. urg = "se acabó" (hacer HOY); sin marca = queda poco (a más tardar mañana).
+let MARZ = {}, MARZ_HECHO = {};
+function bootMarz(){
+  if(!DB) return;
+  DB.collection("estado").onSnapshot(snap=>{
+    const m = {}; let h = {};
+    snap.docs.forEach(d=>{ const id = String(d.id); if(id.indexOf("MARZ-") === 0) m[id.slice(5)] = d.data() || {}; else if(id === "MARZ_HECHO") h = (d.data() || {}).hechos || {}; });
+    if(JSON.stringify([m, h]) === JSON.stringify([MARZ, MARZ_HECHO])) return;
+    MARZ = m; MARZ_HECHO = h;
+    if(["Panaderia","Comida de sal","ALL"].includes(activeCat)) renderAdelantos();
+  }, ()=>{});
+}
+function marzSigHabil(iso){ let x = diasAtras(iso, -1); if(new Date(x + "T12:00:00Z").getUTCDay() === 0) x = diasAtras(x, -1); return x; }   // Parisina no labora domingo
+function marzLista(cat){
+  const areas = cat === "ALL" ? ["Panaderia","Comida de sal"] : (cat === "Panaderia" || cat === "Comida de sal") ? [cat] : [];
+  if(!areas.length) return [];
+  const hoy = hoyISO(), desde = diasAtras(hoy, 7), por = {};
+  Object.keys(MARZ).sort().forEach(f=>{
+    if(f < desde) return;
+    const c = MARZ[f] || {}, hr = String(c.hora || "");
+    let turno = c.fecha || f; if(hr.length > 12 && +hr.slice(11, 13) < 6) turno = diasAtras(turno, 1);   // cierre después de medianoche = turno del día anterior
+    const d1 = marzSigHabil(turno), d2 = marzSigHabil(d1);
+    (c.lista || []).forEach(it=>{
+      if(!it || !areas.includes(it.area) || !it.n) return;
+      const k = f + "|" + it.area + "|" + it.n;
+      if(MARZ_HECHO[k]) return;
+      const lim = it.urg ? d1 : d2, g = it.area + "|" + pedNorm(it.n), prev = por[g];
+      if(!prev) por[g] = {area: it.area, n: it.n, urg: !!it.urg, lim, keys: [k]};
+      else { prev.keys.push(k); if(lim < prev.lim){ prev.lim = lim; prev.urg = !!it.urg; } }
+    });
+  });
+  return Object.values(por).sort((a, b)=> a.lim < b.lim ? -1 : a.lim > b.lim ? 1 : a.n.localeCompare(b.n));
+}
+function marzHTML(L){
+  if(!L.length) return "";
+  const hoy = hoyISO(), man = marzSigHabil(hoy), AN = {"Panaderia":"Panadería","Comida de sal":"Comida de sal"};
+  return `<div style="margin-top:12px;background:#fff;border:2px solid #B23A2E;border-radius:14px;padding:12px 16px;">
+    <div style="font-weight:800;color:#B23A2E;font-size:1rem;">🍕 Para La Marzzana <span style="font-weight:500;font-size:0.78rem;color:#6B6257;">· lo pidió el cierre de caja</span></div>
+    ${L.map(x=>{ const fl = fmtDay(x.lim), atr = x.lim < hoy, esHoy = x.lim === hoy, rojo = atr || esHoy, col = rojo ? "#A3252B" : "#8A5A00", bg = rojo ? "#FBE4E4" : "#FFF4D6";
+      const cuando = atr ? `YA · debía estar el ${fl.dow} ${fl.dm}` : esHoy ? "🔴 URGENTE · HOY" : x.lim === man ? "a más tardar mañana" : `a más tardar el ${fl.dow} ${fl.dm}`;
+      return `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;background:${bg};border:1.5px solid ${col};border-radius:12px;padding:10px 12px;">
+        <div style="flex:1;min-width:0;"><b style="font-size:1.05rem;color:#2A241C;">${escH(x.n)}</b>${activeCat === "ALL" ? ` <span style="font-size:0.78rem;color:#6B6257;">· ${AN[x.area] || x.area}</span>` : ""}
+          <div style="font-size:0.8rem;font-weight:700;color:${col};">${cuando} · ${x.urg ? "se acabó" : "queda poco"}</div></div>
+        <button type="button" data-marz="${escH(x.keys.join("§"))}" style="flex:0 0 auto;padding:10px 14px;border-radius:10px;border:2px solid ${col};background:${col};color:#fff;font-weight:800;font-size:0.95rem;cursor:pointer;">✓ Listo</button></div>`; }).join("")}
+  </div>`;
+}
+function marzWire(el){
+  el.querySelectorAll("button[data-marz]").forEach(b => b.onclick = async ()=>{
+    if(!DB) return;
+    const ks = b.dataset.marz.split("§"), yo = (typeof usrYo === "function" && usrYo()) || {};
+    b.disabled = true; b.textContent = "Guardando…";
+    try{
+      const ref = DB.doc("estado/MARZ_HECHO"), sn = await ref.get();
+      const h = Object.assign({}, (sn.exists && (sn.data() || {}).hechos) || {}), lim = diasAtras(hoyISO(), 14);
+      Object.keys(h).forEach(k=>{ if(k.slice(0, 10) < lim) delete h[k]; });
+      ks.forEach(k=>{ h[k] = {p: yo.nom || "", t: new Date().toISOString()}; });
+      await ref.set({hechos: h}); MARZ_HECHO = h; renderAdelantos();
+    }catch(e){ b.disabled = false; b.textContent = "⚠️ Reintentar"; }
+  });
+}
 function renderAdelantos(){
   const el = document.getElementById("adelantos");
   if(!el) return;
   const list = (activeCat === "FORMULAS" || activeCat === "STOCK" || activeCat === "SEMANA" || activeCat === "EMPAQUE" || LOGM.includes(activeCat) || ROTM.includes(activeCat)) ? [] : avisosAdelanto(activeCat, hoyISO());
-  if(!list.length){ el.innerHTML = ""; el.style.display = "none"; return; }
+  const MZ = marzLista(activeCat);   // Alban 8 nov: pedidos de La Marzzana
+  if(!list.length && !MZ.length){ el.innerHTML = ""; el.style.display = "none"; return; }
   const AREA_NOMBRE = {"Reposteria":"Dulcería","Panaderia":"Panadería"};
   el.style.display = "block";
   el.innerHTML = list.map(a=>{
@@ -1430,7 +1493,8 @@ function renderAdelantos(){
       <div style="margin-top:4px;font-size:0.76rem;">Pedido para el ${fp.dow} ${fp.dm}</div>
       <button type="button" data-adel="${logEsc(a.clave)}" style="margin-top:10px;width:100%;padding:12px;border-radius:12px;border:2px solid ${col};background:${ok ? "#fff" : col};color:${ok ? col : "#fff"};font-weight:800;font-size:1rem;cursor:pointer;">${ok ? "↩︎ Desmarcar" : "✓ Listo, ya lo hice"}</button>
     </div>`;
-  }).join("");
+  }).join("") + marzHTML(MZ);
+  marzWire(el);
   el.querySelectorAll("button[data-adel]").forEach(b => b.onclick = () => { const k = b.dataset.adel; marcar(k, !COMPLETED[k]); flushDb(); render(); });
 }
 
