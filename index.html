@@ -1478,7 +1478,13 @@ const CS_TAREAS = {
       {id:"pollo_crispy", n:"Pollo crispy", q:"6 kg", f:"Pollo crispy"}, {id:"mermelada", n:"Mermelada de tocineta", f:"Mermelada de tocineta"}],
   3: [{id:"carne", n:"Relleno de carne", q:"10 kg", f:"Relleno carne"}, {id:"chimichurri", n:"Chimichurri", q:"1 litro de aceite", f:"Chimichurri"}, {id:"pico", n:"Pico de gallo", f:"Pico de gallo"}],
   4: [{id:"tseco", n:"Tomate seco", q:"6 kg", f:"Tomate seco"}, {id:"napolitana", n:"Salsa napolitana", q:"20 kg", f:"Napolitana"}, {id:"birria", n:"Birria de cerdo", q:"1,5 kg", f:"Birria"}],
-  5: [{id:"pesto_par", n:"Pesto para Parisina", q:"4 kg", f:"Pesto"}, {id:"pesto_marz", n:"Pesto para La Marzzana", q:"2 kg", f:"Pesto"}, {id:"espinaca", n:"Espinaca", q:"5 kg", f:"Relleno espinaca"}],
+  5: [{id:"pesto_par", n:"Pesto para Parisina", q:"4 kg", f:"Pesto"}, {id:"pesto_marz", n:"Pesto para La Marzzana", q:"2 kg", f:"Pesto"}, {id:"espinaca", n:"Espinaca", q:"5 kg", f:"Relleno espinaca"},
+      // Alban 9 nov: pedidos de los viernes (PDF Producción semanal)
+      {id:"ped_pollo", ped:1, n:"Pollo pechuga · Mercado OR", q:"15 kg", para:"lunes"}, {id:"ped_carne", ped:1, n:"Carne molida · Mercado OR", q:"10 kg", para:"martes"},
+      {id:"ped_cerdo", ped:1, n:"Cerdo (birria) · Mercado OR", q:"1,5 kg", para:"martes"}, {id:"ped_pina1", ped:1, n:"Piña · Vaquita", q:"5", u:"und", para:"miércoles"},
+      {id:"ped_tomate1", ped:1, n:"Tomate maduro · Vaquita", q:"26 kg", para:"miércoles"}, {id:"ped_albahaca", ped:1, n:"Albahaca · Plaza", q:"4 kg", para:"jueves"},
+      {id:"ped_espinaca", ped:1, n:"Espinaca · Francisco", q:"5 kg", para:"jueves"}, {id:"ped_tomate2", ped:1, n:"Tomate maduro · Vaquita", q:"6 kg", para:"viernes"},
+      {id:"ped_pina2", ped:1, n:"Piña · Vaquita", q:"5", u:"und", para:"viernes"}],
   6: [{id:"tseco2", n:"Tomate seco", q:"6 kg", f:"Tomate seco"}, {id:"las_carne", n:"Lasaña de carne", q:"15", u:"und", f:"Lasaña carne"},
       {id:"las_pollo", n:"Lasaña de pollo", q:"15", u:"und", f:"Lasaña pollo"}, {id:"las_mixta", n:"Lasaña mixta", q:"15", u:"und", f:"Lasaña mixta"}]
 };
@@ -1523,14 +1529,14 @@ function csTareasEl(){
   w.innerHTML = `<div style="font-weight:800;color:${col};font-size:1.05rem;">📅 Tareas diarias · ${dHoy}</div>
     <div style="font-size:0.8rem;color:${C.inkSoft};">Lo que no se marque sigue apareciendo mañana.</div>` + L.map(x => {
     const t = x.t, u = t.u || "kg", atr = x.ef < hoy, ui = CS_UI[x.k] || "";
-    const tit = `<b style="font-size:1.05rem;color:#2A241C;">${escH(t.n)}</b>${t.q ? ` <span style="font-weight:700;color:${col};">· ${escH(t.q)}</span>` : ""}${atr ? ` <span style="font-size:0.78rem;font-weight:700;color:#A3252B;">· pendiente desde el ${CS_DIAS[new Date(x.d + "T12:00:00Z").getUTCDay()]}</span>` : ""}`;
-    if(x.r) return `<div style="margin-top:8px;padding:9px 12px;border-radius:12px;background:#F1EEE8;color:#6B6257;">✓ ${escH(t.n)} · ${x.r.hace === "si" ? `hecho: <b>${escH(x.r.cant)} ${u}</b>` : `no se hizo, hay <b>${escH(x.r.cant)} ${u}</b>`}${x.r.p ? " · " + escH(x.r.p) : ""} <button type="button" data-csdeshacer="${escH(x.k)}" style="background:none;border:none;color:#6B6257;text-decoration:underline;cursor:pointer;font-size:0.8rem;">deshacer</button></div>`;
+    const tit = `${t.ped ? "🛒 Pedir · " : ""}<b style="font-size:1.05rem;color:#2A241C;">${escH(t.n)}</b>${t.q ? ` <span style="font-weight:700;color:${col};">· ${escH(t.q)}</span>` : ""}${t.para ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">· para el ${escH(t.para)}</span>` : ""}${atr ? ` <span style="font-size:0.78rem;font-weight:700;color:#A3252B;">· pendiente desde el ${CS_DIAS[new Date(x.d + "T12:00:00Z").getUTCDay()]}</span>` : ""}`;
+    if(x.r) return `<div style="margin-top:8px;padding:9px 12px;border-radius:12px;background:#F1EEE8;color:#6B6257;">✓ ${escH(t.n)} · ${x.r.hace === "si" ? `${t.ped ? "pedido" : "hecho"}: <b>${escH(x.r.cant)} ${u}</b>` : `no se ${t.ped ? "pidió" : "hizo"}, hay <b>${escH(x.r.cant)} ${u}</b>`}${x.r.p ? " · " + escH(x.r.p) : ""} <button type="button" data-csdeshacer="${escH(x.k)}" style="background:none;border:none;color:#6B6257;text-decoration:underline;cursor:pointer;font-size:0.8rem;">deshacer</button></div>`;
     let cuerpo = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-        <button type="button" data-cssi="${escH(x.k)}" style="${btn("#2E7D4F", ui === "si" ? "#2E7D4F" : "#fff", ui === "si" ? "#fff" : "#2E7D4F")}">✅ Sí, la hago</button>
+        <button type="button" data-cssi="${escH(x.k)}" style="${btn("#2E7D4F", ui === "si" ? "#2E7D4F" : "#fff", ui === "si" ? "#fff" : "#2E7D4F")}">${t.ped ? "🛒 Sí, lo pido" : "✅ Sí, la hago"}</button>
         <button type="button" data-csno="${escH(x.k)}" style="${btn("#8A5A00", ui === "no" ? "#8A5A00" : "#fff", ui === "no" ? "#fff" : "#8A5A00")}">⏭️ No, ya hay</button></div>`;
     if(ui === "si") cuerpo += `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         ${t.f ? `<button type="button" data-csform="${escH(x.k)}" style="${btn(col, "#fff", col)}">📄 Ver la fórmula</button>` : ""}
-        <span style="font-size:0.9rem;">¿Cuánto hiciste?</span><input class="cs-cant" inputmode="decimal" style="${inp}"> ${u}
+        <span style="font-size:0.9rem;">${t.ped ? "¿Cuánto pediste?" : "¿Cuánto hiciste?"}</span><input class="cs-cant" inputmode="decimal" style="${inp}"> ${u}
         <button type="button" data-csok="${escH(x.k)}" data-hace="si" style="${btn(col, col, "#fff")}">Guardar</button></div>`;
     if(ui === "no") cuerpo += `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span style="font-size:0.9rem;">¿Cuánto hay?</span><input class="cs-cant" inputmode="decimal" style="${inp}"> ${u}
