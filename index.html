@@ -1272,6 +1272,7 @@ async function bootDb(){
     bootRotProd();
     bootUsuarios();
     bootMarz();
+    bootCsTareas();
     if(activeCat === "MSG") msgRepintar();   // 22 oct: en el iframe de pedidos-equipo, Mensajes se pintó antes de tener la base
   }catch(err){ console.warn("Sin base de datos:", err); }
 }
@@ -1466,6 +1467,103 @@ function marzWire(el){
       await ref.set({hechos: h}); MARZ_HECHO = h; renderAdelantos();
     }catch(e){ b.disabled = false; b.textContent = "⚠️ Reintentar"; }
   });
+}
+// 📅 TAREAS DIARIAS de Comida de sal (Alban 9 nov). Producción semanal fija; si el día es festivo pasa al siguiente hábil.
+// Lo que no se resuelve sigue apareciendo los días siguientes. Cada tarea: "Sí, la hago" (fórmula + cuánto hizo) o "No, ya hay" (cuánto hay).
+// Se guarda en estado/CS_TAREAS {reg:{"<día programado>|<id>": {hace:"si"|"no", cant, f:<día resuelto>, p, t}}}.
+const CS_TAREAS_DESDE = "2026-11-09";
+const CS_TAREAS = {
+  1: [{id:"chorizo", n:"Relleno de chorizo", f:"Relleno chorizo"}, {id:"ranchero", n:"Relleno de ranchero", f:"Relleno ranchero"}],
+  2: [{id:"pollo_viz", n:"Pollo Vicenzia", q:"4 kg", f:"Pollo vizencia"}, {id:"pollo_marz", n:"Pollo desmechado para La Marzzana", q:"5 kg"},
+      {id:"pollo_crispy", n:"Pollo crispy", q:"6 kg", f:"Pollo crispy"}, {id:"mermelada", n:"Mermelada de tocineta", f:"Mermelada de tocineta"}],
+  3: [{id:"carne", n:"Relleno de carne", q:"10 kg", f:"Relleno carne"}, {id:"chimichurri", n:"Chimichurri", q:"1 litro de aceite", f:"Chimichurri"}, {id:"pico", n:"Pico de gallo", f:"Pico de gallo"}],
+  4: [{id:"tseco", n:"Tomate seco", q:"6 kg", f:"Tomate seco"}, {id:"napolitana", n:"Salsa napolitana", q:"20 kg", f:"Napolitana"}, {id:"birria", n:"Birria de cerdo", q:"1,5 kg", f:"Birria"}],
+  5: [{id:"pesto_par", n:"Pesto para Parisina", q:"4 kg", f:"Pesto"}, {id:"pesto_marz", n:"Pesto para La Marzzana", q:"2 kg", f:"Pesto"}, {id:"espinaca", n:"Espinaca", q:"5 kg", f:"Relleno espinaca"}],
+  6: [{id:"tseco2", n:"Tomate seco", q:"6 kg", f:"Tomate seco"}, {id:"las_carne", n:"Lasaña de carne", q:"15", u:"und", f:"Lasaña carne"},
+      {id:"las_pollo", n:"Lasaña de pollo", q:"15", u:"und", f:"Lasaña pollo"}, {id:"las_mixta", n:"Lasaña mixta", q:"15", u:"und", f:"Lasaña mixta"}]
+};
+const CS_DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+let CS_REG = {}, CS_UI = {};
+function bootCsTareas(){
+  if(!DB) return;
+  DB.collection("estado").onSnapshot(snap=>{
+    const d = snap.docs.find(x => x.id === "CS_TAREAS"), r = d ? ((d.data() || {}).reg || {}) : {};
+    if(JSON.stringify(r) === JSON.stringify(CS_REG)) return;
+    CS_REG = r;
+    const el = document.querySelector("[data-cstareas]"); if(el && !el.contains(document.activeElement)) el.replaceWith(csTareasEl());
+  }, ()=>{});
+}
+function csEfectivo(iso){ let x = iso, n = 0; while(!esHabil(x) && n++ < 10) x = diasAtras(x, -1); return x; }
+function csLista(){
+  const hoy = hoyISO(), out = [];
+  for(let i = 8; i >= 0; i--){
+    const d = diasAtras(hoy, i); if(d < CS_TAREAS_DESDE) continue;
+    const L = CS_TAREAS[new Date(d + "T12:00:00Z").getUTCDay()]; if(!L) continue;
+    const ef = csEfectivo(d); if(ef > hoy) continue;
+    L.forEach(t => { const k = d + "|" + t.id, r = CS_REG[k]; if(r && r.f !== hoy) return;
+      const prev = out.find(y => y.t.id === t.id);   // la misma tarea de la semana pasada sin hacer: una sola fila
+      if(prev){ if(!r) prev.ks.push(k); if(!prev.r || r){ Object.assign(prev, {k, d, ef, r}); prev.ks.push(k); } return; }
+      out.push({t, k, d, ef, r, ks: [k]}); });
+  }
+  return out;
+}
+function csFormula(t){
+  if(!t.f || !Array.isArray(ENS_REC)) return null;
+  const q = pedNorm(t.f);
+  return ENS_REC.find(x => pedNorm(x.nombre) === q) || ENS_REC.find(x => pedNorm(x.nombre).indexOf(q) >= 0) || null;
+}
+function csTareasEl(){
+  const L = csLista(), hoy = hoyISO(), col = (PALETTE["Comida de sal"] || PALETTE.ALL).a;
+  const w = document.createElement("div"); w.setAttribute("data-cstareas", "1");
+  w.setAttribute("style", `margin-top:16px;background:#fff;border:2px solid ${col};border-radius:16px;padding:14px 16px;`);
+  const dHoy = CS_DIAS[new Date(hoy + "T12:00:00Z").getUTCDay()];
+  if(!L.length){ w.innerHTML = `<div style="font-weight:800;color:${col};">📅 Tareas diarias · ${dHoy}</div><div style="font-size:0.9rem;color:${C.inkSoft};margin-top:4px;">Hoy no hay tareas fijas. ✅</div>`; return w; }
+  const btn = (c, bg, fg) => `font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:800;padding:9px 12px;border-radius:10px;border:2px solid ${c};background:${bg};color:${fg};cursor:pointer;`;
+  const inp = `font-family:'IBM Plex Mono',monospace;font-size:1.05rem;width:90px;padding:8px;border:1.5px solid ${C.line};border-radius:8px;text-align:right;`;
+  w.innerHTML = `<div style="font-weight:800;color:${col};font-size:1.05rem;">📅 Tareas diarias · ${dHoy}</div>
+    <div style="font-size:0.8rem;color:${C.inkSoft};">Lo que no se marque sigue apareciendo mañana.</div>` + L.map(x => {
+    const t = x.t, u = t.u || "kg", atr = x.ef < hoy, ui = CS_UI[x.k] || "";
+    const tit = `<b style="font-size:1.05rem;color:#2A241C;">${escH(t.n)}</b>${t.q ? ` <span style="font-weight:700;color:${col};">· ${escH(t.q)}</span>` : ""}${atr ? ` <span style="font-size:0.78rem;font-weight:700;color:#A3252B;">· pendiente desde el ${CS_DIAS[new Date(x.d + "T12:00:00Z").getUTCDay()]}</span>` : ""}`;
+    if(x.r) return `<div style="margin-top:8px;padding:9px 12px;border-radius:12px;background:#F1EEE8;color:#6B6257;">✓ ${escH(t.n)} · ${x.r.hace === "si" ? `hecho: <b>${escH(x.r.cant)} ${u}</b>` : `no se hizo, hay <b>${escH(x.r.cant)} ${u}</b>`}${x.r.p ? " · " + escH(x.r.p) : ""} <button type="button" data-csdeshacer="${escH(x.k)}" style="background:none;border:none;color:#6B6257;text-decoration:underline;cursor:pointer;font-size:0.8rem;">deshacer</button></div>`;
+    let cuerpo = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button type="button" data-cssi="${escH(x.k)}" style="${btn("#2E7D4F", ui === "si" ? "#2E7D4F" : "#fff", ui === "si" ? "#fff" : "#2E7D4F")}">✅ Sí, la hago</button>
+        <button type="button" data-csno="${escH(x.k)}" style="${btn("#8A5A00", ui === "no" ? "#8A5A00" : "#fff", ui === "no" ? "#fff" : "#8A5A00")}">⏭️ No, ya hay</button></div>`;
+    if(ui === "si") cuerpo += `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        ${t.f ? `<button type="button" data-csform="${escH(x.k)}" style="${btn(col, "#fff", col)}">📄 Ver la fórmula</button>` : ""}
+        <span style="font-size:0.9rem;">¿Cuánto hiciste?</span><input class="cs-cant" inputmode="decimal" style="${inp}"> ${u}
+        <button type="button" data-csok="${escH(x.k)}" data-hace="si" style="${btn(col, col, "#fff")}">Guardar</button></div>`;
+    if(ui === "no") cuerpo += `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:0.9rem;">¿Cuánto hay?</span><input class="cs-cant" inputmode="decimal" style="${inp}"> ${u}
+        <button type="button" data-csok="${escH(x.k)}" data-hace="no" style="${btn("#8A5A00", "#8A5A00", "#fff")}">Guardar</button></div>`;
+    return `<div data-csrow="${escH(x.k)}" style="margin-top:10px;padding:10px 12px;border-radius:12px;border:1.5px solid ${atr ? "#A3252B" : C.line};background:${atr ? "#FBE4E4" : "#FAF7F0"};">${tit}${cuerpo}<div class="cs-msg" style="font-size:0.85rem;font-weight:700;color:#A3252B;"></div></div>`;
+  }).join("");
+  const otra = () => w.replaceWith(csTareasEl());
+  w.querySelectorAll("[data-cssi]").forEach(b => b.onclick = () => { CS_UI[b.dataset.cssi] = "si"; otra(); });
+  w.querySelectorAll("[data-csno]").forEach(b => b.onclick = () => { CS_UI[b.dataset.csno] = "no"; otra(); });
+  w.querySelectorAll("[data-csform]").forEach(b => b.onclick = async () => {
+    const x = L.find(y => y.k === b.dataset.csform); if(!x) return;
+    if(!Array.isArray(ENS_REC) && typeof ensCargar === "function"){ b.textContent = "Abriendo…"; try{ await ensCargar(); }catch(e){} b.textContent = "📄 Ver la fórmula"; }
+    const f = csFormula(x.t); if(f) ensAbrir(f); else alert("Esta fórmula todavía no está en el recetario.");
+  });
+  const guardar = async (k, val) => {
+    if(!DB) throw new Error("sin conexión");
+    const ref = DB.doc("estado/CS_TAREAS"), sn = await ref.get();
+    const reg = Object.assign({}, (sn.exists && (sn.data() || {}).reg) || {}), lim = diasAtras(hoyISO(), 40);
+    Object.keys(reg).forEach(x => { if(x.slice(0, 10) < lim) delete reg[x]; });
+    const x = L.find(y => y.k === k), ks = x ? [...new Set(x.ks.concat([k]))] : [k];
+    ks.forEach(kk => { if(val) reg[kk] = val; else delete reg[kk]; });
+    await ref.set({reg}); CS_REG = reg;
+  };
+  w.querySelectorAll("[data-csok]").forEach(b => b.onclick = async () => {
+    const row = b.closest("[data-csrow]"), m = row.querySelector(".cs-msg"), v = String(row.querySelector(".cs-cant").value || "").trim().replace(",", ".");
+    if(!(parseFloat(v) >= 0)){ m.textContent = "Escribe la cantidad."; return; }
+    const yo = (typeof usrYo === "function" && usrYo()) || {};
+    b.disabled = true; b.textContent = "Guardando…";
+    try{ await guardar(b.dataset.csok, {hace: b.dataset.hace, cant: v, f: hoyISO(), p: yo.nom || "", t: new Date().toISOString()}); delete CS_UI[b.dataset.csok]; otra(); }
+    catch(e){ b.disabled = false; b.textContent = "Guardar"; m.textContent = "⚠️ No se pudo guardar. Intenta otra vez."; }
+  });
+  w.querySelectorAll("[data-csdeshacer]").forEach(b => b.onclick = async () => { try{ await guardar(b.dataset.csdeshacer, null); otra(); }catch(e){} });
+  return w;
 }
 function renderAdelantos(){
   const el = document.getElementById("adelantos");
@@ -6299,6 +6397,7 @@ function render(){
   main.innerHTML = "";
   setTimeout(marcarVidrio, 0);   // Alban 22 oct: "*V*" = va en vidrio -> etiqueta visible para el operador
   if(ASEO_EN_PROD && ["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
+  if(activeCat === "Comida de sal" && activeDate === hoyISO()) main.appendChild(csTareasEl());   // Alban 9 nov: tareas diarias fijas
   if(activeCat === "Tortas"){ const tb = tortasTableroEl(activeDate); if(tb) main.appendChild(tb); }   // Alban 30 oct: tablero de tortas (palitos) · 31 oct: ANTES del Orden de realización (ya tiene las horas en naranja)
   const day = DATA[activeDate];
   const groups = activeCat === "ALL" ? [...GROUP_ORDER, ...EXTRA_GROUPS_ALL] : [activeCat];
