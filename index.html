@@ -1417,8 +1417,19 @@ function bootMarz(){
     snap.docs.forEach(d=>{ const id = String(d.id); if(id.indexOf("MARZ-") === 0) m[id.slice(5)] = d.data() || {}; else if(id === "MARZ_HECHO") h = (d.data() || {}).hechos || {}; });
     if(JSON.stringify([m, h]) === JSON.stringify([MARZ, MARZ_HECHO])) return;
     MARZ = m; MARZ_HECHO = h;
-    if(["Panaderia","Comida de sal","ALL"].includes(activeCat)) renderAdelantos();
+    marzRefrescar();
   }, ()=>{});
+}
+// Alban 9 nov: en Panadería / Comida de sal la tarjeta va en la página, después de "Orden de realización" y de "Tareas diarias"
+function marzBoxEl(cat){
+  const L = marzLista(cat); if(!L.length) return null;
+  const d = document.createElement("div"); d.setAttribute("data-marzbox", "1"); d.innerHTML = marzHTML(L); marzWire(d); return d;
+}
+function marzRefrescar(){
+  if(activeCat === "ALL"){ renderAdelantos(); return; }
+  const v = document.querySelector("[data-marzbox]");
+  if(v){ const n = marzBoxEl(activeCat); if(n) v.replaceWith(n); else v.remove(); }
+  else if((activeCat === "Panaderia" || activeCat === "Comida de sal") && activeDate === hoyISO() && typeof render === "function") render();
 }
 function marzSigHabil(iso){ let x = diasAtras(iso, -1); if(new Date(x + "T12:00:00Z").getUTCDay() === 0) x = diasAtras(x, -1); return x; }   // Parisina no labora domingo
 function marzLista(cat){
@@ -1464,7 +1475,7 @@ function marzWire(el){
       const h = Object.assign({}, (sn.exists && (sn.data() || {}).hechos) || {}), lim = diasAtras(hoyISO(), 14);
       Object.keys(h).forEach(k=>{ if(k.slice(0, 10) < lim) delete h[k]; });
       ks.forEach(k=>{ h[k] = {p: yo.nom || "", t: new Date().toISOString()}; });
-      await ref.set({hechos: h}); MARZ_HECHO = h; renderAdelantos();
+      await ref.set({hechos: h}); MARZ_HECHO = h; marzRefrescar();
     }catch(e){ b.disabled = false; b.textContent = "⚠️ Reintentar"; }
   });
 }
@@ -1575,7 +1586,7 @@ function renderAdelantos(){
   const el = document.getElementById("adelantos");
   if(!el) return;
   const list = (activeCat === "FORMULAS" || activeCat === "STOCK" || activeCat === "SEMANA" || activeCat === "EMPAQUE" || LOGM.includes(activeCat) || ROTM.includes(activeCat)) ? [] : avisosAdelanto(activeCat, hoyISO());
-  const MZ = marzLista(activeCat);   // Alban 8 nov: pedidos de La Marzzana
+  const MZ = activeCat === "ALL" ? marzLista(activeCat) : [];   // Alban 8 nov: pedidos de La Marzzana (en las áreas va dentro de la página, 9 nov)
   if(!list.length && !MZ.length){ el.innerHTML = ""; el.style.display = "none"; return; }
   const AREA_NOMBRE = {"Reposteria":"Dulcería","Panaderia":"Panadería"};
   el.style.display = "block";
@@ -6403,7 +6414,6 @@ function render(){
   main.innerHTML = "";
   setTimeout(marcarVidrio, 0);   // Alban 22 oct: "*V*" = va en vidrio -> etiqueta visible para el operador
   if(ASEO_EN_PROD && ["Panaderia","Comida de sal","Reposteria","Batido"].includes(navFam) && activeDate === hoyISO()){ const ac = aseoCardEl(navFam); if(ac) main.appendChild(ac); }   // Alban 23 oct: aseo de la semana
-  if(activeCat === "Comida de sal" && activeDate === hoyISO()) main.appendChild(csTareasEl());   // Alban 9 nov: tareas diarias fijas
   if(activeCat === "Tortas"){ const tb = tortasTableroEl(activeDate); if(tb) main.appendChild(tb); }   // Alban 30 oct: tablero de tortas (palitos) · 31 oct: ANTES del Orden de realización (ya tiene las horas en naranja)
   const day = DATA[activeDate];
   const groups = activeCat === "ALL" ? [...GROUP_ORDER, ...EXTRA_GROUPS_ALL] : [activeCat];
@@ -6417,6 +6427,11 @@ function render(){
   // ¿se pintó el cuadro "Orden de realización"? (si no, los bloques de fórmula salen abiertos, p. ej. Topping)
   const hayOrden = activeCat !== "ALL" && !!(main.children && main.children.length > nMain0);
   if(hayOrden) any = true;
+  // Alban 9 nov: orden = Orden de realización → Tareas diarias → Para La Marzzana
+  if(activeDate === hoyISO()){
+    if(activeCat === "Comida de sal") main.appendChild(csTareasEl());
+    if(activeCat === "Comida de sal" || activeCat === "Panaderia"){ const mz = marzBoxEl(activeCat); if(mz) main.appendChild(mz); }
+  }
   const AREA = activeCat !== "ALL" && !PANA_FUT;
   const FORMULA_IDS = new Set(FORMULA_DEFS.map(d=>d.id));
   const HORAS = prioHoras(activeDate);
@@ -6627,7 +6642,9 @@ function render(){
   setAccent(activeCat);
   if(deUnaVezEl) main.appendChild(deUnaVezEl);
   if(!any){
+    const quedan = [...main.children].filter(e => e.hasAttribute && (e.hasAttribute("data-cstareas") || e.hasAttribute("data-marzbox")));   // Alban 9 nov: tareas y La Marzzana salen igual
     main.innerHTML = `<div style="color:${C.inkSoft};font-size:0.9rem;padding:20px 4px;font-style:italic;">No hay pedidos registrados en esta categoría para este día.</div>`;
+    quedan.forEach(e => main.appendChild(e));
   }
   if(activeCat === "Topping"){ const rh = rehacerToppingEl(); if(rh) main.appendChild(rh); }   // siempre, haya o no pedidos
 }
