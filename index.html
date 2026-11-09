@@ -6972,7 +6972,9 @@ const ASEO_EQUIPO_DEF = (()=>{ const o = {};
   return Object.keys(o).length ? o : ASEO_EQUIPO_DEF_OLD; })();
 const ASEO_W0 = Date.UTC(2026, 7, 3);
 function aseoW(iso){ const [y,m,d] = (iso || hoyISO()).split("-").map(Number); return Math.floor((Date.UTC(y, m-1, d) - ASEO_W0) / (7*864e5)); }
-function aseoNorm(t){ return pedNorm(String(t || "").split(/\s+/)[0]).replace(/[yj]/g, "i").replace(/(.)\1+/g, "$1"); }
+// Alban 9 nov: apodos (como en el Reloj): María = María Camila = Camila; Yetzaida = Andreina
+const ASEO_APODOS = {"maria": "camila", "ietzaida": "andreina"};
+function aseoNorm(t){ const n = pedNorm(String(t || "").split(/\s+/)[0]).replace(/[yj]/g, "i").replace(/(.)\1+/g, "$1"); return ASEO_APODOS[n] || n; }
 function aseoPuesto(nom){
   const n = aseoNorm(nom);
   return ASEO_ROTA.findIndex(r=>{ if(!r) return false; const k = aseoNorm(r); return k === n || (ASEO_ALIAS[pedNorm(r)] || []).includes(n); });
