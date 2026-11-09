@@ -6828,7 +6828,7 @@ document.getElementById("main").addEventListener("change", (e)=>{
 //   muestra una alerta grande con sonido hasta que tocan "✅ Visto". Se guarda en estado/MSG y estado/MSGV-<área>.
 //   La tablet sabe su área por la última categoría que se abrió en ella (localStorage "mi_area").
 // ============================================================
-const SALUDO_NOMBRES = {"Reposteria":"María y Jesica", "Comida de sal":"Sergio y Adolfo", "Panaderia":"Deisy y Ronald", "Batido":"Andreina", "Logistica":"Juan Pablo", "Rotular":"Juan Pablo"};
+const SALUDO_NOMBRES = {"Reposteria":"Maria Camila y Yesica María", "Comida de sal":"Sergio Andres y Adolfo", "Panaderia":"Deysi Liliana y Ronald Stibin", "Batido":"Yetzaida Andreina", "Logistica":"Juan Pablo", "Rotular":"Juan Pablo"};
 const FRASES = [
   "Que hoy todo te salga como recién horneado: perfecto y con mucho cariño.",
   "Hoy va a ser un día bonito. ¡Gracias por todo lo que haces!",
@@ -6935,7 +6935,7 @@ function cumpleCelebrar(u){
 // La tablet de cada área (Panadería, Comida de sal, Repostería, Batido) muestra a SUS personas (Admin › Personas, campo puesto) con su zona.
 // Personal (Alban 27 oct): sale de la hoja "Datos Personales - Ingreso Parisina" (pestaña Personal de Ventas Parisina). Lo arma personal.py.
 // n = nombre corto · a = área · p = puesto de aseo 1–7 (o "Fijo" = no rota). Sin puesto = no participa.
-const PERSONAL = [{"n": "Adolfo", "a": "Comida de sal", "p": 4}, {"n": "Arelis", "a": "", "p": "Fijo"}, {"n": "Deysi", "a": "Panaderia", "p": 2}, {"n": "Juan Pablo", "a": "Logistica", "p": "Fijo"}, {"n": "Camila", "a": "Reposteria", "p": 6}, {"n": "Ronald", "a": "Panaderia", "p": 1}, {"n": "Sergio", "a": "Comida de sal", "p": 5}, {"n": "Yesica", "a": "Reposteria", "p": 7}, {"n": "Andreina", "a": "Batido", "p": 3}];
+const PERSONAL = [{"n": "Adolfo", "a": "Comida de sal", "p": 4}, {"n": "Arelis", "a": "", "p": "Fijo"}, {"n": "Deysi Liliana", "a": "Panaderia", "p": 2}, {"n": "Juan Pablo", "a": "Logistica", "p": "Fijo"}, {"n": "Maria Camila", "a": "Reposteria", "p": 6}, {"n": "Ronald Stibin", "a": "Panaderia", "p": 1}, {"n": "Sergio Andres", "a": "Comida de sal", "p": 5}, {"n": "Yesica María", "a": "Reposteria", "p": 7}, {"n": "Yetzaida Andreina", "a": "Batido", "p": 3}];
 const ASEO_ROTA_DEF = ["Ronald","Deysi","Andreina","Adolfo","Sergio","Camila","Yessica"];
 const ASEO_ROTA = (()=>{ const r = Array(7).fill(null); let ok = false;
   (PERSONAL || []).forEach(p=>{ if(typeof p.p === "number" && p.p >= 1 && p.p <= 7){ r[p.p - 1] = p.n; ok = true; } });
