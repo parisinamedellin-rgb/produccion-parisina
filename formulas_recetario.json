@@ -7448,5 +7448,1832 @@
   "historial": [
    "31/10/2026: cargada desde BOM Parisina (sin pasos, por revisar)"
   ]
+ },
+ {
+  "code": "RP-ALFAJOR",
+  "nombre": "Alfajor vainilla",
+  "area": "Reposteria",
+  "subgrupo": "Dulcería",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 100,
+  "unidad": "tapas",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — Acremar azúcar + margarina + mantequilla (batidora 8 L de repostería, NO Kitchenaid)",
+    "items": [
+     {
+      "ing": "Mantequilla (ambiente)",
+      "cant": 450,
+      "u": "g"
+     },
+     {
+      "ing": "Margarina (ambiente)",
+      "cant": 450,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar XXX",
+      "cant": 100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — Agregar los secos y la esencia",
+    "items": [
+     {
+      "ing": "Harina Haz de Oros",
+      "cant": 900,
+      "u": "g"
+     },
+     {
+      "ing": "Fécula de maíz",
+      "cant": 430,
+      "u": "g"
+     },
+     {
+      "ing": "Sal",
+      "cant": 5,
+      "u": "g"
+     },
+     {
+      "ing": "Esencia de vainilla",
+      "cant": 5,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Volcar en el mesón enharinado, dividir en 2 y extender; congelar 2 h en bandejas",
+    "items": []
+   },
+   {
+    "titulo": "Paso 4 — Cortar con cortador de 5 cm. Hornear 180 °C arriba y abajo 15 min por un lado; muy poco doradas por debajo. Enfriar en rejillas",
+    "items": []
+   },
+   {
+    "titulo": "Decoración — Rellenar las tapas con arequipe (manga), pasar por coco rallado y poner en capacillos pequeños",
+    "items": [
+     {
+      "ing": "Arequipe de tarro",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Coco rallado",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Capacillo pequeño",
+      "cant": 0,
+      "u": "unid"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para 100 tapas de 23 g c/u (peso total ~2.340 g). La hoja 'ALFAJOR C' trae la fórmula para 2 horneadas = 188 unidades (×3,5). Código rotulación 500. Una lata grande = 54 tapas.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'ALFAJOR'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-VOLCAN-CHOCOLATE",
+  "nombre": "Volcán de chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Dulcería",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 63,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Corazón de chocolate — Baño maría: mantequilla + chocolate hasta derretir; agregar la crema de leche y unificar; emulsionar 1 min con globo",
+    "items": [
+     {
+      "ing": "Mantequilla",
+      "cant": 190,
+      "u": "g"
+     },
+     {
+      "ing": "Crema de leche",
+      "cant": 1200,
+      "u": "g"
+     },
+     {
+      "ing": "Chocolate cobertura",
+      "cant": 1800,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Corazón — En lata con vinipel, cubrir y congelar; desmoldar y cortar cuadros de 2×3 cm (~17 g). Guardar en congelador",
+    "items": []
+   },
+   {
+    "titulo": "Paso 1 — Baño maría: mantequilla + chocolate hasta derretir",
+    "items": [
+     {
+      "ing": "Mantequilla",
+      "cant": 525,
+      "u": "g"
+     },
+     {
+      "ing": "Chocolate cobertura",
+      "cant": 2100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — Agregar azúcar blanca + azúcar morena (aún en baño maría)",
+    "items": [
+     {
+      "ing": "Azúcar común",
+      "cant": 525,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar morena",
+      "cant": 525,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Agregar de golpe harina + sal (aún en baño maría) y mezclar hasta integrar",
+    "items": [
+     {
+      "ing": "Harina Haz de Oros",
+      "cant": 750,
+      "u": "g"
+     },
+     {
+      "ing": "Sal",
+      "cant": 15,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 4 — Fuera del baño maría, en batidora con pala, agregar los huevos",
+    "items": [
+     {
+      "ing": "Huevos AA",
+      "cant": 30,
+      "u": "unid"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 5 — Moldes con desmoldante: 20 % de mezcla, corazón en el centro (sin tocar el fondo), cubrir hasta el 80 % del molde",
+    "items": []
+   }
+  ],
+  "usos": [],
+  "nota": "Siempre hacer DOS fórmulas, una por bowl. Rinde 63 volcanes en refractaria de 70 g + 17 g de corazón (o 60 en desechable). Horno (hoja vieja): 220 °C + 195 °C, 23,5 min. Al chocolate no le gusta el agua: secar todo. Versión de la hoja 'VOLCAN DE CHOCO (I)'.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'VOLCAN DE CHOCO (I)'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-MUFFIN-CHOCOLATE",
+  "nombre": "Muffin de chocolate",
+  "area": "Reposteria",
+  "subgrupo": "Dulcería",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 99,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — Batidora velocidad mínima y luego media: aceite + azúcar",
+    "items": [
+     {
+      "ing": "Aceite vegetal",
+      "cant": 1400,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 2100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — Añadir los huevos uno a uno",
+    "items": [
+     {
+      "ing": "Huevos AA",
+      "cant": 28,
+      "u": "unid"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Aparte mezclar los secos; incorporar la mitad, luego leche + vainilla, y terminar con la otra mitad",
+    "items": [
+     {
+      "ing": "Harina Haz de Oros",
+      "cant": 3360,
+      "u": "g"
+     },
+     {
+      "ing": "Cocoa",
+      "cant": 528,
+      "u": "g"
+     },
+     {
+      "ing": "Leche en polvo",
+      "cant": 70,
+      "u": "g"
+     },
+     {
+      "ing": "Sal",
+      "cant": 29,
+      "u": "g"
+     },
+     {
+      "ing": "Leche líquida",
+      "cant": 1680,
+      "u": "g"
+     },
+     {
+      "ing": "Esencia de vainilla",
+      "cant": 70,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 4 — Moldes con desmoldante: llenar a la mitad, poner los chunks y el corazón, y cubrir. Hornear 180 °C arriba y abajo 30 min",
+    "items": [
+     {
+      "ing": "Chunks de chocolate (por molde)",
+      "cant": 20,
+      "u": "g"
+     },
+     {
+      "ing": "Corazón de chocolate (por molde)",
+      "cant": 18,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Peso total ~9.870 g de mezcla → 99 muffins.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Muffin de chocolate'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-CHEESECAKE-CB",
+  "nombre": "Cheesecake crème brûlée",
+  "area": "Reposteria",
+  "subgrupo": "Dulcería",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 4,
+  "unidad": "latas",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Galleta base — Batidora con pala hasta homogenizar; estirar en 4 bandejas 40×30 con silpat; hornear, enfriar y triturar en el procesador",
+    "items": [
+     {
+      "ing": "Mantequilla",
+      "cant": 460,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 240,
+      "u": "g"
+     },
+     {
+      "ing": "Huevos",
+      "cant": 173,
+      "u": "g"
+     },
+     {
+      "ing": "Harina Haz de Oros",
+      "cant": 1150,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar XXX",
+      "cant": 230,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Piso — Mezclar la galleta triturada con la grasa; 650 g por lata; hornear 10 min a 180 °C (horno 3)",
+    "items": [
+     {
+      "ing": "Galleta base",
+      "cant": 2253,
+      "u": "g"
+     },
+     {
+      "ing": "Margarina",
+      "cant": 173,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla",
+      "cant": 173,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Crème — Acremar queso crema + azúcar + fécula con pala; yemas una a una a vel. media; luego esencia y crema agria",
+    "items": [
+     {
+      "ing": "Queso crema",
+      "cant": 6090,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 1827,
+      "u": "g"
+     },
+     {
+      "ing": "Fécula de maíz",
+      "cant": 113,
+      "u": "g"
+     },
+     {
+      "ing": "Yemas",
+      "cant": 974,
+      "u": "g"
+     },
+     {
+      "ing": "Esencia de vainilla",
+      "cant": 4,
+      "u": "g"
+     },
+     {
+      "ing": "Crema agria",
+      "cant": 1392,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Horno 3 — Servir 2.800 g de crème por lata. 1.º 160 °C + 170 °C 70 min; 2.º 180 °C + 180 °C 10–15 min hasta dorar. Enfriar y congelar una noche sin desmoldar",
+    "items": []
+   },
+   {
+    "titulo": "Al pedido — Espolvorear azúcar común y sopletear. Corte 6×6 cm = 24 por lata",
+    "items": []
+   }
+  ],
+  "usos": [],
+  "nota": "Versión 'CHEES CB 2.0' (4 bandejas). La hoja 'Chessecake de CB' tiene una versión anterior (galleta 800 g/lata, 2.500 g de crema por molde).",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'CHEES CB 2.0'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-FRAISIER",
+  "nombre": "Fraisier (montaje)",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — Aro de acetato 83×7 cm (1,5 lb) o 66×7 cm (1 lb). Bizcochuelo dividido en 2: una mitad de base",
+    "items": []
+   },
+   {
+    "titulo": "Paso 2 — Fresas grandes en mitades por todo el contorno; rellenar con fresa picada y crema musselina; tapar con la otra mitad",
+    "items": [
+     {
+      "ing": "Fresa normal picada",
+      "cant": 120,
+      "u": "g"
+     },
+     {
+      "ing": "Fresa exterior (3,5 cm de alto)",
+      "cant": 190,
+      "u": "g"
+     },
+     {
+      "ing": "Crema musselina",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Merengue francés para decorar, con fresas",
+    "items": [
+     {
+      "ing": "Claras",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar XXX",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Albúmina en polvo",
+      "cant": 5,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Montaje por torta. Usa Bizcochuelo y Crema musselina del recetario.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Fraisier'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-SAINT-HONORE",
+  "nombre": "Saint-Honoré (montaje)",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — Hornear el hojaldre y cortarlo del tamaño de una blonda de 21,5 cm",
+    "items": [
+     {
+      "ing": "Masa hojaldre",
+      "cant": 200,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — Hornear masa bomba: 12–13 profiteroles (base 3 cm × 2,5 cm de alto) + aro",
+    "items": [
+     {
+      "ing": "Masa bomba",
+      "cant": 350,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Rellenar profiteroles y aro con crema pastelera de vainilla",
+    "items": [
+     {
+      "ing": "Crema pastelera (profiteroles)",
+      "cant": 360,
+      "u": "g"
+     },
+     {
+      "ing": "Crema pastelera (aro)",
+      "cant": 230,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 4 — Merengue",
+    "items": [
+     {
+      "ing": "Azúcar XXX",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Claras",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Albúmina",
+      "cant": 5,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 5 — Caramelo a 160 °C (fuego medio-alto) y pegar el aro sobre el hojaldre y luego los profiteroles",
+    "items": [
+     {
+      "ing": "Azúcar común",
+      "cant": 200,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Interior — Suavizar la crema pastelera con la gelatina hidratada; llenar el interior y decorar con merengue y fresas",
+    "items": [
+     {
+      "ing": "Crema pastelera de vainilla",
+      "cant": 400,
+      "u": "g"
+     },
+     {
+      "ing": "Gelatina sin sabor",
+      "cant": 8,
+      "u": "g"
+     },
+     {
+      "ing": "Agua",
+      "cant": 45,
+      "u": "g"
+     },
+     {
+      "ing": "Merengue",
+      "cant": 50,
+      "u": "g"
+     },
+     {
+      "ing": "Fresas decoración",
+      "cant": 20,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Total crema pastelera ~990 g por torta.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Saint Honore'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-MASA-QUEBRADA",
+  "nombre": "Masa quebrada",
+  "area": "Reposteria",
+  "subgrupo": "Mise en place",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 4796,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — En el bowl: harina + azúcar XXX + sal",
+    "items": [
+     {
+      "ing": "Harina Haz de Oros",
+      "cant": 2300,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar XXX",
+      "cant": 800,
+      "u": "g"
+     },
+     {
+      "ing": "Sal",
+      "cant": 16,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — Agregar margarina + mantequilla muy frías en cubos; batir con escudo hasta arenar",
+    "items": [
+     {
+      "ing": "Margarina",
+      "cant": 600,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla",
+      "cant": 600,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Agregar los huevos uno a uno y unificar. Estirar y guardar en nevera con vinipel al contacto",
+    "items": [
+     {
+      "ing": "Huevos AA",
+      "cant": 8,
+      "u": "unid"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 4 — Poner en moldes y congelar unos minutos. 1.ª cocción con capacillo y fríjoles 180 °C + 180 °C 15 min; retirar y terminar la cocción",
+    "items": []
+   }
+  ],
+  "usos": [],
+  "nota": "Fórmula ×2. Masa por tarta: 8–10 porc. 370 g · individual 42 g · mini 32–35 g.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'MASA QUEBRADA'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TARTA-MARACUYA",
+  "nombre": "Tarta de maracuyá (montaje)",
+  "area": "Reposteria",
+  "subgrupo": "Tartas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "tarta 8-10 porc.",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Base",
+    "items": [
+     {
+      "ing": "Masa quebrada",
+      "cant": 370,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Relleno",
+    "items": [
+     {
+      "ing": "Crema de maracuyá",
+      "cant": 550,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Brillo maracuyá (base: 500 semillas + 250 glasé neutro + 50 agua + 8 gelatina)",
+    "items": [
+     {
+      "ing": "Brillo maracuyá",
+      "cant": 100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Decorar con merengue francés",
+    "items": [
+     {
+      "ing": "Merengue francés",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Por tarta 8–10 porc. Mini: 32 masa + 33,5 crema + 20 brillo. Individual: 42 + 60 + 30.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'TARTA DE MARACUYA'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TARTA-LIMON",
+  "nombre": "Tarta de limón (montaje)",
+  "area": "Reposteria",
+  "subgrupo": "Tartas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "tarta 8-10 porc.",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Base",
+    "items": [
+     {
+      "ing": "Masa quebrada",
+      "cant": 390,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Rellenar con la crema de limón",
+    "items": [
+     {
+      "ing": "Crema de limón",
+      "cant": 650,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Cubrir con merengue francés (boquilla estrella, en arcoíris), flamear y rallar limón. Refrigerar",
+    "items": [
+     {
+      "ing": "Merengue francés",
+      "cant": 128,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Por tarta 8–10 porc. Mini: 32 + 35 + 6. Individual: 42 + 50 + 14.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'TARTA DE LIMON (K)'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TARTA-MANZANA",
+  "nombre": "Tarta de manzana",
+  "area": "Reposteria",
+  "subgrupo": "Tartas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1635,
+  "unidad": "g compota",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Compota — Lavar, pelar, quitar semillas y cortar en cuadros. Cocinar con tapa a fuego bajo con azúcar, mantequilla y anís (timer 1 h, luego cada 10 min); procesar un poco hasta puré. Nevera con vinipel",
+    "items": [
+     {
+      "ing": "Manzana roja",
+      "cant": 1500,
+      "u": "g"
+     },
+     {
+      "ing": "Manzana verde",
+      "cant": 15,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 60,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla",
+      "cant": 60,
+      "u": "g"
+     },
+     {
+      "ing": "Anís estrellado",
+      "cant": 5,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Decoración — Laminar manzanas con mandolina; derretir mantequilla con canela y las 2 azúcares; enmantequillar silpats y poner las láminas; hornear 180 °C ~10 min",
+    "items": [
+     {
+      "ing": "Manzana roja (decoración, ~3 por tarta)",
+      "cant": 3,
+      "u": "unid"
+     },
+     {
+      "ing": "Azúcar morena",
+      "cant": 30,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 30,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla",
+      "cant": 20,
+      "u": "g"
+     },
+     {
+      "ing": "Canela en polvo",
+      "cant": 0.5,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Montaje — Rellenar la tarta con la compota y poner las manzanas encima",
+    "items": [
+     {
+      "ing": "Masa quebrada",
+      "cant": 370,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Mantener siempre en stock 2 fórmulas de compota.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'TARTA  MANZANA (K)'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TARTA-FRESA",
+  "nombre": "Tarta de fresa (montaje)",
+  "area": "Reposteria",
+  "subgrupo": "Tartas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "tarta 8-10 porc.",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Montaje",
+    "items": [
+     {
+      "ing": "Masa quebrada",
+      "cant": 370,
+      "u": "g"
+     },
+     {
+      "ing": "Crema pastelera de vainilla",
+      "cant": 520,
+      "u": "g"
+     },
+     {
+      "ing": "Fresa jumbo",
+      "cant": 400,
+      "u": "g"
+     },
+     {
+      "ing": "Fresa jumbo (decoración)",
+      "cant": 20,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Mini: 32 + 35 + 9 fresa + 3. Individual: 42 + 50 + 25 + 3–4. Ponerle brillo encima.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'TARTA F Y M (K)'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TARTA-MULTIFRUTA",
+  "nombre": "Tarta multifruta (montaje)",
+  "area": "Reposteria",
+  "subgrupo": "Tartas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "tarta 8-10 porc.",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Montaje",
+    "items": [
+     {
+      "ing": "Masa quebrada",
+      "cant": 370,
+      "u": "g"
+     },
+     {
+      "ing": "Crema pastelera de vainilla",
+      "cant": 520,
+      "u": "g"
+     },
+     {
+      "ing": "Fresa jumbo",
+      "cant": 150,
+      "u": "g"
+     },
+     {
+      "ing": "Durazno en almíbar",
+      "cant": 150,
+      "u": "g"
+     },
+     {
+      "ing": "Agraz",
+      "cant": 30,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Las frutas pueden variar según disponibilidad. Ponerle brillo encima.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'TARTA F Y M (K)'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-RELLENO-ALMENDRAS",
+  "nombre": "Relleno de almendras (panadería)",
+  "area": "Panaderia",
+  "subgrupo": "Rellenos",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 3868,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — Triturar las almendras sin hornear. Calentar la leche con la mantequilla hasta derretirla",
+    "items": [
+     {
+      "ing": "Almendras (harina)",
+      "cant": 500,
+      "u": "g"
+     },
+     {
+      "ing": "Leche líquida",
+      "cant": 1500,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla",
+      "cant": 250,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — En un bowl cremar azúcares + fécula + huevos + yemas",
+    "items": [
+     {
+      "ing": "Azúcar morena",
+      "cant": 400,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 345,
+      "u": "g"
+     },
+     {
+      "ing": "Fécula de maíz",
+      "cant": 150,
+      "u": "g"
+     },
+     {
+      "ing": "Huevos AA",
+      "cant": 6,
+      "u": "unid"
+     },
+     {
+      "ing": "Yemas",
+      "cant": 9,
+      "u": "unid"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 3 — Verter la leche caliente en 3 tandas; volver a la olla, agregar la almendra y la esencia; cocinar sin dejar de mover hasta espesar",
+    "items": [
+     {
+      "ing": "Esencia de almendras",
+      "cant": 2.5,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 4 — Enfriar con film al contacto",
+    "items": []
+   }
+  ],
+  "usos": [],
+  "nota": "Variante 'con CPV': por cada 100 g de este relleno, 65 g de crema pastelera de vainilla.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Relleno Almendras'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-RELLENO-NUTELLA",
+  "nombre": "Relleno chocolate Nutella (croissant)",
+  "area": "Panaderia",
+  "subgrupo": "Rellenos",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 7150,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "En un bowl a baño maría, todos los ingredientes, removiendo hasta integrar",
+    "items": [
+     {
+      "ing": "Chocolate semiamargo 43 %",
+      "cant": 750,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 300,
+      "u": "g"
+     },
+     {
+      "ing": "Cocoa",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Crema de avellanas",
+      "cant": 4875,
+      "u": "g"
+     },
+     {
+      "ing": "Nutella",
+      "cant": 1125,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Hacer dos recetas por separado para llenar la caneca. Distinto al 'Relleno chocolate' actual de Panadería.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Relleno Nutella'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-MOUSSE-FRUTOS-ROJOS",
+  "nombre": "Mousse de frutos rojos",
+  "area": "Reposteria",
+  "subgrupo": "Dulcería",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 15,
+  "unidad": "unid",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Ingredientes",
+    "items": [
+     {
+      "ing": "Azúcar común",
+      "cant": 262,
+      "u": "g"
+     },
+     {
+      "ing": "Agua",
+      "cant": 97,
+      "u": "g"
+     },
+     {
+      "ing": "Frutos rojos",
+      "cant": 750,
+      "u": "g"
+     },
+     {
+      "ing": "Crema de leche",
+      "cant": 750,
+      "u": "g"
+     },
+     {
+      "ing": "Agua (gelatina)",
+      "cant": 112,
+      "u": "g"
+     },
+     {
+      "ing": "Gelatina sin sabor",
+      "cant": 22,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Total ~1.993 g → 15 unidades. La hoja no trae los pasos: definirlos en el ensayo.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Mousse frutos rojos'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-MERENGON-RED-VELVET",
+  "nombre": "Merengón de red velvet",
+  "area": "Reposteria",
+  "subgrupo": "Dulcería",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 96,
+  "unidad": "cuadros",
+  "proteina": "",
+  "pasos": [],
+  "usos": [],
+  "nota": "La hoja del Excel no trae los nombres de los ingredientes (solo cantidades): completarlos en el ensayo. Bandeja de 3.000 g ×4; horno 160 °C arriba / 180 °C abajo ~40 min; congelar una noche; corte 6×6 cm = 24 por bandeja (96 en total).",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'MERENGON RED VELVET'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-ROSCA-REYES",
+  "nombre": "Rosca de Reyes",
+  "area": "Reposteria",
+  "subgrupo": "Navidad",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 16,
+  "unidad": "porciones",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Masa",
+    "items": [
+     {
+      "ing": "Leche",
+      "cant": 120,
+      "u": "g"
+     },
+     {
+      "ing": "Levadura fresca",
+      "cant": 15,
+      "u": "g"
+     },
+     {
+      "ing": "Levadura seca",
+      "cant": 5,
+      "u": "g"
+     },
+     {
+      "ing": "Huevos",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar",
+      "cant": 120,
+      "u": "g"
+     },
+     {
+      "ing": "Agua de azahar",
+      "cant": 45,
+      "u": "g"
+     },
+     {
+      "ing": "Ron",
+      "cant": 30,
+      "u": "g"
+     },
+     {
+      "ing": "Ralladura de limón",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Ralladura de naranja",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Harina de fuerza",
+      "cant": 500,
+      "u": "g"
+     },
+     {
+      "ing": "Sal",
+      "cant": 3,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla (ambiente)",
+      "cant": 120,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Relleno — Ganache de chocolate montada",
+    "items": [
+     {
+      "ing": "Crema de leche",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Whip topping",
+      "cant": 300,
+      "u": "g"
+     },
+     {
+      "ing": "Chocolate semiamargo",
+      "cant": 240,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar",
+      "cant": 80,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Decoración",
+    "items": [
+     {
+      "ing": "Huevo batido",
+      "cant": 50,
+      "u": "g"
+     },
+     {
+      "ing": "Fruta confitada",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Almendras en láminas",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar perlada",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar",
+      "cant": 30,
+      "u": "g"
+     },
+     {
+      "ing": "Agua de azahar",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para 16 porciones. La hoja no trae los pasos completos: definirlos en el ensayo.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'ROSCA DE REYES'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "PN-PAN-JAMON",
+  "nombre": "Pan de jamón",
+  "area": "Panaderia",
+  "subgrupo": "Navidad",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "pan",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Masa — Mezclar todo menos la levadura y el azúcar; poolish con el agua tibia + levadura + azúcar; unir y amasar 7 min a vel. media; reposar en bola 30 min",
+    "items": [
+     {
+      "ing": "Harina Haz de Oros",
+      "cant": 165,
+      "u": "g"
+     },
+     {
+      "ing": "Huevos AA",
+      "cant": 50,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 15,
+      "u": "g"
+     },
+     {
+      "ing": "Mantequilla",
+      "cant": 35,
+      "u": "g"
+     },
+     {
+      "ing": "Leche en polvo",
+      "cant": 23,
+      "u": "g"
+     },
+     {
+      "ing": "Sal",
+      "cant": 3,
+      "u": "g"
+     },
+     {
+      "ing": "Levadura seca",
+      "cant": 3,
+      "u": "g"
+     },
+     {
+      "ing": "Agua",
+      "cant": 70,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Formar — Desgasificar y estirar a 26×45 cm",
+    "items": []
+   },
+   {
+    "titulo": "Relleno — Jamón de base, aceitunas en línea, queso crema al centro y uvas pasas; enrollar empezando por las aceitunas",
+    "items": [
+     {
+      "ing": "Jamón Ricachef",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Aceite vegetal",
+      "cant": 50,
+      "u": "g"
+     },
+     {
+      "ing": "Uvas pasas",
+      "cant": 20,
+      "u": "g"
+     },
+     {
+      "ing": "Queso crema",
+      "cant": 130,
+      "u": "g"
+     },
+     {
+      "ing": "Aceitunas",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Horno — Trinchar con tenedor, pintar con huevo y azúcar, levar 45 min y hornear 180 °C 40 min",
+    "items": []
+   }
+  ],
+  "usos": [],
+  "nota": "Pan de 24 cm sin levar (27 cm horneado). Viene de la hoja 'FORMULA NAVIDAD'.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'FORMULA NAVIDAD'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-MIGAS",
+  "nombre": "Migas deshidratadas (red velvet / zanahoria / chocolate)",
+  "area": "Reposteria",
+  "subgrupo": "Mise en place",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 2000,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Paso 1 — Desmigar a mano al máximo la miga del sabor, sobre bandeja grande, y dejar deshidratar de un día para otro",
+    "items": [
+     {
+      "ing": "Miga red velvet",
+      "cant": 2000,
+      "u": "g"
+     },
+     {
+      "ing": "Miga zanahoria",
+      "cant": 2000,
+      "u": "g"
+     },
+     {
+      "ing": "Miga chocolate",
+      "cant": 2000,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Paso 2 — Al otro día, procesar de a poco (hasta 3/4 del procesador)",
+    "items": []
+   }
+  ],
+  "usos": [],
+  "nota": "2.000 g por sabor. Si se necesita para el mismo día, ver la nota del Excel.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'MIGAS'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-BRILLO",
+  "nombre": "Brillo repostería",
+  "area": "Reposteria",
+  "subgrupo": "Mise en place",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1020,
+  "unidad": "g",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Ingredientes",
+    "items": [
+     {
+      "ing": "Agua",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 800,
+      "u": "g"
+     },
+     {
+      "ing": "Gelatina sin sabor",
+      "cant": 20,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para tartas y decoración.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Brillo Reposteria'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-CAFE-CAFETERA",
+  "nombre": "Café de cafetera",
+  "area": "Reposteria",
+  "subgrupo": "Mise en place",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 0,
+  "unidad": "ml",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Verter el agua en la cafetera, poner el café y encender; esperar que cuele todo",
+    "items": [
+     {
+      "ing": "Agua",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Café instantáneo",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "La hoja no trae cantidades: definir en el ensayo (para Ópera, tres leches de café, etc.).",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'CAFE CAFETERA'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TL-VAINILLA",
+  "nombre": "Tres leches vainilla y durazno",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta 1 lb",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Remojo",
+    "items": [
+     {
+      "ing": "Leche líquida",
+      "cant": 400,
+      "u": "g"
+     },
+     {
+      "ing": "Leche en polvo",
+      "cant": 30,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 50,
+      "u": "g"
+     },
+     {
+      "ing": "Crema de leche",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Topping de queso crema (frío)",
+      "cant": 100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Relleno",
+    "items": [
+     {
+      "ing": "Topping queso crema",
+      "cant": 400,
+      "u": "g"
+     },
+     {
+      "ing": "Leche condensada",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Duraznos",
+      "cant": 100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Decoración",
+    "items": [
+     {
+      "ing": "Topping queso crema",
+      "cant": 400,
+      "u": "g"
+     },
+     {
+      "ing": "Whip topping Rich's",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Leche condensada",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Duraznos en cuadritos",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Brillo (en los duraznos)",
+      "cant": 100,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para una torta 3 leches de 1 libra (2 capas de bizcochuelo de 23 cm). Topping de queso crema = 'Topping' del recetario.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Tres Leches Vai'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TL-CAFE",
+  "nombre": "Tres leches café",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta 1 lb",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Remojo — calentar leche + leche en polvo + azúcar; fuera del fuego agregar café y topping",
+    "items": [
+     {
+      "ing": "Leche líquida",
+      "cant": 600,
+      "u": "g"
+     },
+     {
+      "ing": "Leche en polvo",
+      "cant": 20,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Café instantáneo",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Topping de queso crema (frío)",
+      "cant": 100,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Relleno",
+    "items": [
+     {
+      "ing": "Topping queso crema",
+      "cant": 100,
+      "u": "g"
+     },
+     {
+      "ing": "Café instantáneo",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Leche condensada",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Decoración",
+    "items": [
+     {
+      "ing": "Topping queso crema",
+      "cant": 200,
+      "u": "g"
+     },
+     {
+      "ing": "Café instantáneo",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Leche condensada",
+      "cant": 0,
+      "u": "g"
+     },
+     {
+      "ing": "Whip topping Rich's",
+      "cant": 0,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para una torta 3 leches de 1 libra (2 capas de bizcochuelo de 23 cm). Topping de queso crema = 'Topping' del recetario.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Tres Leches Cafe'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TL-AREQUIPE",
+  "nombre": "Tres leches arequipe",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta 1 lb",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Remojo — calentar leche + leche en polvo; fuera del fuego agregar arequipe y topping. 2 partes de ~600 g, una por capa",
+    "items": [
+     {
+      "ing": "Leche líquida",
+      "cant": 750,
+      "u": "g"
+     },
+     {
+      "ing": "Leche en polvo",
+      "cant": 62.5,
+      "u": "g"
+     },
+     {
+      "ing": "Arequipe de bolsa",
+      "cant": 187.5,
+      "u": "g"
+     },
+     {
+      "ing": "Topping de queso crema (frío)",
+      "cant": 250,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Relleno, cubierta y decoración — 200 g relleno + 200 g cubierta + 50 g decoración",
+    "items": [
+     {
+      "ing": "Topping queso crema (frío)",
+      "cant": 440,
+      "u": "g"
+     },
+     {
+      "ing": "Arequipe de bolsa",
+      "cant": 60,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para una torta 3 leches de 1 libra (2 capas de bizcochuelo de 23 cm). Topping de queso crema = 'Topping' del recetario.",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Tres Leches Are'), por ensayar (Alban)"
+  ]
+ },
+ {
+  "code": "RP-TL-MILO",
+  "nombre": "Tres leches Milo",
+  "area": "Reposteria",
+  "subgrupo": "Tortas",
+  "estado": "por_ensayar",
+  "duda_area": "",
+  "rinde": 1,
+  "unidad": "torta 1 lb",
+  "proteina": "",
+  "pasos": [
+   {
+    "titulo": "Remojo — en un ruso a fuego bajo: leche + leche en polvo + azúcar + cocoa + Milo; fuera del fuego agregar el topping",
+    "items": [
+     {
+      "ing": "Leche líquida",
+      "cant": 762.5,
+      "u": "g"
+     },
+     {
+      "ing": "Leche en polvo",
+      "cant": 62.5,
+      "u": "g"
+     },
+     {
+      "ing": "Azúcar común",
+      "cant": 62.5,
+      "u": "g"
+     },
+     {
+      "ing": "Cocoa",
+      "cant": 25,
+      "u": "g"
+     },
+     {
+      "ing": "Milo",
+      "cant": 87.5,
+      "u": "g"
+     },
+     {
+      "ing": "Topping de queso crema (frío)",
+      "cant": 250,
+      "u": "g"
+     }
+    ]
+   },
+   {
+    "titulo": "Relleno, cubierta y decoración — cernir la cocoa; 200 g relleno + 200 g cubierta + 50 g decoración",
+    "items": [
+     {
+      "ing": "Topping queso crema",
+      "cant": 425,
+      "u": "g"
+     },
+     {
+      "ing": "Cocoa",
+      "cant": 21,
+      "u": "g"
+     },
+     {
+      "ing": "Milo",
+      "cant": 54,
+      "u": "g"
+     }
+    ]
+   }
+  ],
+  "usos": [],
+  "nota": "Para una torta 3 leches de 1 libra (2 capas de bizcochuelo de 23 cm). Topping de queso crema = 'Topping' del recetario. La hoja 'Tres Leches Milo (c)' trae otra versión con 3 capas (remojo 1.350 g).",
+  "validada": "",
+  "historial": [
+   "11/11/2026: cargada desde Reposteria 2025.xlsx (hoja 'Tres Leches Milo'), por ensayar (Alban)"
+  ]
  }
 ]
