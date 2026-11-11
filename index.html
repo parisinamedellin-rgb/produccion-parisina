@@ -2008,6 +2008,25 @@ function renderBackup(){
   if(usrEsAdmin()) w.appendChild(bkAdminEl()); else { const x = document.createElement("div"); x.style.marginTop = "14px"; x.textContent = "Solo para el administrador."; w.appendChild(x); }
   main.appendChild(w);
 }
+// Alban 11 nov: Recetario (solo admin). Todas las fórmulas; el backup se copia solo cada hora a un Google Sheet.
+const REC_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_P6yEycAlrhvp391AFLm02WYU3ibXfgxuiXcPz0b5Vw/edit";
+function renderRecetarioAdm(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const w = document.createElement("div"); w.setAttribute("data-rec", "1");
+  w.innerHTML = `<button type="button" class="rc-vol" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Inicio</button>`;
+  w.querySelector(".rc-vol").onclick = ()=>{ activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  if(!usrEsAdmin()){ const x = document.createElement("div"); x.style.marginTop = "14px"; x.textContent = "Solo para el administrador."; w.appendChild(x); main.appendChild(w); return; }
+  const h = document.createElement("div");
+  h.setAttribute("style", `margin-top:10px;background:${C.paper};border:1.5px solid ${C.line};border-radius:14px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;`);
+  h.innerHTML = `<span style="display:flex;flex-direction:column;gap:3px;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;">📖 Recetario</span>
+      <span style="font-size:0.82rem;color:${C.inkSoft};">Backup en Google Sheet (Drive › Produccion Parisina Backup). Se actualiza solo cada hora.</span></span>
+    <a href="${REC_SHEET_URL}" target="_blank" rel="noopener" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#1E7B45;color:#fff;border-radius:100px;padding:10px 16px;text-decoration:none;">📊 Abrir backup</a>`;
+  w.appendChild(h);
+  w.appendChild(ensSeccionEl());
+  main.appendChild(w);
+}
 function admLogin(){
   const box = document.createElement("form");
   box.setAttribute("style", `margin-top:22px;max-width:380px;background:${C.paper};border:1.5px solid ${C.line};border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px;`);
@@ -2380,7 +2399,16 @@ function renderHome(){
         <span style="font-size:0.8rem;color:${C.inkSoft};">Descargar · restaurar</span>
       </span>`;
     bB.onclick = ()=>{ activeCat = "BACKUP"; render(); window.scrollTo(0,0); };
-    grid.appendChild(bB); }
+    grid.appendChild(bB);
+    // Alban 11 nov: tarjeta "Recetario" (solo admin) con todas las fórmulas + backup en Google Sheet
+    const rB = bB.cloneNode(true);
+    rB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">📖</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Recetario</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">Todas las fórmulas · backup</span>
+      </span>`;
+    rB.onclick = ()=>{ activeCat = "RECETARIO"; render(); window.scrollTo(0,0); };
+    grid.appendChild(rB); }
   // Alban 23 oct: "Mensajes" va como tarjeta grande, igual que las categorías
   { const colM = PALETTE.Oficina || PALETTE.ALL;
     const msgB = document.createElement("button");
@@ -3285,7 +3313,7 @@ function ensAreasFam(){ const k = famObj().key; return k === "ALL" ? Object.keys
 function ensSeccionEl(){
   const box = document.createElement("div");
   box.id = "ens-sec";
-  const areas = ensAreasFam();
+  const areas = activeCat === "RECETARIO" ? Object.keys(ENS_AREAS) : ensAreasFam();   // Alban 11 nov: el Recetario del admin muestra todas las áreas
   if(!areas.length) return box;
   box.setAttribute("style", `margin-top:14px;background:${C.paper};border:1.5px solid #A3252B;border-radius:14px;overflow:hidden;`);
   const pintar = () => {
@@ -6352,6 +6380,7 @@ function ponerTitulo(){
     else if(activeCat === "CALC") t = "Calculadora";
     else if(activeCat === "TIMER") t = "Timers";
     else if(activeCat === "BACKUP") t = "Backup";
+    else if(activeCat === "RECETARIO") t = "Recetario";
     else if(activeCat === "SANIDAD") t = "Sanidad";
     else if(activeCat !== "HOME"){ const f = famObj(); t = f.key === "ALL" ? "Todo" : f.label; }
     document.title = t ? t + " · Parisina" : "Producción Parisina";
@@ -6384,7 +6413,8 @@ function render(){
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
   if(activeCat === "CALC"){ if(!document.querySelector("[data-calc]")) renderCalc(); return; }
   if(activeCat === "TIMER"){ if(!document.querySelector("[data-tmr]")) renderTimer(); return; }
-  if(activeCat === "BACKUP"){ if(!document.querySelector("[data-bk]")) renderBackup(); return; }   // Alban 5 nov
+  if(activeCat === "BACKUP"){ if(!document.querySelector("[data-bk]")) renderBackup(); return; }
+  if(activeCat === "RECETARIO"){ if(!document.querySelector("[data-rec]")) renderRecetarioAdm(); return; }   // Alban 11 nov   // Alban 5 nov
   if(activeCat === "SANIDAD"){ if(!document.querySelector("[data-san]")) renderSanidad(); return; }   // Alban 24 oct: sanidad   // Alban 24 oct: calculadora   // Alban 21 oct: mensajes a cocina (no se repinta solo)
   if(activeCat === "ADMIN"){ if(!document.querySelector("[data-adm]")) renderAdmin(); return; }   // Admin: no se repinta solo (no borra lo que se está escribiendo)
   if(activeDate < TODAY_ISO && !conAyer()) activeDate = dates.find(d => d === TODAY_ISO) || dates[0];   // "Ayer" solo existe en Panadería
