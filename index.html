@@ -7031,7 +7031,7 @@ function aseoSaludoHTML(fam){
 function esViernes(){ return new Date(hoyISO() + "T12:00:00").getDay() === 5; }
 function compraViernesHTML(){
   return `<div style="text-align:left;margin-top:16px;background:#F4EADF;border:1.5px solid #8C5A2B;border-radius:14px;padding:12px 14px;font-size:1rem;line-height:1.5;">
-    <div style="font-weight:700;">🛒 Hoy es viernes: recuerda realizar la compra semanal.</div>
+    <div style="font-weight:700;">🛒 Hoy es viernes: haz la lista de compras de la semana entrante.</div><div style="font-size:0.9rem;">Después confírmalo en tu check del turno (🧼 Sanidad).</div>
     <a href="https://laparisina.co/compras" target="_blank" rel="noopener" style="display:inline-block;margin-top:8px;font-weight:700;color:#fff;background:#8C5A2B;border-radius:10px;padding:8px 16px;text-decoration:none;">Ir a Comprar</a></div>`;
 }
 function compraViernesToca(nom){ return esViernes() && nom && lsGet("compra_" + nom) !== hoyISO(); }
@@ -7041,7 +7041,7 @@ function compraViernesAviso(){
   lsSet("compra_" + yo.nom, hoyISO());
   const o = capaModal(`<div data-compra="1" style="font-size:3rem;line-height:1;">🛒</div>
     <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin-top:10px;color:#8C5A2B;">${escH(yo.nom)}, hoy es viernes</div>
-    <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">Recuerda realizar la <b>compra semanal</b>.</div>
+    <div style="font-size:1.08rem;line-height:1.55;margin-top:12px;">Hoy tienes que hacer la <b>lista de compras de la semana entrante</b> en laparisina.co/compras.<br>Después confírmalo en tu check del turno (🧼 Sanidad).</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px;">
       <a href="https://laparisina.co/compras" target="_blank" rel="noopener" class="cv-ir" style="font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:#8C5A2B;color:#fff;border-radius:14px;padding:13px 24px;text-decoration:none;">Ir a Comprar</a>
       <button type="button" class="cv-ok" style="font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:600;background:#fff;color:#8C5A2B;border:1.5px solid #8C5A2B;border-radius:14px;padding:13px 24px;cursor:pointer;">Más tarde</button></div>`, "#8C5A2B");
@@ -7689,6 +7689,7 @@ function sanPlanEstado(w){
   // Alban 4 nov: debajo de "Enviar check del turno", aviso de las planillas obligatorias que faltan
   const zf = w.querySelector(".san-falta");
   if(zf){ const falta = [...w.querySelectorAll("[data-plr]")].filter(b => { const pl = PLANILLAS.find(x => x.id === b.dataset.plr); if(!pl || pl.opcional) return false; const vez = b.dataset.vez; return !planFirmadas(pl.id, b.dataset.area).some(r => !vez || r.extra === vez); }).map(b => { const pl = PLANILLAS.find(x => x.id === b.dataset.plr); return pl.t + (b.dataset.vez ? " · " + b.dataset.vez : ""); });
+    const cc = w.querySelector(".san-compra"); if(cc && !cc.checked) falta.push("Lista de compras de la semana (laparisina.co/compras)");
     if(PLAN_HOY != null && falta.length){ zf.style.display = ""; zf.innerHTML = `<b style="color:#B3261E;">⚠️ Ojo: te falta llenar ${falta.length === 1 ? "esta planilla" : "estas " + falta.length + " planillas"}</b><div style="margin-top:4px;">${falta.map(t => "• " + escH(t)).join("<br>")}</div><div style="margin-top:6px;font-size:0.85rem;">Sin eso no vas a poder cerrar el turno correctamente en el Reloj.</div>`; }
     else { zf.style.display = "none"; zf.innerHTML = ""; } }
   w.querySelectorAll("[data-plr]").forEach(b => {
@@ -7735,6 +7736,11 @@ function sanCheckHTML(fam, gente, col){
     + T.pl.map(x => `<button type="button" data-plr="${x.pl.id}" data-vez="${escH(x.vez)}" data-area="${escH(sanAreaKey(fam))}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:none;border-top:1px solid ${C.line};padding:9px 2px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:1rem;line-height:1.4;color:${C.ink};">
       <span class="plr-ico" data-c="${col}" style="width:24px;height:24px;flex:0 0 24px;box-sizing:border-box;border:2px solid ${col};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:700;background:#fff;"></span>
       <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("");
+  if(esViernes()){ const cOk = sanLs("san_c_" + p.nom + "_" + hoy);   // Alban 11 nov: los viernes, confirmar la lista de compras de la semana entrante
+    h += `<div style="font-weight:700;margin-top:14px;color:${col};">🛒 Viernes — lista de compras de la semana entrante</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:1px solid ${C.line};padding:10px 2px;">
+        <a href="https://laparisina.co/compras/" target="_blank" rel="noopener" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#8C5A2B;color:#fff;border-radius:12px;padding:10px 16px;text-decoration:none;">🛒 Hacer la lista en laparisina.co/compras</a>
+        <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:1rem;"><input type="checkbox" class="san-compra" ${cOk ? "checked" : ""} style="width:24px;height:24px;margin:0;accent-color:${col};"> Ya hice la lista de compras</label></div>`; }
   h += `<div class="san-nev"></div>`;
   if(T.s.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">Semanales (una vez por semana)</div>`
     + T.s.map((t, i) => box("s" + i, t, !!sHechas[i], sHechas[i] ? "✓ hecha el " + sHechas[i].slice(8) + "/" + sHechas[i].slice(5,7) : "", !!sHechas[i])).join("");   // Alban 4 nov: hecha = tachada toda la semana
@@ -7756,6 +7762,7 @@ function sanCheckBind(w, fam, gente){
     const yo = typeof usrYo === "function" ? usrYo() : null;
     if(!yo || aseoNorm(yo.nom) !== aseoNorm(p.nom) || PLAN_HOY == null || !RELOJ_API) return;
     const dH = sanLs(kD) || {}, faltaPl = (T.pl || []).filter(x => !x.pl.opcional && !planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez)).map(x => x.pl.t + (x.vez ? " · " + x.vez : ""));
+    if(esViernes() && !sanLs("san_c_" + p.nom + "_" + hoy)) faltaPl.push("Lista de compras de la semana");   // Alban 11 nov
     const faltaT = T.d.filter((t, i) => !dH[i]), listo = !faltaPl.length && !faltaT.length;
     const area = fam === "ARELIS" ? "Aseo planta" : ((SAN_AREAS.find(a=>a[0]===fam)||[,fam])[1]).replace(/^\S+\s/, "");
     const falta = faltaPl.concat(faltaT.length ? ["Tareas sin marcar: " + faltaT.length] : []).join(" | ");
@@ -7772,6 +7779,7 @@ function sanCheckBind(w, fam, gente){
       const lb = c.closest("label"), sp = lb && lb.querySelector("span > span"); if(lb) lb.style.opacity = c.checked ? ".6" : ""; if(sp) sp.style.textDecoration = c.checked ? "line-through" : ""; }
     sanAuto();
   });
+  { const cc = el.querySelector(".san-compra"); if(cc) cc.onchange = ()=>{ sanLs("san_c_" + p.nom + "_" + hoy, cc.checked ? new Date().toISOString() : ""); sanPlanEstado(el); sanAuto(); }; }
   el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ()=>{ PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
   // Alban 4 nov: desde el jueves, aviso si las neveras/congeladores del área no se han limpiado en la semana
   if(planHoyDow() >= 4 && (T.pl || []).some(x => x.pl.tipo === "aseo")) planCargarSemana().then(() => { if(!document.body.contains(el)) return;
@@ -7790,6 +7798,7 @@ function sanCheckBind(w, fam, gente){
       semanales: T.s.map((t, i) => t + " → " + (sH[i] ? "hecha el " + sH[i] : "PENDIENTE")).join(" | "),
       inicio: ini ? ini.e + " (" + ini.f + ")" : "",
       falto: T.d.filter((t, i) => !dH[i]).join(" | "),
+      compras: esViernes() ? (sanLs("san_c_" + p.nom + "_" + hoy) ? "lista de compras hecha" : "lista de compras PENDIENTE") : "",
       planillas: (T.pl || []).map(x => x.pl.t + (x.vez ? " " + x.vez : "") + " → " + (planFirmadas(x.pl.id, sanAreaKey(fam)).some(r => !x.vez || r.extra === x.vez) ? "firmada" : "PENDIENTE")).join(" | ")};
     if(nD < T.d.length && !confirm("Faltan " + (T.d.length - nD) + " tareas de hoy sin marcar. ¿Enviar así?")) return;
     btn.disabled = true; btn.style.opacity = "0.6"; msg.style.color = C.ink; msg.textContent = "Enviando…";
