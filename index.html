@@ -2024,6 +2024,7 @@ function renderRecetarioAdm(){
       <span style="font-size:0.82rem;color:${C.inkSoft};">Backup en Google Sheet (Drive › Produccion Parisina Backup). Se actualiza solo cada hora.</span></span>
     <a href="${REC_SHEET_URL}" target="_blank" rel="noopener" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#1E7B45;color:#fff;border-radius:100px;padding:10px 16px;text-decoration:none;">📊 Abrir backup</a>`;
   w.appendChild(h);
+  w.appendChild(armadoEl());
   w.appendChild(ensSeccionEl());
   main.appendChild(w);
 }
@@ -3847,6 +3848,45 @@ function ajBase(def){
   if(b){ for(const st of def.recipe.steps) for(const it of st.items) if(it[0] === b) return it[1]; }
   return def.recipe.per;
 }   // cantidad escogida en las fórmulas ajustables (Alban 9 oct)
+
+// Alban 11 nov: guía de ARMADO (antes pegada en la pared): medida del corte, gramos de relleno y fotos relleno/cara/espalda
+const ARMADO = {"p": [{"n": "Arequipe (manjar blanco)", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado por todos los lados", "g": "40", "f": {"relleno": "arequipe-manjar-blanco-relleno.jpg", "espalda": "arequipe-manjar-blanco-espalda.jpg", "cara": "arequipe-manjar-blanco-cara.jpg"}}, {"n": "Carne", "c": "Cuadrado de 13 x 13. \nForma triangular.\nRepulgado por los lados + tira", "g": "40", "f": {"cara": "carne-cara.jpg", "espalda": "carne-espalda.jpg", "relleno": "carne-relleno.jpg"}}, {"n": "Champiñones espinaca", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado hasta la mitad por encima y repulgado a la otra mitad del otro lado", "g": "40", "f": {"cara": "champinones-espinaca-cara.jpg", "espalda": "champinones-espinaca-espalda.jpg", "relleno": "champinones-espinaca-relleno.jpg"}}, {"n": "Chorizo", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado solo por la parte superior", "g": "40", "f": {"cara": "chorizo-cara.jpg", "relleno": "chorizo-relleno.jpg", "espalda": "chorizo-espalda.jpg"}}, {"n": "Empanada argentina", "c": "Usar el molde de 12,5 cm", "g": "40", "f": {"relleno": "empanada-argetina-relleno.jpg", "cara": "empanada-argetina-cara.jpg", "espalda": "empanada-argetina-espalda.jpg"}}, {"n": "Espinaca", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado solo por la esquinas", "g": "40", "f": {"relleno": "espinaca-relleno.jpg", "cara": "espinaca-cara.jpg", "espalda": "espinaca-espalda.jpg"}}, {"n": "Gloria (queso crema + manjar blanco)", "c": "Diametro de  10 \nForma redonda\nRepulgado por los lados", "g": "20 + 20", "f": {"relleno": "gloria-queso-crema-manjar-blanco-relleno.jpg", "cara": "gloria-queso-crema-manjar-blanco-cara.jpg", "espalda": "gloria-queso-crema-manjar-blanco-espalda.jpg"}}, {"n": "Jamon y queso", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado de los lados por la parte de frente y repulgado arriba por la parte atrasera + tira", "g": "40", "f": {"relleno": "jamon-y-queso-relleno.jpg", "cara": "jamon-y-queso-cara.jpg", "espalda": "jamon-y-queso-espalda.jpg"}}, {"n": "Palito de chocolate", "c": "ESTANDAR : Tiras 30 x 3\nMINI: Tiras de 15 x 3", "g": "16x1 y 5 x 1", "f": {"espalda": "palito-de-chocolate-espalda.jpg", "relleno": "palito-de-chocolate-relleno.jpg"}}, {"n": "Palito de queso", "c": "ESTANDAR : Tiras 30 x 3\nMINI: Tiras de 15 x 3", "g": "16x1 y 5 x 1", "f": {"relleno": "palito-de-queso-relleno.jpg", "espalda": "palito-de-queso-espalda.jpg"}}, {"n": "Pesto", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado arriba por la parte de frente", "g": "40", "f": {"espalda": "pesto-espalda.jpg", "relleno": "pesto-relleno.jpg", "cara": "pesto-cara.jpg"}}, {"n": "Pollo verduras", "c": "Cuadrado de 13 x 13. \nForma triangular.\nRepulgado por los lados + tira trasnversal", "g": "40", "f": {"relleno": "pollo-verduras-relleno.jpg", "espalda": "pollo-verduras-espalda.jpg", "cara": "pollo-verduras-cara.jpg"}}, {"n": "Queso azul", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado de los lados por la parte de frente y repulgado arriba por la parte atrasera", "g": "40", "f": {"relleno": "qeso-azul-relleno.jpg", "cara": "qeso-azul-cara.jpg", "espalda": "qeso-azul-espalda.jpg"}}, {"n": "Queso", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nRepulgado arriba por la parte atrasera", "g": "40", "f": {"espalda": "queso-espalda.jpg", "cara": "queso-cara.jpg", "relleno": "queso-relleno.jpg"}}, {"n": "Ranchero", "c": "2 cuadrados de 10 x 10\nRepulgados por los todos los datos", "g": "40", "f": {"cara": "ranchero-cara.jpg", "espalda": "ranchero-espalda.jpg", "relleno": "ranchero-relleno.jpg"}}, {"n": "Tomate pesto", "c": "Cuadrado de 13 x 13. \nForma rectangular.\nSe corta las esquinas del frente Repulgado la parte superior", "g": "40", "f": {"relleno": "tomate-pesto-relleno.jpg", "cara": "tomate-pesto-cara.jpg", "espalda": "tomate-pesto-espalda.jpg"}}, {"n": "Tomate seco", "c": "Cuadrado de 13 x 13. \nForma piramidal. \nRepulgado por los datos", "g": "40", "f": {"espalda": "tomate-seco-espalda.jpg", "cara": "tomate-seco-cara.jpg", "relleno": "tomate-seco-relleno.jpg"}}, {"n": "New York", "c": "Cuadrado de 13 x 13. \nForma piramidal. \nRepulgado por los datos y abierto arriba", "g": "100", "f": {"cara": "new-york-cara.jpg", "espalda": "new-york-espalda.jpg"}}, {"n": "Italiano", "c": "Circunferencia de 15,5 cm (ver cortador). Relleno de 100 gr. Mezcla Italiano + 5gr. Pimenton + 2gr. Pepperoni + 0,75gr. Mozarella", "g": "100", "f": {"cara": "italiano-cara.jpg", "espalda": "italiano-espalda.jpg"}}], "cr": [{"n": "Croissant estandar", "s": "Almendra Chocolate Chorizo Espinaca Jamon Y Queso Nutella Pesto Pollo Queso Queso Azul Tomate Pesto Tomate Seco", "gr": "3 mm", "c": "13 X 30", "r": "40 G"}, {"n": "Croissant sencillo", "s": "", "gr": "", "c": "20", "r": "0 G"}, {"n": "Mini croissant", "s": "", "gr": "", "c": "7 de base x 28 de alto", "r": "14 G"}, {"n": "Pan de chocolate", "s": "", "gr": "", "c": "Rectangulo de 9 X 15", "r": "Capas de chocolate liquido + 2 barras de chocolate"}, {"n": "Mini pan de chocolate", "s": "", "gr": "", "c": "Rectangulo de 4,5 X 15", "r": "Capas de chocolate liquido + 1 barra cortada en su mitad"}, {"n": "Pan de uva - 1 rollo completo", "s": "", "gr": "4,5 mm", "c": "Para 10 uds, Rectangulo de 40 X 35", "r": "140 g Uvas pasas + 450 g de crema pastelera"}], "crf": "croissant-estandar.jpg", "crn": "Amasadora 20 min · vueltas: doble + sencilla + doble"};
+let ARM_ABIERTO = false;
+function armadoEl(){
+  const box = document.createElement("div"); box.id = "arm-sec";
+  box.setAttribute("style", `margin-top:14px;background:${C.paper};border:1.5px solid #B8612A;border-radius:14px;overflow:hidden;`);
+  const foto = (f, t) => f ? `<figure style="margin:0;flex:1;min-width:0;text-align:center;"><img src="armado/${f}" alt="${t}" loading="lazy" data-armimg="armado/${f}" style="width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;border:1px solid ${C.line};background:#fff;cursor:zoom-in;"><figcaption style="font-size:0.72rem;color:${C.inkSoft};margin-top:3px;">${t}</figcaption></figure>` : "";
+  const pintar = () => {
+    box.innerHTML = `<div class="arm-h" style="padding:13px 16px;background:#FBEBDD;display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;">
+        <span style="display:flex;flex-direction:column;gap:2px;"><span style="font-weight:700;font-size:1.02rem;color:#B8612A;">📐 Armado de pasteles y croissants</span>
+        <span style="font-size:0.78rem;color:${C.inkSoft};">Medida del corte · gramos de relleno · cómo se cierra</span></span>
+        <span style="font-size:1.1rem;color:#B8612A;font-weight:700;">${ARM_ABIERTO ? "▾" : "▸"}</span></div>
+      ${ARM_ABIERTO ? `<div style="padding:12px 14px 14px;display:grid;gap:12px;">
+        ${ARMADO.p.map(p => `<div style="background:#fff;border:1.5px solid ${C.line};border-radius:12px;padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;"><span style="font-weight:800;font-size:1.05rem;">${escH(p.n)}</span>
+          <span style="font-weight:800;color:#B8612A;font-size:1.05rem;">Relleno ${escH(p.g)}${/^\d+$/.test(p.g) ? " g" : ""}</span></div>
+          <div style="font-size:0.88rem;color:${C.ink};white-space:pre-line;margin:6px 0 10px;line-height:1.4;">${escH(p.c)}</div>
+          <div style="display:flex;gap:8px;">${foto(p.f.relleno, "Relleno")}${foto(p.f.cara, "Cara")}${foto(p.f.espalda, "Espalda")}</div></div>`).join("")}
+        <div style="background:#fff;border:1.5px solid ${C.line};border-radius:12px;padding:12px;">
+          <div style="display:flex;gap:12px;align-items:center;"><img src="armado/${ARMADO.crf}" alt="Croissant" loading="lazy" data-armimg="armado/${ARMADO.crf}" style="width:90px;border-radius:10px;cursor:zoom-in;">
+          <div><div style="font-weight:800;font-size:1.05rem;">🥐 Croissants y pan de uva</div><div style="font-size:0.82rem;color:${C.inkSoft};">${escH(ARMADO.crn)}</div></div></div>
+          <div style="overflow-x:auto;margin-top:10px;"><table style="width:100%;border-collapse:collapse;font-size:0.86rem;">
+            <tr style="text-align:left;color:${C.inkSoft};"><th style="padding:6px 4px;">Producto</th><th style="padding:6px 4px;">Grosor</th><th style="padding:6px 4px;">Corte</th><th style="padding:6px 4px;">Relleno por unidad</th></tr>
+            ${ARMADO.cr.map(c => `<tr style="border-top:1px solid ${C.line};vertical-align:top;"><td style="padding:6px 4px;font-weight:700;">${escH(c.n)}${c.s ? `<div style="font-weight:400;font-size:0.76rem;color:${C.inkSoft};">${escH(c.s)}</div>` : ""}</td><td style="padding:6px 4px;">${escH(c.gr)}</td><td style="padding:6px 4px;">${escH(c.c)}</td><td style="padding:6px 4px;">${escH(c.r)}</td></tr>`).join("")}
+          </table></div></div>
+      </div>` : ""}`;
+    box.querySelector(".arm-h").onclick = () => { ARM_ABIERTO = !ARM_ABIERTO; pintar(); };
+    box.querySelectorAll("[data-armimg]").forEach(im => im.onclick = () => {
+      const o = document.createElement("div");
+      o.setAttribute("style", "position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out;");
+      o.innerHTML = `<img src="${im.dataset.armimg}" style="max-width:100%;max-height:100%;border-radius:12px;">`;
+      o.onclick = () => o.remove(); document.body.appendChild(o);
+    });
+  };
+  pintar();
+  return box;
+}
+function armadoVisible(){ try{ if(activeCat === "RECETARIO") return true; const k = famObj().key; return k === "Panaderia" || k === "ALL"; }catch(e){ return false; } }
 function renderFormulas(){
   const main = document.getElementById("main");
   main.innerHTML = "";
@@ -3857,6 +3897,7 @@ function renderFormulas(){
     <input type="search" id="form-q" placeholder="🔎 Buscar fórmula o ingrediente…" style="margin-top:10px;width:100%;box-sizing:border-box;font-family:'Work Sans',sans-serif;font-size:1rem;padding:11px 14px;border:1.5px solid ${C.line};border-radius:12px;background:${C.paper};color:${C.ink};">
     <div id="form-none" style="display:none;color:${C.inkSoft};font-size:0.88rem;padding:16px 4px;font-style:italic;">Ninguna fórmula coincide.</div>`;
   main.appendChild(head);
+  if(armadoVisible()) main.appendChild(armadoEl());   // Alban 11 nov: guía de armado
   if(typeof ensSeccionEl === "function") main.appendChild(ensSeccionEl());   // Alban 5 nov: ensayos del recetario
   const cards = [];
 
