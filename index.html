@@ -2024,6 +2024,7 @@ function renderRecetarioAdm(){
       <span style="font-size:0.82rem;color:${C.inkSoft};">Backup en Google Sheet (Drive › Produccion Parisina Backup). Se actualiza solo cada hora.</span></span>
     <a href="${REC_SHEET_URL}" target="_blank" rel="noopener" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#1E7B45;color:#fff;border-radius:100px;padding:10px 16px;text-decoration:none;">📊 Abrir backup</a>`;
   w.appendChild(h);
+  w.appendChild(recEquiposEl());   // Alban 11 nov
   w.appendChild(armadoEl());
   w.appendChild(ensSeccionEl());
   main.appendChild(w);
@@ -3247,6 +3248,7 @@ async function ensGuardarAj(code, cambio){
     cur[code] = ENS_AJ[code]; ENS_AJ = Object.assign(cur, ENS_AJ); await DB.doc("estado/RECETARIO_AJUSTES").set({aj: cur}); return true; } }catch(e){}
   alert("No se pudo guardar. Revisa internet."); return false;
 }
+var ENS_BLOQ = false, REC_EQUIPO = "";   // Alban 11 nov: recetario privado por equipo
 var ENS_REC = null, ENS_EST = {}, ENS_CARGA = null, ENS_T = 0, ENS_ABIERTO = {}, ENS_GRUPO = {};
 function ensApi(){ try{ return PLAN_API; }catch(e){ return ""; } }
 function ensPersonal(){ try{ return PERSONAL; }catch(e){ return []; } }
@@ -3259,8 +3261,13 @@ function ensCargar(forzar){
   if(ENS_CARGA && !forzar && Date.now() - ENS_T < 120000) return ENS_CARGA;
   ENS_T = Date.now();
   ENS_CARGA = (async () => {
-    try{ const r = await fetch("formulas_recetario.json?t=" + Date.now(), {cache: "no-store"}); if(r.ok){ ENS_REC = await r.json(); try{ localStorage.setItem("ens_rec_cache", JSON.stringify(ENS_REC)); }catch(e){} } }catch(e){}
-    if(!ENS_REC){ try{ ENS_REC = JSON.parse(localStorage.getItem("ens_rec_cache") || "null"); }catch(e){} }
+    // Alban 11 nov: las fórmulas ya no están en GitHub; el Apps Script solo las entrega a equipos autorizados
+    { const dev = lsGet("rec_dev"), api0 = ensApi();
+      if(!dev){ ENS_BLOQ = true; ENS_REC = null; try{ localStorage.removeItem("ens_rec_cache"); }catch(e){} }
+      else if(api0){ try{ const r = await fetch(api0 + "?rec=1&dev=" + encodeURIComponent(dev) + "&t=" + Date.now(), {credentials: "omit"}); const j = await r.json();
+        if(j && j.ok && Array.isArray(j.rec)){ ENS_BLOQ = false; ENS_REC = j.rec; REC_EQUIPO = j.equipo || ""; try{ localStorage.setItem("ens_rec_cache", JSON.stringify(ENS_REC)); }catch(e){} }
+        else if(j && j.error){ ENS_BLOQ = true; ENS_REC = null; try{ localStorage.removeItem("ens_rec_cache"); localStorage.removeItem("rec_dev"); }catch(e){} } }catch(e){} } }
+    if(!ENS_REC && !ENS_BLOQ){ try{ ENS_REC = JSON.parse(localStorage.getItem("ens_rec_cache") || "null"); }catch(e){} }
     // Alban 5 nov: fórmulas agregadas sin tocar el archivo del repo (estado/RECETARIO_EXTRA = {add:[fórmulas], del:[códigos]})
     try{ if(DB && ENS_REC){ const g = await DB.doc("estado/RECETARIO_EXTRA").get(); const x = g.exists && g.data();
       if(x){ const quitar = new Set([...(x.del || []), ...(x.add || []).map(f => f.code)]); ENS_REC = ENS_REC.filter(f => !quitar.has(f.code)).concat(x.add || []); } } }catch(e){}
@@ -3310,6 +3317,49 @@ function ensTag(est){
   return `<span style="display:inline-block;white-space:nowrap;font-size:0.72rem;font-weight:700;color:${m[1]};background:${m[2]};border:1px solid ${m[1]};border-radius:100px;padding:2px 9px;">${m[0]}</span>`;
 }
 function ensAreasFam(){ const k = famObj().key; return k === "ALL" ? Object.keys(ENS_AREAS) : (k in ENS_AREAS ? [k] : []); }
+// Alban 11 nov: equipos autorizados para ver las fórmulas (la clave es la de gerente del Apps Script)
+function recBloqHTML(){
+  return `<div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+    <div style="font-weight:800;font-size:1.05rem;">🔒 Fórmulas bloqueadas en este equipo</div>
+    <div style="font-size:0.88rem;color:${C.inkSoft};">Por seguridad, las fórmulas solo se ven en los equipos autorizados por el gerente.</div>
+    <button type="button" class="rec-aut" style="align-self:flex-start;font-family:'Work Sans',sans-serif;font-size:0.92rem;font-weight:700;background:#1E7B45;color:#fff;border:none;border-radius:100px;padding:10px 16px;cursor:pointer;">🔑 Autorizar este equipo (gerente)</button></div>`;
+}
+async function recPost(d){ const r = await fetch(ensApi(), {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(d), credentials: "omit"}); return r.json(); }
+async function recAutorizar(){
+  const nombre = prompt("Nombre de este equipo (ej. Tablet Panadería):"); if(!nombre) return;
+  const clave = prompt("Clave de gerente:"); if(!clave) return;
+  try{ const j = await recPost({tipo: "rec_autorizar", clave: clave, nombre: nombre});
+    if(j && j.ok && j.token){ lsSet("rec_dev", j.token); ENS_BLOQ = false; ENS_CARGA = null; alert("✅ Equipo autorizado: " + nombre); await ensCargar(true); render(); }
+    else alert("No se pudo: " + ((j && j.error) || "error")); }catch(e){ alert("Sin conexión. Intenta otra vez."); }
+}
+function recBloqBind(box){ const b = box.querySelector(".rec-aut"); if(b) b.onclick = recAutorizar; }
+let REC_CLAVE = "";
+function recEquiposEl(){
+  const w = document.createElement("div");
+  w.setAttribute("style", `margin-top:12px;background:${C.paper};border:1.5px solid ${C.line};border-radius:14px;padding:14px 16px;`);
+  const pintar = (lista, msg) => {
+    w.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-weight:800;font-size:1.05rem;">🔐 Equipos autorizados</span>
+        <span style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="re-ver" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;background:none;border:1.5px solid ${C.line};border-radius:100px;padding:7px 12px;cursor:pointer;">Ver lista</button>
+        ${lsGet("rec_dev") ? "" : `<button type="button" class="re-aut" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;background:#1E7B45;color:#fff;border:none;border-radius:100px;padding:7px 12px;cursor:pointer;">🔑 Autorizar este equipo</button>`}</span></div>
+      <div style="font-size:0.82rem;color:${C.inkSoft};margin-top:6px;">${lsGet("rec_dev") ? "Este equipo está autorizado" + (REC_EQUIPO ? " (" + escH(REC_EQUIPO) + ")" : "") + "." : "Este equipo NO está autorizado."} Para autorizar otro equipo: ábrelo, entra a Fórmulas y toca “Autorizar este equipo”.</div>
+      ${msg ? `<div style="font-size:0.85rem;margin-top:8px;">${escH(msg)}</div>` : ""}
+      ${lista ? `<div style="margin-top:10px;display:grid;gap:6px;">${lista.length ? lista.map(e => `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid ${C.line};padding-top:6px;">
+          <span><b>${escH(e.nombre)}</b><span style="font-size:0.78rem;color:${C.inkSoft};"> · desde ${escH(e.fecha)}${e.visto ? " · último uso " + escH(e.visto) : ""}</span></span>
+          <button type="button" data-quitar="${escH(e.id)}" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;background:none;border:1.5px solid #A3252B;color:#A3252B;border-radius:100px;padding:5px 10px;cursor:pointer;">Quitar</button></div>`).join("") : "<div>No hay equipos autorizados.</div>"}</div>` : ""}`;
+    const a = w.querySelector(".re-aut"); if(a) a.onclick = recAutorizar;
+    w.querySelector(".re-ver").onclick = async () => {
+      if(!REC_CLAVE){ REC_CLAVE = prompt("Clave de gerente:") || ""; if(!REC_CLAVE) return; }
+      try{ const j = await recPost({tipo: "rec_equipos", clave: REC_CLAVE}); if(j && j.ok) pintar(j.equipos); else { REC_CLAVE = ""; pintar(null, "Clave incorrecta."); } }catch(e){ pintar(null, "Sin conexión."); }
+    };
+    w.querySelectorAll("[data-quitar]").forEach(b => b.onclick = async () => {
+      if(!confirm("¿Quitar este equipo? Ya no podrá ver las fórmulas.")) return;
+      try{ const j = await recPost({tipo: "rec_quitar", clave: REC_CLAVE, id: b.dataset.quitar}); if(j && j.ok){ const k = await recPost({tipo: "rec_equipos", clave: REC_CLAVE}); pintar(k.equipos, "Equipo quitado."); } }catch(e){ pintar(null, "Sin conexión."); }
+    });
+  };
+  pintar(null, "");
+  return w;
+}
 // Sección arriba de "Fórmulas"
 function ensSeccionEl(){
   const box = document.createElement("div");
@@ -3318,6 +3368,7 @@ function ensSeccionEl(){
   if(!areas.length) return box;
   box.setAttribute("style", `margin-top:14px;background:${C.paper};border:1.5px solid #A3252B;border-radius:14px;overflow:hidden;`);
   const pintar = () => {
+    if(ENS_BLOQ){ box.innerHTML = recBloqHTML(); recBloqBind(box); return; }   // Alban 11 nov
     if(!ENS_REC){ box.innerHTML = `<div style="padding:13px 16px;font-size:0.9rem;color:${C.inkSoft};">🧪 Cargando el recetario…</div>`; return; }
     const lista = ENS_REC.filter(f => areas.includes(f.area)).slice().sort((x, y) => (ensSub(x) || "~").localeCompare(ensSub(y) || "~", "es") || x.nombre.localeCompare(y.nombre, "es"));   // agrupadas por subcategoría
     const grupos = {por_ensayar: [], por_aprobar: [], confirmada: []};
