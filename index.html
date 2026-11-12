@@ -333,9 +333,6 @@ function isMini(name){ return /\bmini\b/i.test(name); }
 
 const FORMULA_DEFS = [
   {
-    // Fórmula "Topping (queso crema)" — SE-TOP-QUESO, validada 2026-09-13 (chat Fórmulas).
-    // Coeficientes Red Velvet validados; Zanahoria / Tres leches / Parfait vienen del Excel "CODIGO 535".
-    // Receta por 1.000 g: Mantequilla 66 · Margarina 66 · Azúcar XXX 219 · Queso crema 645 · Esencia vainilla 4 ml.
     id: "Topping",
     code: "SE-TOP-QUESO",
     group: "Topping",
@@ -365,18 +362,8 @@ const FORMULA_DEFS = [
       {label:"G de Topping (g)", calc: ch=>ch.total}
     ],
     titleFmt: v => `${fmtN(v)} g de Topping`,
-    // Receta por lote base, en el orden y pasos originales. El motor la escala al total del día.
-    recipe: {
-      per: 1000, of: "total",
-      steps: [
-        {title:"Paso 1 — Cremar mantequilla + margarina + azúcar XXX", items:[
-          ["Mantequilla", 66, "g"], ["Margarina", 66, "g"], ["Azúcar XXX", 219, "g"]]},
-        {title:"Paso 2 — Incorporar queso crema y vainilla; batir hasta liso", items:[
-          ["Queso crema", 645, "g"], ["Esencia de vainilla", 4, "ml"]]},
-      ]
-    }
+    recipe: {"per":1000,"of":"total","steps":[]}
   },
-  // Fórmulas exactas tomadas de la hoja de Excel "RELLENO PANADERIA SALADO"
   {
   id: "Relleno panadería salado",
   group: "Comida de sal",
@@ -419,12 +406,8 @@ const FORMULA_DEFS = [
   ]
 },
   {
-    // Cremas pasteleras (Recetario, validadas 10/10/26). Alban 10 oct: van en Mise en place (mismo día, no es stock).
-    // Se hace UNA base (SE-CREMA-PASTELERA, 696 g) y se reparte caliente en vainilla (531), chocolate (532) y café (530).
-    // La base suma lo que piden las tres; cada sabor dice cuánta base tomar.
     id: "Crema pastelera (base)", code: "SE-CREMA-PASTELERA", group: "Topping", unit: "g",
     channels: { total: [
-      // vainilla: 696 g de base por 700 g
       {group:"Reposteria", sub:"Dulceria", name:"Profiterol", coef:34.8},
       {group:"Reposteria", sub:"Dulceria", name:"Rayo vainilla", coef:49.7143},
       {group:"Reposteria", sub:"Tartas", name:"Tarta fresa mini", coef:29.8286},
@@ -434,25 +417,17 @@ const FORMULA_DEFS = [
       {group:"Reposteria", sub:"Tartas", name:"Tarta fresa 8-10 porc.", coef:646.2857},
       {group:"Tortas", sub:"Particular", name:"Saint-Honoré", coef:984.3429},
       {group:"Tortas", sub:"Por mayor - PM", name:"Saint-Honoré PM", coef:984.3429},
-      // chocolate: 444 g de base por 500 g
       {group:"Reposteria", sub:"Dulceria", name:"Rayo chocolate", coef:44.4},
       {group:"Reposteria", sub:"Dulceria", name:"Rayo mini chocolate", coef:31.08},
-      // café: 498 g de base por 500 g
       {group:"Reposteria", sub:"Dulceria", name:"Rayo café", coef:49.8},
       {group:"Reposteria", sub:"Dulceria", name:"Rayo mini café", coef:34.86},
     ] },
     outputs: [ {label:"Crema pastelera base (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema pastelera base`,
     note: "BASE SIN SABORIZAR: no se usa sola. Se hace una vez y se reparte CALIENTE en vainilla, chocolate y café (mira cuánta base lleva cada una en sus tarjetas). Máquina de cocción con cuchilla. CONTROL: los ingredientes suman ≈ 895 g y salen 696 g (se evapora ≈ 22 % de agua en los 25 min): el control es el PESO FINAL, no el tiempo. Huevos y yemas: pesarlos (receta base: 62 g de huevo ≈ 1,1 unid · 68 g de yema ≈ 3,4 yemas). OJO: la crema pastelera de mil hojas NO sale de esta base.",
-    recipe: { per: 696, of: "total", steps: [
-      {title:"1er paso — 100 °C · 10 minutos · velocidad 3", items:[
-        ["Leche entera", 565, "ml"], ["Mantequilla", 34, "g"]]},
-      {title:"2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3", items:[
-        ["Azúcar común", 130, "g"], ["Fécula de maíz", 40, "g"], ["Huevos (pesados)", 62, "g"], ["Yemas (pesadas)", 68, "g"]]},
-    ]}
+    recipe: {"per":696,"of":"total","steps":[]}
   },
   {
-    // "Crema Pastelera de Vainilla" — SE-PASTELERA-VAINILLA (cod. 531). 696 g de base + 4,4 ml de esencia = 700 g.
     id: "Crema pastelera de vainilla", code: "SE-PASTELERA-VAINILLA", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Reposteria", sub:"Dulceria", name:"Profiterol", coef:35.0},
@@ -468,15 +443,9 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema pastelera de vainilla (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema pastelera de vainilla`,
     note: "Sale de la crema pastelera base. Un lote de 700 g alcanza para 20 profiteroles, 14 rayos de vainilla o 1 tarta grande. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 700, of: "total", steps: [
-      {title:"Tomar la parte de crema pastelera BASE, todavía caliente", items:[
-        ["Crema pastelera base", 696, "g"]]},
-      {title:"Al final — fuera del fuego. ⚠ NO OLVIDAR LA ESENCIA", items:[
-        ["Esencia de vainilla", 4.4, "ml"]]},
-    ]}
+    recipe: {"per":700,"of":"total","steps":[]}
   },
   {
-    // "Crema Pastelera de Chocolate" — SE-PASTELERA-CHOCOLATE (cod. 532). 444 g de base + 56 g de chocolate = 500 g.
     id: "Crema pastelera de chocolate", code: "SE-PASTELERA-CHOCOLATE", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Reposteria", sub:"Dulceria", name:"Rayo chocolate", coef:50.0},
@@ -485,15 +454,9 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema pastelera de chocolate (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema pastelera de chocolate`,
     note: "Sale de la crema pastelera base, recién hecha y caliente. Mezclar hasta que el chocolate se derrita por completo y quede homogénea y brillante. Un lote de 500 g alcanza para 10 rayos o 14 rayos mini. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 500, of: "total", steps: [
-      {title:"Tomar la parte de crema pastelera BASE, todavía caliente", items:[
-        ["Crema pastelera base", 444, "g"]]},
-      {title:"Picar el chocolate y agregarlo a la base caliente; mezclar hasta que se derrita", items:[
-        ["Chocolate semiamargo 43 % en bloque", 56, "g"]]},
-    ]}
+    recipe: {"per":500,"of":"total","steps":[]}
   },
   {
-    // "Crema Pastelera de Café" — SE-PASTELERA-CAFE (cod. 530). 498 g de base + 2,15 g de café = 500 g.
     id: "Crema pastelera de café", code: "SE-PASTELERA-CAFE", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Reposteria", sub:"Dulceria", name:"Rayo café", coef:50.0},
@@ -502,16 +465,9 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema pastelera de café (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema pastelera de café`,
     note: "Sale de la crema pastelera base. El café va en la base CALIENTE para que se disuelva sin grumos. Un lote de 500 g alcanza para 10 rayos o 14 rayos mini. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 500, of: "total", steps: [
-      {title:"Tomar la parte de crema pastelera BASE, todavía caliente", items:[
-        ["Crema pastelera base", 498, "g"]]},
-      {title:"Agregar y mezclar hasta que se disuelva por completo", items:[
-        ["Café instantáneo", 2.15, "g"]]},
-    ]}
+    recipe: {"per":500,"of":"total","steps":[]}
   },
   {
-    // "Crema Pastelera Mil Hojas" — SE-PASTELERA-MILHOJAS (cod. 529). Otra fórmula: lleva harina y menos huevo. NO sale de la base.
-    // Alban 10 oct: Mil hojas 10 x 4,5 = 100 g · Mil hojas 4,5 x 4,5 = 50 g.
     id: "Crema pastelera mil hojas", code: "SE-PASTELERA-MILHOJAS", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Reposteria", sub:"Dulceria", name:"Mil hojas 10 x 4,5 Arequipe", coef:100},
@@ -520,18 +476,10 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema pastelera mil hojas (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema pastelera mil hojas`,
     note: "NO sale de la crema pastelera base: lleva HARINA y mucho menos huevo, para que quede firme y aguante el corte del mil hojas. CONTROL: los ingredientes suman ≈ 228 g y salen 200 g (se evapora ≈ 12 %): el control es el PESO FINAL. Huevos y yemas: pesarlos (receta base: 17 g de huevo ≈ 0,3 unid · 6 g de yema ≈ 0,3 yema). Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 200, of: "total", steps: [
-      {title:"1er paso — 100 °C · 10 minutos · velocidad 3", items:[
-        ["Leche entera", 147, "ml"], ["Mantequilla", 9, "g"]]},
-      {title:"2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3", items:[
-        ["Azúcar común", 34, "g"], ["Fécula de maíz", 10, "g"], ["Harina Haz de Oros", 4, "g"], ["Huevos (pesados)", 17, "g"], ["Yemas (pesadas)", 6, "g"]]},
-      {title:"Al final — fuera del fuego. ⚠ NO OLVIDAR LA ESENCIA", items:[
-        ["Esencia de vainilla", 0.9, "ml"]]},
-    ]}
+    recipe: {"per":200,"of":"total","steps":[]}
   },
 
   {
-    // "Crema de Limón" — SE-CREMA-LIMON (cod. 527), Recetario 10/10/26. Mise en place (mismo día). Curd: no sale de la pastelera base.
     id: "Crema de limón", code: "SE-CREMA-LIMON", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Reposteria", sub:"Tartas", name:"Tarta limón mini", coef:30},
@@ -541,15 +489,9 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema de limón (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema de limón`,
     note: "⚠⚠ REVISAR LA HOJA ORIGINAL ANTES DE PRODUCIR: los ingredientes suman 658 g pero dice que salen 680 g (imposible: en la cocción se pierde agua). Probablemente falta huevo (tiene mucho menos que la de maracuyá). — Es un curd: zumo y mantequilla primero, huevo blanqueado después; la fécula solo estabiliza. Huevos: pesarlos (112 g ≈ 2 unid). Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 680, of: "total", steps: [
-      {title:"1er paso — 100 °C · 10 minutos · velocidad 3", items:[
-        ["Zumo de limón mandarino", 221, "ml"], ["Mantequilla", 89, "g"]]},
-      {title:"2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3", items:[
-        ["Fécula de maíz", 15, "g"], ["Azúcar común", 221, "g"], ["Huevos (pesados)", 112, "g"]]},
-    ]}
+    recipe: {"per":680,"of":"total","steps":[]}
   },
   {
-    // "Crema de Maracuyá" — SE-CREMA-MARACUYA (cod. 528), Recetario 10/10/26. Mise en place (mismo día). Curd.
     id: "Crema de maracuyá", code: "SE-CREMA-MARACUYA", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Reposteria", sub:"Tartas", name:"Tarta maracuyá mini", coef:30},
@@ -559,15 +501,9 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema de maracuyá (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema de maracuyá`,
     note: "Es un curd: la pulpa y la mantequilla primero, el huevo blanqueado después; la fécula solo estabiliza. CONTROL: los ingredientes suman 760 g y salen 680 g (se pierde ≈ 10,5 %): el control es el PESO FINAL. Huevos: pesarlos (291 g ≈ 5,3 unid). Un lote de 680 g = 1 tarta grande, 22 mini o 13 individuales. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 680, of: "total", steps: [
-      {title:"1er paso — 100 °C · 10 minutos · velocidad 3", items:[
-        ["Pulpa de maracuyá sin pepa", 189, "g"], ["Mantequilla", 76, "g"]]},
-      {title:"2do paso — Blanquear aparte mientras tanto; luego agregar: 120 °C · 15 minutos · velocidad 3", items:[
-        ["Fécula de maíz", 15, "g"], ["Azúcar común", 189, "g"], ["Huevos (pesados)", 291, "g"]]},
-    ]}
+    recipe: {"per":680,"of":"total","steps":[]}
   },
   {
-    // "Merengue" — SE-MERENGUE, Recetario 10/10/26. Mise en place (mismo día). En planta se lleva en CLARA; aquí en merengue (×340/110).
     id: "Merengue", code: "SE-MERENGUE", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Tortas", sub:"Particular", name:"Saint-Honoré", coef:309.09},
@@ -592,13 +528,9 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Merengue (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de merengue`,
     note: "⚠ EL VASO DEBE ESTAR IMPECABLE, SIN NADA DE GRASA (si hay grasa no monta). Montar CON PALA. Usar de inmediato. El azúcar es el DOBLE del peso de la clara. Un lote de 340 g = 1 tarta de limón grande. MÁQUINA según la CLARA: menos de 200 g → Yammin o KitchenAid · 200 a 400 g → batidora pequeña · más de 400 g → dividir en varios lotes.",
-    recipe: { per: 340, of: "total", steps: [
-      {title:"1er paso — 6 minutos · 60 °C · velocidad 4. 2do paso — 8 minutos · velocidad 4, sin temperatura", items:[
-        ["Claras", 110, "g"], ["Azúcar XXX", 220, "g"], ["Albúmina", 10, "g"]]},
-    ]}
+    recipe: {"per":340,"of":"total","steps":[]}
   },
   {
-    // "Crema Musselina" — SE-MUSSELINA (cod. 534), Recetario 10/10/26. Mise en place (mismo día). Fórmula propia, lleva gelatina.
     id: "Crema musselina", code: "SE-MUSSELINA", group: "Topping", unit: "g",
     channels: { total: [
       {group:"Tortas", sub:"Particular", name:"Fraisier 1/2 libra", coef:1100},
@@ -619,35 +551,17 @@ const FORMULA_DEFS = [
     outputs: [ {label:"Crema musselina (g)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} g de crema musselina`,
     note: "NO sale de la crema pastelera base. Lleva gelatina: es lo que le da cuerpo para montar las tortas. Antes de empezar: hidratar la gelatina en el agua y reservar. La gelatina va AL FINAL, fuera del fuego y por debajo de 85 °C (si se cocina pierde fuerza). Huevos: pesarlos (151 g ≈ 2,8 unid). Un lote de 1.100 g = 1 torta de media libra. Enfriar rápido, cubrir al contacto con vinipel y refrigerar.",
-    recipe: { per: 1100, of: "total", steps: [
-      {title:"Paso 1 — 20 segundos · velocidad 7 · sin temperatura", items:[
-        ["Leche entera", 596, "ml"], ["Mantequilla", 138, "g"], ["Licor de naranja (o Triple Sec)", 5, "ml"], ["Azúcar común", 138, "g"], ["Fécula de maíz", 46, "g"], ["Huevos (pesados)", 151, "g"]]},
-      {title:"Paso 2 — 16 minutos · 100 °C · velocidad 4", items:[]},
-      {title:"Paso 3 — Retirar del fuego; por debajo de 85 °C agregar la gelatina hidratada y mezclar hasta disolver", items:[
-        ["Gelatina sin sabor", 7, "g"], ["Agua (para hidratar la gelatina)", 28, "ml"]]},
-    ]}
+    recipe: {"per":1100,"of":"total","steps":[]}
   },
   {
-    // "Masa Bomba (pâte à choux)" — SE-MASA-BOMBA, Recetario 10/10/26. STOCK (según el Recetario). Base de profiteroles, rayos y Saint-Honoré.
-    // ⚠ Sin canales: falta cuántos g de masa lleva cada profiterol, rayo y base de Saint-Honoré.
     id: "Masa bomba", code: "SE-MASA-BOMBA", group: "Reposteria", unit: "g",
     channels: { total: [] }, outputs: [],
     stock: {batch: 1057, unit: "g", alertPct: 20},
     note: "Se hace STOCK. Base de los profiteroles, rayos y Saint-Honoré. Los HUEVOS van a TEMPERATURA AMBIENTE y la masa tiene que haber reposado: huevo frío sobre masa caliente = huevo cuajado. Huevos: pesarlos (≈ 250 g = 5 huevos M). Escudillar sobre lata con papel. HORNO: precalentar a 220 °C, 5 minutos a 220 °C y luego bajar a 180 °C por 25 minutos. NO ABRIR EL HORNO antes de esos 25 minutos: se bajan. ⚠ Pesar la masa final una vez y avisarle a Alban (el rinde real es menor que 1.057 g porque se evapora agua).",
-    recipe: { per: 1057, of: "total", steps: [
-      {title:"1er paso — 7 minutos · 100 °C · velocidad 1", items:[
-        ["Agua", 195, "ml"], ["Leche entera", 195, "ml"], ["Mantequilla", 170, "g"], ["Sal", 6, "g"], ["Azúcar común", 6, "g"]]},
-      {title:"2do paso — Agregar toda la harina de una vez: 4 minutos · 90 °C · velocidad 4 (se despega de las paredes)", items:[
-        ["Harina Haz de Oros", 235, "g"]]},
-      {title:"3er paso — Reposar 7-8 minutos (que baje la temperatura). 4to paso — Agregar los huevos: 4 minutos · velocidad 4 · sin temperatura", items:[
-        ["Huevos a temperatura ambiente (pesados)", 250, "g"]]},
-    ]}
+    recipe: {"per":1057,"of":"total","steps":[]}
   },
 
   {
-    // Fórmula "Relleno Chocolate (croissant)" — SE-RELLENO-CHOCO, validada 18/09/26 en el Recetario.
-    // Reemplaza la fórmula antigua con Nutella. Receta por 7.200 g de relleno.
-    // Croissant chocolate 40 g · Croiss. mini chocolate 20 g (nevera y congelador).
     id: "Relleno chocolate",
     code: "SE-RELLENO-CHOCO",
     group: "Panaderia",
@@ -663,25 +577,11 @@ const FORMULA_DEFS = [
       {label:"G de Relleno chocolate (g)", calc: ch=>ch.total}
     ],
     titleFmt: v => `${fmtN(v)} g de Relleno chocolate`,
-    // Lote estándar: siempre se hacen 7.200 g, ni más ni menos. Dura varios días.
     stock: {batch: 7200, unit: "g", alertPct: 20},
     note: "Se prepara el día anterior. Armar el croissant con el relleno frío (sin congelarlo aparte), dejándolo a 1 cm de las puntas y sellando bien el borde. Si se fuga, el problema es el sellado, no la fórmula.",
-    recipe: {
-      per: 7200, of: "total",
-      steps: [
-        {title:"Paso 1 — Derretir el chocolate a baño maría", items:[
-          ["Chocolate semiamargo 43 %", 1300, "g"]]},
-        {title:"Paso 2 — Con el chocolate derretido, integrar muy bien", items:[
-          ["Azúcar XXX", 250, "g"], ["Cocoa", 300, "g"]]},
-        {title:"Paso 3 — Adicionar alternando una a una e integrar hasta crema homogénea", items:[
-          ["Crema de avellanas", 4250, "g"], ["Hazelnut spread", 1100, "g"]]},
-      ]
-    }
+    recipe: {"per":7200,"of":"total","steps":[]}
   },
   {
-    // "Bombita de Atún" — PB-BOMBITA-ATUN, validada 03/10/26 en el Recetario (fuente: PASABOCAS 2018).
-    // Producto final: receta por 28 unidades (relleno ≈ 379 g, ≈ 13,5 g por bombita).
-    // Cilantro, aceite y sal no tienen gramaje en el Recetario -> "al gusto" (Alban 3 oct).
     id: "Bombita de atún",
     code: "PB-BOMBITA-ATUN",
     group: "Comida de sal",
@@ -695,32 +595,14 @@ const FORMULA_DEFS = [
       {label:"Bombitas de atún (unid)", calc: ch=>ch.total}
     ],
     titleFmt: v => `${fmtN(v)} bombitas de atún`,
-    // Adelantos (Alban 3 oct): Comida de sal debe tener los insumos 1 día hábil antes (el día anterior);
-    // Repostería hace la base de profiterol mínimo 1 día hábil antes.
     adelantos: [
       {area:"Comida de sal", dias:1, tipo:"insumos", excluir:["Profiterol — base"]},
       {area:"Reposteria", dias:1, tipo:"hacer", item:"Profiterol — base", texto:"profiteroles para las Bombitas de atún de Comida de sal"},
     ],
     note: "Se prepara el día anterior. Relleno ≈ 13,5 g por bombita. Decorar con hoja de cilantro o perejil crespo.",
-    recipe: {
-      per: 28, of: "total",
-      steps: [
-        {title:"Paso 1 — Saltear pimentón + cebolla + atún", items:[
-          ["Pimentón verde", 45, "g"], ["Cebolla blanca", 20, "g"], ["Atún", 104, "g"]]},
-        {title:"Paso 2 — Retirar del fuego, agregar el queso crema y homogeneizar. Refrigerar si es posible", items:[
-          ["Queso crema", 210, "g"]]},
-        {title:"Al gusto — sin gramaje", items:[
-          ["Cilantro — decoración", 0, "g"], ["Aceite vegetal", 0, "ml"], ["Sal", 0, "g"]]},
-        {title:"Paso 3 — Cortar el profiterol a 3/4 de la altura (NO en la mitad) y sin terminar el corte: la tapa queda pegada por un lado, como bisagra. Levantarla, rellenar y decorar", items:[
-          ["Profiterol — base", 28, "unid"]]},
-      ]
-    }
+    recipe: {"per":28,"of":"total","steps":[]}
   },
   {
-    // "Cookies de Red Velvet" — RP-COOKIE-RED-VELVET, validada 03/10/26 en el Recetario.
-    // Alban 3 oct: es el mismo producto "Cookies red velvet 20g" del pedido. Producto de STOCK
-    // (se arman, se congelan y se hornean en el momento): lote DOBLE de 44 unid (receta del Recetario ×2), se lleva inventario.
-    // El topping del relleno NO se suma al Topping del día (va con el lote, no con el pedido).
     id: "Cookies red velvet",
     code: "RP-COOKIE-RED-VELVET",
     group: "Reposteria",
@@ -736,27 +618,9 @@ const FORMULA_DEFS = [
     titleFmt: v => `${fmtN(v)} cookies red velvet`,
     stock: {batch: 44, unit: "unid", alertPct: 20},
     note: "Tener listas y CONGELADAS. Hornear en el momento, desde congelado: 180 °C arriba / 160 °C abajo, 25 a 26 minutos. Lote doble (Alban 3 oct): masa total 3.606 g = 44 galletas de 80 g. Antes de empezar: bowl de la batidora pequeña, accesorio de pala, bandeja con tapete de silicona y gramera.",
-    recipe: {
-      per: 44, of: "total",
-      steps: [
-        {title:"Paso 1 — En el bowl de la batidora pequeña: azúcar + huevos + vainilla. BATIR 7 MINUTOS", items:[
-          ["Azúcar común", 500, "g"], ["Huevos AA (≈ 440 g)", 8, "unid"], ["Esencia de vainilla", 20, "ml"]]},
-        {title:"Paso 2 — Pesar los secos en un bowl mediano (NO tamizar)", items:[
-          ["Harina Haz de Oros", 560, "g"], ["Fécula de maíz", 60, "g"], ["Polvo de hornear (1 cucharadita)", 6, "g"],
-          ["Bicarbonato (2 cucharaditas)", 10, "g"], ["Sal (½ cucharadita)", 10, "g"]]},
-        {title:"Paso 3 — Migas sin grumos a la batidora; luego todos los secos con la pala: a toques y después velocidad baja", items:[
-          ["Migas de red velvet", 2000, "g"]]},
-        {title:"Paso 4 — Armar bolitas de 80 g en la bandeja y poner los chips encima", items:[
-          ["Chips de chocolate blanco", 160, "g"]]},
-        {title:"Paso 5 — Rellenar cada cookie (10 g por galleta) y congelar", items:[
-          ["Topping de queso crema", 440, "g"]]},
-      ]
-    }
+    recipe: {"per":44,"of":"total","steps":[]}
   },
   {
-    // "Galleta de Macadamia" — RP-GALLETA-MACADAMIA, validada 05/10/26 en el Recetario (puente 5 oct, tarde).
-    // Alban 5 oct: producto de STOCK, lote DOBLE de 58 galletas (receta del Recetario ×2; base 29).
-    // Es el producto "Galleta Macadamia" del pedido. Ingredientes en el orden original de la fórmula.
     id: "Galletas de macadamia",
     code: "RP-GALLETA-MACADAMIA",
     group: "Reposteria",
@@ -772,86 +636,36 @@ const FORMULA_DEFS = [
     titleFmt: v => `${fmtN(v)} galletas de macadamia`,
     stock: {batch: 58, unit: "unid", alertPct: 20},
     note: "Lote doble: masa ≈ 2.340 g = 58 galletas en bolas de 40 g, sobre latas con tapete silpat. Decorado: 4 nueces de macadamia por galleta (no almendras). Llevar a congelación. Hornear desde congelado: 180 °C arriba / 180 °C abajo, 20 minutos.",
-    recipe: {
-      per: 58, of: "total",
-      steps: [
-        {title:"Chips y decorado — los chips van al cremado con los secos; las nueces, 4 encima de cada galleta", items:[
-          ["Chips de chocolate blanco", 200, "g"], ["Nueces de macadamia", 200, "g"]]},
-        {title:"Paso 1 — En la batidora con pala, cremar mantequilla + azúcares + vainilla", items:[
-          ["Mantequilla", 500, "g"], ["Azúcar común", 100, "g"], ["Azúcar morena", 300, "g"]]},
-        {title:"Paso 2 — Agregar los huevos uno a uno", items:[
-          ["Huevos AA (≈ 220 g)", 4, "unid"]]},
-        {title:"Paso 3 — Pesar aparte los secos; agregarlos al cremado con los chips y batir hasta homogenizar", items:[
-          ["Harina Haz de Oros", 800, "g"], ["Polvo de hornear", 6, "g"], ["Sal", 4, "g"]]},
-        {title:"Va en el paso 1, con el cremado", items:[
-          ["Esencia de vainilla", 10, "ml"]]},
-      ]
-    }
+    recipe: {"per":58,"of":"total","steps":[]}
   },
   {
-    // "Galleta de Avena" — RP-GALLETA-AVENA, validada 08/10/26 (puente 8 oct). STOCK, lote tal cual: 84.
-    // El Recetario ya trae la fórmula ×2 (4.258 g). Pedido: "Galleta avena y uvas pasas".
     id: "Galletas de avena", code: "RP-GALLETA-AVENA", group: "Reposteria", unit: "unid",
     channels: { total: [ {group:"Reposteria", sub:"Galletas", name:"Galleta avena y uvas pasas", coef:1} ] },
     outputs: [ {label:"Galletas de avena (unid)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} galletas de avena`,
     stock: {batch: 84, unit: "unid", alertPct: 20},
     note: "Antes de empezar: 4 bandejas grandes con tapete silpat. Peso total 4.258 g · porciones de 50 g = 84 galletas. Formar cada porción con el cortador de 7,5 cm sobre el silpat y poner 3 o 4 pasas pequeñas encima. Horneo: HORNO No. 3 — 180 °C arriba y abajo, 15 a 18 min · HORNOS No. 1 y 2 — 180 °C arriba y abajo, 20 min.",
-    recipe: { per: 84, of: "total", steps: [
-      {title:"Paso 1 — En el bowl de la batidora pequeña, unificar a mano", items:[
-        ["Avena en hojuelas", 912, "g"], ["Granola", 1166, "g"]]},
-      {title:"Paso 2 — Agregar la mantequilla a temperatura ambiente y los huevos uno a uno", items:[
-        ["Mantequilla (temperatura ambiente)", 412, "g"], ["Huevos AA (≈ 900 g)", 16, "unid"]]},
-      {title:"Paso 3 — La miel de último", items:[
-        ["Miel", 534, "ml"]]},
-      {title:"Paso 4 — Encima de cada galleta ya formada (3 o 4)", items:[
-        ["Uvas pasas", 336, "g"]]},
-    ]}
+    recipe: {"per":84,"of":"total","steps":[]}
   },
   {
-    // "Galleta de Chocolate" — RP-GALLETA-CHOCOLATE, validada 08/10/26, fórmula estándar 10/10/26. STOCK, lote tal cual: 60 (bolas de 45 g).
-    // Pedido: "Galleta de chocolate". Orden original de ingredientes; cada bloque dice a qué paso va.
     id: "Galletas de chocolate", code: "RP-GALLETA-CHOCOLATE", group: "Reposteria", unit: "unid",
     channels: { total: [ {group:"Reposteria", sub:"Galletas", name:"Galleta de chocolate", coef:1} ] },
     outputs: [ {label:"Galletas de chocolate (unid)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} galletas de chocolate`,
     stock: {batch: 60, unit: "unid", alertPct: 20},
     note: "Fórmula estándar (10/10/26): 60 galletas de 45 g. Peso total 2.883 g (+ ≈6 % de merma). Antes estaba a 50 de 80 g: el peso de 80 g estaba mal. Horneo: 180 °C arriba / 180 °C abajo, 15 minutos.",
-    recipe: { per: 60, of: "total", steps: [
-      {title:"Secos — van en el paso 2, juntos, a velocidad 1 SOLO HASTA INTEGRAR", items:[
-        ["Harina Haz de Oros", 1013, "g"], ["Fécula de maíz", 34, "g"], ["Polvo de hornear", 4.2, "g"]]},
-      {title:"Paso 1 — Cremar a velocidad 2 (es lo primero que se hace)", items:[
-        ["Azúcar morena", 363, "g"], ["Azúcar blanca", 224, "g"], ["Mantequilla", 477, "g"]]},
-      {title:"Va con los secos del paso 2", items:[
-        ["Sal", 4.2, "g"]]},
-      {title:"Paso 3 — Agregar los huevos (pesarlos: 156 g ≈ 2,8 huevos)", items:[
-        ["Huevos AA (pesados)", 156, "g"]]},
-      {title:"Paso 4 — De último, para que quede en trozos grandecitos. Luego pesar bolas de 45 g", items:[
-        ["Cobertura de chocolate Nestlé, en trozos", 608, "g"]]},
-    ]}
+    recipe: {"per":60,"of":"total","steps":[]}
   },
   {
-    // "Galleta de Mantequilla" — RP-GALLETA-MANTEQUILLA, validada 08/10/26 (antes "Galleta Corazón"). STOCK, lote tal cual: 28.
-    // Pedido: "Galleta mantequilla". Rinde estimado (30 g ya horneada): contar el próximo lote.
     id: "Galletas de mantequilla", code: "RP-GALLETA-MANTEQUILLA", group: "Reposteria", unit: "unid",
     channels: { total: [ {group:"Reposteria", sub:"Galletas", name:"Galleta mantequilla", coef:1} ] },
     outputs: [ {label:"Galletas de mantequilla (unid)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} galletas de mantequilla`,
     stock: {batch: 28, unit: "unid", alertPct: 20},
     note: "Masa 902 g · galleta horneada 30 g ≈ 28 galletas (rinde estimado: contar el próximo lote y registrarlo real). Estirar la masa con guía de 6 mm y cortar con el cortador. Horneo: 180 °C arriba y abajo, 15 a 18 minutos. Es la masa base de la galleta de canela y la de jengibre.",
-    recipe: { per: 28, of: "total", steps: [
-      {title:"Paso 1 — En la batidora a velocidad mediana con EL ESCUDO, unificar", items:[
-        ["Harina Haz de Oros", 300, "g"], ["Fécula de maíz", 200, "g"], ["Azúcar XXX", 150, "g"], ["Leche en polvo", 80, "g"]]},
-      {title:"Paso 2 — Unificar la mantequilla al clima — NO BATIR", items:[
-        ["Mantequilla (al clima)", 170, "g"]]},
-      {title:"Paso 3 — Unificar los huevos — NO BATIR", items:[
-        ["Huevos AA", 2, "unid"]]},
-    ]}
+    recipe: {"per":28,"of":"total","steps":[]}
   },
-  // ---- COMIDA DE SAL: tomate (Recetario, validadas 09/10/26; puente 9 oct) ----
   {
-    // "Crema de Tomate" — CS-CREMA-DE-TOMATE. Alban 9 oct: STOCK, lote de 5 envases (×5 = 1.250 g),
-    // pero se puede escoger cuántos envases hacer (ajustable: la receta se recalcula en Fórmulas y en el registro).
     id: "Crema de tomate", code: "CS-CREMA-DE-TOMATE", group: "Comida de sal", unit: "envases",
     channels: { total: [ {group:"Comida de sal", sub:"Crema", name:"Crema de tomate - 250 gr", coef:1} ] },
     outputs: [ {label:"Crema de tomate (envases)", calc: ch=>ch.total} ],
@@ -859,88 +673,37 @@ const FORMULA_DEFS = [
     stock: {batch: 5, unit: "envases", alertPct: 20, opciones: [1,2,3,4,5,6,7,8,9,10,12,15]},
     ajustable: {min: 1, max: 30, paso: 1},
     note: "1 envase = 250 g. Se hace 2 días antes. Hervir agua con los vasos y usar la misma agua para pelar el tomate (GUARDAR el agua para la crema); secar los vasos en el horno unos minutos. ⚠ Por definir: si el tomate de la fórmula es antes o después de pelar (si es después, comprar 175 g de tomate crudo por envase).",
-    recipe: { per: 5, of: "total", steps: [
-      {title:"Pasos 2 y 3 — Pelar y quitar semillas; se sofríe después de la cebolla y el ajo", items:[
-        ["Tomate", 500, "g"]]},
-      {title:"Va en el paso 4 — del agua de pelar los tomates (guardada en el paso 1)", items:[
-        ["Agua", 575, "ml"]]},
-      {title:"Paso 3 — Sofreír primero", items:[
-        ["Cebolla blanca", 175, "g"], ["Ajo (≈ 1 diente)", 1, "g"]]},
-      {title:"Paso 4 — Con el agua, la sal, la pimienta y el orégano; hervir a fuego bajo 5 a 10 min. Licuar en la olla con el mixer: que queden pedazos", items:[
-        ["Azúcar común", 20, "g"]]},
-      {title:"Paso 5 — Agregar a la mezcla", items:[
-        ["Pasta de tomate", 150, "g"], ["Crema de leche", 100, "ml"]]},
-      {title:"Va en el paso 4", items:[
-        ["Sal", 0, "g"], ["Pimienta", 0, "g"], ["Orégano", 0, "g"]]},
-      {title:"Paso 6 — Servir en los envases de vidrio, tapar y voltear el envase", items:[
-        ["Envase de vidrio", 5, "unid"]]},
-    ]}
+    recipe: {"per":5,"of":"total","steps":[]}
   },
   {
-    // "Salsa Napolitana Cocida (lasaña)" — SE-SALSA-NAPOLITANA. SOLO lasaña de carne. Alban 9 oct: STOCK por lote (g).
-    // Sin canales: no baja sola hasta saber cuántos gramos lleva cada lasaña.
     id: "Salsa napolitana (lasaña)", code: "SE-SALSA-NAPOLITANA", group: "Comida de sal", unit: "g",
     channels: { total: [] }, outputs: [],
     stock: {batch: 1330, unit: "g", alertPct: 20},
     ajustable: {base: "Tomate pelado", min: 100, max: 20000, paso: 100},   // Alban 9 oct: se escribe cuánto tomate pelado hay
     note: "Solo para lasaña de carne. Se hace 2 días antes. Sin albahaca (cocida y congelada se oscurece). Enfriar, poner en moldes de silicona grandes y congelar. Escribe arriba cuánto tomate pelado tienes y la fórmula se calcula sola. ⚠ Falta el peso final después de cocinar y licuar. Cuando se sepan los gramos por lasaña, el stock bajará solo al chulear las lasañas de carne.",
-    recipe: { per: 1330, of: "total", steps: [
-      {title:"Pasos 1 y 3 — Pelar y despepar con agua caliente; se agregan en cuartos después del salteado", items:[
-        ["Tomate pelado", 900, "g"]]},
-      {title:"Paso 2 — Saltear en cubos grandes", items:[
-        ["Pimentón rojo", 70, "g"], ["Cebolla blanca", 70, "g"]]},
-      {title:"Paso 4 — Con el orégano y la sal; cocinar 5 minutos", items:[
-        ["Azúcar común", 30, "g"], ["Agua (del escaldado)", 160, "ml"]]},
-      {title:"Paso 4 — Al final, hasta lograr el color. Retirar y licuar con la licuadora invertida", items:[
-        ["Pasta de tomate", 100, "g"]]},
-      {title:"Va en el paso 4", items:[
-        ["Orégano", 0, "g"], ["Sal", 0, "g"], ["Pimienta", 0, "g"]]},
-    ]}
+    recipe: {"per":1330,"of":"total","steps":[]}
   },
   {
-    // "Tomate Pelado (base común)" — SE-TOMATE-PELADO. Solo receta (base de la crema y las dos salsas).
     id: "Tomate pelado", code: "SE-TOMATE-PELADO", group: "Comida de sal", unit: "g",
     channels: { total: [] }, outputs: [],
     ajustable: {min: 100, max: 20000, paso: 100, pregunta: "¿Cuántos g de tomate pelado necesitas?"},
     note: "Rendimiento: 854 g de tomate (8 unidades) = 490 g sin piel ni pepa (merma 43 %). Por cada 1 kg de tomate pelado que se necesite, comprar 1,75 kg de tomate crudo. GUARDAR el agua de escaldar: se usa en la salsa cocida y en la crema de tomate.",
-    recipe: { per: 490, of: "total", steps: [
-      {title:"Calentar agua. Marcar una cruz en la base y escaldar 20-30 s; pasar a agua fría. Quitar la piel y despepar", items:[
-        ["Tomate crudo", 854, "g"]]},
-    ]}
+    recipe: {"per":490,"of":"total","steps":[]}
   },
   {
-    // "Salsa de Pizza Napoletana (Marzzana)" — SE-SALSA-PIZZA. Alban 9 oct: también va en la página. Solo receta.
     id: "Salsa de pizza (La Marzzana)", code: "SE-SALSA-PIZZA", group: "Marzzana", unit: "g",   // Alban 9 oct: va en la categoría La Marzzana
     channels: { total: [] }, outputs: [],
     ajustable: {base: "Tomate pelado", min: 100, max: 20000, paso: 100},   // Alban 9 oct
     note: "Para La Marzzana. Salsa CRUDA: NO cocinar; NO lleva azúcar, pasta de tomate, cebolla ni pimentón. Dura 2-3 días en nevera; NO congelar. El tomate seco en polvo arranca en 2 % (20 g por kilo de tomate pelado): si sabe a tomate secado al sol, bajarlo; si el color sigue pálido, subirlo hasta 3 %. Sal 1 % del tomate, ajustar al gusto. Albahaca en hoja fresca y aceite de oliva van sobre la pizza, nunca en la salsa.",
-    recipe: { per: 1030, of: "total", steps: [
-      {title:"Paso 1 — Triturar a mano o con la licuadora a pulsos cortos. NO licuar liso: que quede con pedazos", items:[
-        ["Tomate pelado", 1000, "g"]]},
-      {title:"Paso 2 — Agregar y mezclar bien. Reposar 10 minutos, volver a mezclar y probar. Refrigerar", items:[
-        ["Sal", 10, "g"], ["Tomate seco en polvo", 20, "g"]]},
-    ]}
+    recipe: {"per":1030,"of":"total","steps":[]}
   },
-  // ---- ÓPERA (Recetario, validadas 08/10/26; puente 8 oct) ----
-  // Alban 8 oct: va en Tortas. El ensamble se arma el mismo día con el pedido ("Ópera PM" / "Ópera").
-  // Los 4 semielaborados son STOCK: se hacen ×3 = 3 reservas de nevera (1 por ópera); bajan al chulear
-  // la ópera y avisan cuando queda la última (alertPct 34). Se hacen de nuevo solo al usar la última reserva.
   {
     id: "Ópera", code: "RP-OPERA", group: "Tortas", unit: "unid",
     channels: { total: [ {group:"Tortas", sub:"Por mayor - PM", name:"Ópera PM", coef:1}, {group:"Tortas", sub:"Particular", name:"Ópera", coef:1} ] },
     outputs: [ {label:"Óperas (unid)", calc: ch=>ch.total} ],
     titleFmt: v => `${fmtN(v)} ${v === 1 ? "ópera" : "óperas"}`,
     note: "Se arma el mismo día. Orden de capas: joconda + ganache + buttercream + joconda + ganache + buttercream + joconda + glace. Las 3 capas de joconda van remojadas con el jarabe de café. Usar primero las reservas de la nevera. Escribir 'ÓPERA'. DESMOLDAR SOLO CUANDO SE VAYA A DESPACHAR. Peso aproximado armada: 2.757 g. El ópera mini es de 3 × 3 cm.",
-    recipe: { per: 1, of: "total", steps: [
-      {title:"Paso 1 — Cubrir el molde con acetato de 91 × 7 sobre blonda rectangular. 1ra capa de joconda, remojada con jarabe de café (≈20 g por capa, las 3 capas)", items:[
-        ["Joconda — 1 lata = 3 capas (≈419 g c/u)", 1256, "g"], ["Jarabe de café (1 reserva)", 59.5, "g"]]},
-      {title:"Paso 2 — Ganache: 275 g sobre la 1ra capa, alisar y congelar 10 min; 2da capa de joconda con jarabe; 275 g más; los 30 g restantes, tibios, para pintar la 3ra capa con el pincel", items:[
-        ["Ganache de chocolate (1 reserva)", 555, "g"]]},
-      {title:"Paso 3 — Buttercream: 302 g sobre cada ganache, congelar 10 min cada vez", items:[
-        ["Buttercream de café (1 reserva)", 604, "g"]]},
-      {title:"Paso 4 — 3ra capa de joconda ya pintada, remojada con jarabe; terminar con el glace tibio (brillo espejo) y refrigerar", items:[
-        ["Glace de chocolate (1 reserva, en tibio)", 282.5, "g"]]},
-    ]}
+    recipe: {"per":1,"of":"total","steps":[]}
   },
   {
     id: "Ópera · Buttercream de café", code: "SE-OP-BUTTERCREAM-CAFE", group: "Tortas", unit: "reservas",
@@ -949,12 +712,7 @@ const FORMULA_DEFS = [
     titleFmt: v => `${fmtN(v)} reservas de buttercream`,
     stock: {batch: 3, unit: "reservas", alertPct: 34},
     note: "Fórmula ×3 = 1.812 g → 3 reservas de 604 g (una por ópera); cada una se divide en 2 de 302 g, una por relleno. Se hace solo al usar la última reserva de la nevera.",
-    recipe: { per: 3, of: "total", steps: [
-      {title:"Paso 1 — Con el escudo, batir hasta integrar", items:[
-        ["Mantequilla Auralac", 900, "g"], ["Azúcar XXX", 900, "g"]]},
-      {title:"Paso 2 — Disolver el café en el agua e incorporarlo a la buttercream", items:[
-        ["Café instantáneo", 12, "g"], ["Agua", 9.9, "ml"]]},
-    ]}
+    recipe: {"per":3,"of":"total","steps":[]}
   },
   {
     id: "Ópera · Ganache de chocolate", code: "SE-OP-GANACHE-CHOCO", group: "Tortas", unit: "reservas",
@@ -963,12 +721,7 @@ const FORMULA_DEFS = [
     titleFmt: v => `${fmtN(v)} reservas de ganache`,
     stock: {batch: 3, unit: "reservas", alertPct: 34},
     note: "Fórmula ×3 = 1.665 g → 3 reservas (una por ópera); cada una: 2 rellenos de 275 g + 30 g para pintar la 3ra capa de joconda. Refrigerar en bolsas con rótulo. Se hace solo al usar la última reserva de la nevera.",
-    recipe: { per: 3, of: "total", steps: [
-      {title:"Paso 1 — En una olla, calentar a temperatura media", items:[
-        ["Crema de leche", 540, "g"], ["Mantequilla Auralac (temperatura ambiente)", 225, "g"]]},
-      {title:"Paso 2 — A fuego bajo, agregar el chocolate solo hasta derretir", items:[
-        ["Chococubierta Canasta", 900, "g"]]},
-    ]}
+    recipe: {"per":3,"of":"total","steps":[]}
   },
   {
     id: "Ópera · Jarabe de café", code: "SE-OP-JARABE-CAFE", group: "Tortas", unit: "reservas",
@@ -977,10 +730,7 @@ const FORMULA_DEFS = [
     titleFmt: v => `${fmtN(v)} reservas de jarabe`,
     stock: {batch: 3, unit: "reservas", alertPct: 34},
     note: "Fórmula ×3 = 178,5 g → 3 reservas de 59,5 g (una por ópera); cada reserva se divide en 3, una por capa de joconda. Se hace solo al usar la última reserva de la nevera.",
-    recipe: { per: 3, of: "total", steps: [
-      {title:"Paso 1 — Llevar a ebullición sin dejar de mezclar", items:[
-        ["Agua", 150, "ml"], ["Azúcar común", 24, "g"], ["Café instantáneo (6 cucharaditas)", 4.5, "g"]]},
-    ]}
+    recipe: {"per":3,"of":"total","steps":[]}
   },
   {
     id: "Ópera · Glace de chocolate", code: "SE-OP-GLACE-CHOCO", group: "Tortas", unit: "reservas",
@@ -989,114 +739,65 @@ const FORMULA_DEFS = [
     titleFmt: v => `${fmtN(v)} reservas de glace`,
     stock: {batch: 3, unit: "reservas", alertPct: 34},
     note: "Fórmula ×3 = 847,5 g → 3 reservas en bolsas pequeñas con rótulo. Al usarla: calentar una reserva y ponerla en tibio (brillo espejo). Se hace solo al usar la última reserva de la nevera.",
-    recipe: { per: 3, of: "total", steps: [
-      {title:"Hidratar — la gelatina en el agua, y reservar", items:[
-        ["Agua", 69, "ml"], ["Gelatina sin sabor", 18, "g"]]},
-      {title:"Cocción — hervir agua + azúcar; a fuego bajo incorporar crema y cocoa con el globo. Retirar y agregar enseguida la gelatina hidratada", items:[
-        ["Agua", 90, "ml"], ["Azúcar común", 270, "g"], ["Crema de leche", 360, "g"], ["Cocoa", 40.5, "g"]]},
-    ]}
+    recipe: {"per":3,"of":"total","steps":[]}
   },
-  // ---- Fórmulas de BATIDO (Recetario, validadas 05/10/26; puente 5 oct) ----
-  // Alban 5 oct: son de lote y SIEMPRE se hace la fórmula completa (lote: true). No se calculan por
-  // pedido (channels vacío -> no salen en la vista del día). El inventario se lleva en tortas,
-  // en "Stock de Batido" (batidoStockEl). Ingredientes en el orden original de la fórmula.
   {
     id: "Batido chocolate", code: "SE-BAT-CHOCO", group: "Batido", lote: true,
     formatos: {"Chocolate 1/2 libra":null,"Chocolate 1 libra":8,"Chocolate 2 libras":null},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 145 °C 40 min + 165 °C 60 min. Batido total 14.808 g: rinde 8 tortas de 1 libra (1.800 g por molde).",
-    recipe: { per: 14808, of: "total", steps: [
-      {title:"Ingredientes — en el orden de la fórmula", items:[
-        ["Huevos AA", 48, "unid"], ["Azúcar común", 3840, "g"], ["Leche líquida", 1920, "ml"], ["Harina Haz de Oros", 2880, "g"],
-        ["Polvo de hornear", 40, "g"], ["Sal", 20, "g"], ["Café en polvo", 48, "g"], ["Agua", 1440, "ml"],
-        ["Esencia de vainilla", 10, "ml"], ["Color caramelo", 130, "g"], ["Cocoa", 320, "g"], ["Aceite vegetal", 1760, "ml"]]},
-    ]}
+    recipe: {"per":14808,"of":"total","steps":[]}
   },
   {
     id: "Batido Maria Luisa", code: "SE-BAT-ML", group: "Batido", lote: true,
     formatos: {"Maria Luisa 1/2 libra":null,"Maria Luisa 1 libra":8},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 150 °C arriba / 160 °C abajo, 120 min. Con el escudo. Molde 1.350 g. Batido total 11.021 g.",
-    recipe: { per: 11021, of: "total", steps: [
-      {title:"Ingredientes — en el orden de la fórmula", items:[
-        ["Margarina", 2577, "g"], ["Azúcar común", 2577, "g"], ["Huevos AA", 48, "unid"], ["Harina Haz de Oros", 2577, "g"],
-        ["Polvo de hornear", 25, "g"], ["Leche en polvo", 329, "g"], ["Leche líquida", 329, "ml"], ["Esencia de naranja", 42, "ml"],
-        ["Limón Tahití", 17, "g"]]},
-    ]}
+    recipe: {"per":11021,"of":"total","steps":[]}
   },
   {
     id: "Batido zanahoria", code: "SE-BAT-ZAN", group: "Batido", lote: true,
     formatos: {"Zanahoria 1/2 libra":null,"Zanahoria 1 libra":7},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 70 min. Molde de 1 libra: 1.600 g. NO se corta. Batido total 12.694 g.",
-    recipe: { per: 12694, of: "total", steps: [
-      {title:"Ingredientes — en el orden de la fórmula", items:[
-        ["Azúcar morena", 1550, "g"], ["Azúcar común", 670, "g"], ["Huevos AA", 36, "unid"], ["Aceite vegetal", 1820, "ml"],
-        ["Harina Haz de Oros", 3420, "g"], ["Polvo de hornear", 85, "g"], ["Bicarbonato", 37, "g"], ["Canela en polvo", 26, "g"],
-        ["Clavos en polvo", 3, "g"], ["Nuez moscada", 3, "g"], ["Sal", 18, "g"], ["Zanahoria", 3000, "g"],
-        ["Almendras", 400, "g"], ["Leche líquida", 220, "ml"]]},
-    ]}
+    recipe: {"per":12694,"of":"total","steps":[]}
   },
   {
     id: "Batido red velvet", code: "SE-BIZ-RV", group: "Batido", lote: true,
     formatos: {"Red velvet 1/4 libra":20,"Red velvet 1/2 libra":10,"Red velvet 1 libra":8,"Red velvet 2 libras":4},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Antes de empezar: engrasar los moldes con desmoldante. Pesar en moldes: ¼ lb 750 g · ½ lb 1.500 g · 1 lb 1.900 g · 2 lb 3.300 g. Horneo en dos etapas: 165 °C arriba / 175 °C abajo 55 min, luego 170 °C arriba / 175 °C abajo 32 min. Enfriar 2 horas antes de desmoldar y cortar. Batido total 15.084 g: rinde 10 de ½ libra u 8 de 1 libra.",
-    recipe: { per: 15084, of: "total", steps: [
-      {title:"Paso 1 — Con el globo, velocidad mínima 30 segundos", items:[
-        ["Aceite vegetal", 2890, "ml"], ["Azúcar común", 2550, "g"], ["Azúcar morena", 440, "g"]]},
-      {title:"Paso 2 — Huevos uno a uno, luego velocidad máxima 8 minutos", items:[
-        ["Huevos AA", 28, "unid"]]},
-      {title:"Paso 3 — Sólidos: intercalar con los líquidos, sin sobrebatir", items:[
-        ["Harina Haz de Oros", 3820, "g"], ["Fécula de maíz", 280, "g"], ["Cocoa", 142, "g"], ["Polvo de hornear", 12, "g"],
-        ["Bicarbonato", 11, "g"], ["Sal", 9, "g"]]},
-      {title:"Paso 3 — Líquidos: intercalar con los sólidos", items:[
-        ["Leche líquida", 3387, "ml"], ["Vinagre blanco", 13, "ml"], ["Colorante en polvo", 45, "g"]]},
-    ]}
+    recipe: {"per":15084,"of":"total","steps":[]}
   },
   {
     id: "Bizcochuelo", code: "SE-BIZCOCHUELO", group: "Batido", lote: true,
     formatos: {"Bizcochuelo 1/2 libra":11,"Bizcochuelo 1 libra":8},   // tortas que rinde la fórmula completa por formato (null = por definir con Alban)
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 175 °C arriba / 175 °C abajo, 75 min. Peso en molde: ½ lb 600 g · 1 lb 800 g. Batido total 7.051 g: rinde 8 moldes.",
-    recipe: { per: 7051, of: "total", steps: [
-      {title:"Paso 1 — Separar claras y yemas. Batir las claras a punto de nieve", items:[
-        ["Huevos AA", 52, "unid"]]},
-      {title:"Paso 2 — Batir las yemas con el azúcar", items:[
-        ["Azúcar común", 2151, "g"]]},
-      {title:"Paso 3 — Integrar con movimientos envolventes y la harina cernida", items:[
-        ["Harina Haz de Oros", 1882, "g"], ["Fécula de maíz", 268, "g"]]},
-    ]}
+    recipe: {"per":7051,"of":"total","steps":[]}
   },
   {
     id: "Joconda (Ópera)", code: "SE-JOCONDA", group: "Batido", lote: true,
-    // Puente 8 oct: proceso actualizado (Recetario v7). Gramos sin cambio. 1 batch = 2 latas = 6 capas = 2 óperas.
-    formatos: {"Joconda x 3 tapas":2},   // 1 batch = 2 juegos de 3 capas (Recetario 08/10/26)
+    formatos: {"Joconda x 3 tapas":2},
     channels: { total: [] }, outputs: [],
     note: "Se hace el día anterior. Horneo: 180 °C arriba / 180 °C abajo, 20 minutos, en 2 hornos — 2 latas por horno, con preferencia latas cuadradas. Rendimiento real: un batch de 2.512 g da 2 latas; de las 2 latas salen 6 capas = 2 óperas (1 lata ≈ 1.256 g = 3 capas ≈ 419 g por capa). Ya fría, cortar las capas con el cortador rectangular y llevar al congelador; para la Ópera se saca a atemperar.",
-    recipe: { per: 2512, of: "total", steps: [
-      {title:"Paso 1 — Con el globo a velocidad mínima, batir 30 segundos; luego velocidad mínima 13 minutos", items:[
-        ["Claras", 1080, "g"], ["Huevos AA", 0.4, "unid"], ["Azúcar común", 130, "g"], ["Azúcar XXX", 800, "g"]]},
-      {title:"Paso 2 — Agregar la harina a velocidad mínima, en 4 tandas. Colocar los silpat en las latas, enmantequillar y servir la mezcla", items:[
-        ["Harina Haz de Oros", 360, "g"]]},
-      {title:"Paso 3 — Espolvorear por encima", items:[
-        ["Maní triturado", 120, "g"]]},
-    ]}
+    recipe: {"per":2512,"of":"total","steps":[]}
   },
   {
-    // Alban 6 nov: ficha Desmoldante (27/06/26). Para engrasar moldes de batidos.
     id: "Desmoldante", code: "SE-DESMOLDANTE", group: "Batido",
     channels: { total: [] }, outputs: [],
     note: "Rinde aprox. 1.900 ml. Guardar a temperatura ambiente en recipiente cerrado. No refrigerar. Mezclar bien antes de cada uso.",
-    recipe: { per: 1900, of: "total", steps: [
-      {title:"Ingredientes", items:[["Harina Haz de Oros", 600, "g"], ["Fécula de maíz", 300, "g"], ["Aceite vegetal", 1000, "ml"]]},
-    ]}
+    recipe: {"per":1900,"of":"total","steps":[]}
   },
 ];
 
 // FORMULA_SUBS y FORMULA_DETAIL_FN se arman solos a partir de FORMULA_DEFS.
 // "Parfait de frutas" lleva el badge de fórmula pero aún no tiene definición
 // (aparece "pendiente de definir"). Jugo mango va dentro de "Bebida".
+// Alban 11 nov (fase 2): los ingredientes de estas fórmulas ya no están en el código; llegan del Apps Script solo a equipos autorizados
+function recAplicarDefs(m){ if(!m) return; FORMULA_DEFS.forEach(d => { if(d.recipe && m[d.id] && Array.isArray(m[d.id].steps)){ d.recipe.steps = m[d.id].steps; delete d._proc; } }); }
+function recStepsOrLock(def){ const st = def && def.recipe && def.recipe.steps; return st && st.length ? st : [{title: "🔒 Receta solo en equipos autorizados por el gerente", items: []}]; }
+(function(){ try{ if(localStorage.getItem("rec_dev")) recAplicarDefs(JSON.parse(localStorage.getItem("rec_defs_cache") || "null")); }catch(e){} })();
 const FORMULA_SUBS = new Set([...FORMULA_DEFS.map(d=>d.id), "Parfait de frutas"]);
 const FORMULA_DETAIL_FN = {};
 FORMULA_DEFS.forEach(def=>{ FORMULA_DETAIL_FN[def.id] = (day)=>formulaDetailLines(day||{}, def); });
@@ -3263,10 +2964,11 @@ function ensCargar(forzar){
   ENS_CARGA = (async () => {
     // Alban 11 nov: las fórmulas ya no están en GitHub; el Apps Script solo las entrega a equipos autorizados
     { const dev = lsGet("rec_dev"), api0 = ensApi();
-      if(!dev){ ENS_BLOQ = true; ENS_REC = null; try{ localStorage.removeItem("ens_rec_cache"); }catch(e){} }
+      if(!dev){ ENS_BLOQ = true; ENS_REC = null; try{ localStorage.removeItem("ens_rec_cache"); localStorage.removeItem("rec_defs_cache"); }catch(e){} }
       else if(api0){ try{ const r = await fetch(api0 + "?rec=1&dev=" + encodeURIComponent(dev) + "&t=" + Date.now(), {credentials: "omit"}); const j = await r.json();
-        if(j && j.ok && Array.isArray(j.rec)){ ENS_BLOQ = false; ENS_REC = j.rec; REC_EQUIPO = j.equipo || ""; try{ localStorage.setItem("ens_rec_cache", JSON.stringify(ENS_REC)); }catch(e){} }
-        else if(j && j.error){ ENS_BLOQ = true; ENS_REC = null; try{ localStorage.removeItem("ens_rec_cache"); localStorage.removeItem("rec_dev"); }catch(e){} } }catch(e){} } }
+        if(j && j.ok && Array.isArray(j.rec)){ ENS_BLOQ = false; ENS_REC = j.rec; REC_EQUIPO = j.equipo || ""; try{ localStorage.setItem("ens_rec_cache", JSON.stringify(ENS_REC)); }catch(e){}
+          if(j.defs){ const nuevo = !localStorage.getItem("rec_defs_cache"); recAplicarDefs(j.defs); try{ localStorage.setItem("rec_defs_cache", JSON.stringify(j.defs)); }catch(e){} if(nuevo) setTimeout(() => { try{ render(); }catch(e){} }, 0); } }
+        else if(j && j.error){ ENS_BLOQ = true; ENS_REC = null; try{ localStorage.removeItem("ens_rec_cache"); localStorage.removeItem("rec_defs_cache"); localStorage.removeItem("rec_dev"); }catch(e){} } }catch(e){} } }
     if(!ENS_REC && !ENS_BLOQ){ try{ ENS_REC = JSON.parse(localStorage.getItem("ens_rec_cache") || "null"); }catch(e){} }
     // Alban 5 nov: fórmulas agregadas sin tocar el archivo del repo (estado/RECETARIO_EXTRA = {add:[fórmulas], del:[códigos]})
     try{ if(DB && ENS_REC){ const g = await DB.doc("estado/RECETARIO_EXTRA").get(); const x = g.exists && g.data();
@@ -3885,7 +3587,7 @@ try{ document.addEventListener("click", e => { const b = e.target && e.target.cl
   else if(b.dataset.batacc === "tmr"){ batTimerHorno(def); b.textContent = "⏱️ Timer de horneo corriendo (abajo)"; } }); }catch(e){}
 function formPasosHTML(def, k){
   if(typeof batPasosHTML === "function") return batPasosHTML(def, k);   // Alban 6 nov: todas las fórmulas en formato por pasos
-  return def.recipe.steps.map(st2=>`
+  return recStepsOrLock(def).map(st2=>`
     <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
     <ul style="list-style:none;margin:0;padding:0;">${st2.items.map(([nm,q,u])=>{
       const v = q*k, shown = q === 0 ? "al gusto" : (u === "unid" ? fmtN(Math.ceil(v - 1e-9)) : v >= 10 ? fmtN(Math.round(v)) : (v % 1 ? fmtN(Math.round(v*10)/10) : fmtN(v)));
@@ -3972,7 +3674,7 @@ function renderFormulas(){
     card.dataset.search = normTxt([def.id, def.code, GROUP_LABEL[def.group] || def.group,
       ...def.recipe.steps.flatMap(s=>s.items.map(i=>i[0]))].join(" "));
 
-    const pasos = def.recipe.steps.map(st2=>`
+    const pasos = recStepsOrLock(def).map(st2=>`
       <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st2.title}</div>
       <ul style="list-style:none;margin:0;padding:0;">
         ${st2.items.map(([n,q,u])=>`<li style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid ${C.line};">
@@ -6645,7 +6347,7 @@ function render(){
         titleEl.setAttribute("style", `padding:14px 16px 10px;font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;border-bottom:1px solid ${C.line};`);
         titleEl.textContent = recipeDef.titleFmt ? recipeDef.titleFmt(total) : `${fmtN(total)} ${subs[sk][0][0]}`;
         host.appendChild(titleEl);
-        recipeDef.recipe.steps.forEach((st, si)=>{
+        recStepsOrLock(recipeDef).forEach((st, si)=>{
           const labelEl = document.createElement("div");
           labelEl.setAttribute("style", `padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;`);
           labelEl.textContent = st.title;
@@ -6844,7 +6546,7 @@ function rehacerToppingEl(){
     const filas = REHACER.filas;
     const g = filas.reduce((s,f)=>s + coefDe(f.torta) * (f.cant || 0), 0);
     const k = g / def.recipe.per;
-    const pasos = def.recipe.steps.map(st=>`
+    const pasos = recStepsOrLock(def).map(st=>`
       <div style="padding:10px 16px 4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:.05em;color:${C.inkSoft};font-weight:700;">${st.title}</div>
       <ul style="list-style:none;margin:0;padding:0;">${st.items.map(([n,q,u])=>{
         const v = q*k, shown = u === "ml" ? fmtN(Math.round(v*10)/10) : fmtN(Math.round(v));
