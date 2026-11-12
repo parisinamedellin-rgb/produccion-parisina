@@ -798,6 +798,7 @@ const FORMULA_DEFS = [
 function recAplicarDefs(m){ if(!m) return; FORMULA_DEFS.forEach(d => { if(d.recipe && m[d.id] && Array.isArray(m[d.id].steps)){ d.recipe.steps = m[d.id].steps; delete d._proc; } }); }
 function recStepsOrLock(def){ const st = def && def.recipe && def.recipe.steps; return st && st.length ? st : [{title: "🔒 Receta solo en equipos autorizados por el gerente", items: []}]; }
 (function(){ try{ if(localStorage.getItem("rec_dev")) recAplicarDefs(JSON.parse(localStorage.getItem("rec_defs_cache") || "null")); }catch(e){} })();
+const OCULTAR_FORM_SUBS = new Set(["Cookies red velvet", "Galletas de avena", "Galletas de chocolate"]);
 const FORMULA_SUBS = new Set([...FORMULA_DEFS.map(d=>d.id), "Parfait de frutas"]);
 const FORMULA_DETAIL_FN = {};
 FORMULA_DEFS.forEach(def=>{ FORMULA_DETAIL_FN[def.id] = (day)=>formulaDetailLines(day||{}, def); });
@@ -6324,6 +6325,7 @@ function render(){
 
     subKeys.forEach(sk=>{
       const isFormula = FORMULA_SUBS.has(sk);
+      if(isFormula && OCULTAR_FORM_SUBS.has(sk)) return;   // Alban 12 nov: en Dulcería no mostrar estos bloques de fórmula
       const subEl = document.createElement("div");
       subEl.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-bottom:12px;overflow:hidden;`);
       const flag = isFormula ? `<button type="button" class="formula-toggle" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:${C.amber};background:${C.amberSoft};border:1px solid ${C.amber};border-radius:100px;padding:2px 8px;font-weight:700;cursor:pointer;">Fórmula ▸</button>` : '';
