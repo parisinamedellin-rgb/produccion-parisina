@@ -7524,7 +7524,7 @@ function sanPlanEstado(w){
     const f = planFirmadas(pl.id, b.dataset.area).filter(r => !vez || r.extra === vez), ico = b.querySelector(".plr-ico"), est = b.querySelector(".plr-est"), col = ico.dataset.c;
     if(!PLAN_API){ est.textContent = "⚙️ falta activar"; return; }
     if(PLAN_HOY == null){ est.textContent = "sin conexión · toca para abrir"; return; }
-    if(f.length){ ico.textContent = "✓"; ico.style.background = col; ico.style.color = "#fff"; est.style.color = "#2F6DB5"; est.textContent = "✅ firmada · " + f.map(r => r.persona + " " + String(r.hora).slice(0,5)).join(" · "); }
+    if(f.length){ ico.textContent = "✓"; ico.style.background = col; ico.style.color = "#fff"; est.style.color = "#2F6DB5"; est.innerHTML = "✅ firmada · " + escH(f.map(r => r.persona + " " + String(r.hora).slice(0,5)).join(" · ")) + ` <span class="plr-ver" style="display:inline-block;margin-left:6px;font-weight:700;color:#2F6DB5;text-decoration:underline;padding:2px 4px;">👁 ver lo registrado</span>`; }
     else { ico.textContent = ""; ico.style.background = "#fff"; est.style.color = pl.evento ? C.inkSoft : "#B23A2E"; est.textContent = pl.opcional ? "opcional · solo si hubo · toca para abrir" : pl.evento ? "cuando haya · o \"sin novedad\" · toca para abrir" : "⏳ pendiente · toca para llenar y firmar"; }
   });
 }
@@ -7562,7 +7562,8 @@ function sanCheckHTML(fam, gente, col){
   if(T.pl && T.pl.length) h += `<div style="font-weight:700;margin-top:14px;color:${col};">📋 Planillas de hoy — se llenan aquí y se firman con el dedo</div>`
     + T.pl.map(x => `<button type="button" data-plr="${x.pl.id}" data-vez="${escH(x.vez)}" data-area="${escH(sanAreaKey(fam))}" style="display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;background:none;border:none;border-top:1px solid ${C.line};padding:9px 2px;cursor:pointer;font-family:'Work Sans',sans-serif;font-size:1rem;line-height:1.4;color:${C.ink};">
       <span class="plr-ico" data-c="${col}" style="width:24px;height:24px;flex:0 0 24px;box-sizing:border-box;border:2px solid ${col};border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;font-weight:700;background:#fff;"></span>
-      <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("");
+      <span style="flex:1;">${escH(x.pl.t)}${x.vez ? ` · <b>${escH(x.vez)}</b>` : ""} <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};">${escH(x.pl.cod)}</span><span class="plr-est" style="display:block;font-size:0.8rem;color:${C.inkSoft};">…</span></span></button>`).join("")
+    + `<button type="button" class="plr-hist" style="margin-top:8px;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:1.5px solid ${col};background:#fff;color:${col};border-radius:10px;padding:8px 14px;cursor:pointer;">📜 Histórico de hoy — todo lo registrado</button>`;
   if(esViernes()){ const cOk = sanLs("san_c_" + p.nom + "_" + hoy);   // Alban 11 nov: los viernes, confirmar la lista de compras de la semana entrante
     h += `<div style="font-weight:700;margin-top:14px;color:${col};">🛒 Viernes — lista de compras de la semana entrante</div>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;border-top:1px solid ${C.line};padding:10px 2px;">
@@ -7607,7 +7608,10 @@ function sanCheckBind(w, fam, gente){
     sanAuto();
   });
   { const cc = el.querySelector(".san-compra"); if(cc) cc.onchange = ()=>{ sanLs("san_c_" + p.nom + "_" + hoy, cc.checked ? new Date().toISOString() : ""); sanPlanEstado(el); sanAuto(); }; }
-  el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ()=>{ PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
+  el.querySelectorAll("[data-plr]").forEach(b => b.onclick = ev =>{
+    if(ev && ev.target && ev.target.closest && ev.target.closest(".plr-ver")){ planHistorial([b.dataset.plr], b.dataset.area); return; }   // Alban 17 nov: ver lo que se registró
+    PLAN_VEZ_PRE = b.dataset.vez || null; planAbrir(PLANILLAS.find(x => x.id === b.dataset.plr)); });
+  { const hb = el.querySelector(".plr-hist"); if(hb) hb.onclick = () => planHistorial((T.pl || []).map(x => x.pl.id), sanAreaKey(fam)); }
   // Alban 4 nov: desde el jueves, aviso si las neveras/congeladores del área no se han limpiado en la semana
   if(planHoyDow() >= 4 && (T.pl || []).some(x => x.pl.tipo === "aseo")) planCargarSemana().then(() => { if(!document.body.contains(el)) return;
     const pend = (T.pl || []).filter(x => x.pl.tipo === "aseo").flatMap(x => planNevPend(x.pl)); const z = el.querySelector(".san-nev");
@@ -8132,6 +8136,24 @@ function planHoyDow(){ return new Date(hoyISO() + "T12:00:00").getDay(); }
 const PLAN_POR_AREA = ["DESINF"];
 function planFirmadas(id, area){ let l = (PLAN_HOY || []).filter(r => r.planilla === id); if(area && PLAN_POR_AREA.includes(id)) l = l.filter(r => String(r.area || "") === area); return l; }
 const sanAreaKey = fam => fam === "ARELIS" ? "Aseo" : fam;
+// Alban 17 nov: histórico del día — qué se registró en cada planilla (quién, hora, resumen, observaciones, foto)
+async function planHistorial(ids, area){
+  const m = capaModal(`<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;">📜 Registrado hoy</div><div class="ph-c" style="text-align:left;margin-top:10px;color:${C.inkSoft};">Cargando…</div>
+    <button type="button" class="ph-x" style="margin-top:14px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:11px 22px;cursor:pointer;">Cerrar</button>`, "#2F6DB5");
+  m.querySelector(".ph-x").onclick = () => m.remove();
+  if(typeof planCargarHoy === "function") await planCargarHoy(true);
+  const c = m.querySelector(".ph-c"); if(!c) return;
+  if(PLAN_HOY == null){ c.textContent = "Sin conexión. Intenta otra vez."; return; }
+  const regs = ids.flatMap(id => planFirmadas(id, area).map(r => ({r, pl: PLANILLAS.find(x => x.id === id)}))).sort((a, b) => String(a.r.hora).localeCompare(String(b.r.hora)));
+  c.style.color = C.ink;
+  c.innerHTML = regs.length ? regs.map(({r, pl}) => `<div style="border-top:1px solid ${C.line};padding:9px 0;font-size:0.92rem;line-height:1.4;">
+      <div><b>${escH(String(r.hora).slice(0,5))}</b> · ${escH(pl ? pl.t : r.planilla)}${r.extra ? " · " + escH(r.extra) : ""}</div>
+      <div style="color:${C.inkSoft};font-size:0.82rem;">✍️ ${escH(r.persona)}</div>
+      ${r.resumen ? `<div style="margin-top:3px;">${escH(r.resumen)}</div>` : ""}
+      ${r.observaciones ? `<div style="margin-top:3px;"><b>Obs.:</b> ${escH(r.observaciones)}</div>` : ""}
+      ${/^https?:/.test(r.foto || "") ? `<a href="${escH(r.foto)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:3px;font-weight:700;color:#2F6DB5;">📷 ver foto</a>` : ""}</div>`).join("")
+    : `<div style="color:${C.inkSoft};">Todavía no hay nada registrado hoy.</div>`;
+}
 async function planCargarHoy(forzar){
   if(!PLAN_API) return null;
   if(!forzar && PLAN_HOY && Date.now() - PLAN_HOY_T < 60000) return PLAN_HOY;
@@ -8335,6 +8357,17 @@ function planAbrir(pl){
   </div>`;
   document.body.appendChild(ov);
   const q = s => ov.querySelector(s), qa = s => [...ov.querySelectorAll(s)];
+  // Alban 17 nov: borrador — lo que se escribe queda guardado en este equipo; si la página se recarga, al abrir la planilla vuelve todo (menos la firma)
+  { const borK = "pl_bor_" + pl.id + "_" + hoy + "_" + y.nom; let borPon = false;
+    const borMapa = () => { const m = {}, n = {}; qa("input,select,textarea").forEach(e => { if(e.type === "file") return; const s = e.tagName + "|" + e.className + "|" + JSON.stringify(e.dataset) + "|" + (e.name || "") + "|" + (e.type === "radio" ? e.value : ""); n[s] = (n[s] || 0) + 1; m[s + "#" + n[s]] = e; }); return m; };
+    const borLeer = () => { try{ const v = JSON.parse(localStorage.getItem(borK) || "null"); return v && typeof v === "object" ? v : {}; }catch(e){ return {}; } };
+    const borGuardar = () => { if(borPon) return; const v = borLeer(), m = borMapa(); Object.keys(m).forEach(k => { const e = m[k]; v[k] = (e.type === "checkbox" || e.type === "radio") ? (e.checked ? 1 : 0) : e.value; }); try{ localStorage.setItem(borK, JSON.stringify(v)); }catch(e){} };
+    const borPoner = () => { const v = borLeer(), m = borMapa(); borPon = true; try{ Object.keys(m).forEach(k => { if(!(k in v)) return; const e = m[k];
+      if(e.type === "checkbox" || e.type === "radio"){ if(!e.disabled && e.checked !== !!v[k]){ e.checked = !!v[k]; e.dispatchEvent(new Event("change", {bubbles: true})); } }
+      else if(v[k] !== "" && v[k] != null && e.value !== String(v[k])){ e.value = v[k]; if(e.tagName === "SELECT") e.dispatchEvent(new Event("change", {bubbles: true})); else if(e.style.display === "none") e.style.display = ""; } }); } finally { borPon = false; } };
+    ov.addEventListener("input", borGuardar); ov.addEventListener("change", borGuardar);
+    ov._borrar = () => { try{ localStorage.removeItem(borK); }catch(e){} };
+    if(Object.keys(borLeer()).length){ [50, 900, 2000, 3500].forEach(t => setTimeout(() => { if(document.body.contains(ov)) borPoner(); }, t)); } }
   q(".pl-x").onclick = () => ov.remove();
   if(q(".pl-todo")) q(".pl-todo").onclick = () => qa('input[data-i]').forEach(c => { if(!c.dataset.opc) c.checked = true; });
   if(q(".pl-quim")) q(".pl-quim").onclick = () => { const m = capaModal(`<div style="text-align:left;">${quimSeccionHTML(C.ink).replace('<details data-quim="1"', '<details open data-quim="1"')}</div><button type="button" style="margin-top:14px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:11px 22px;cursor:pointer;">Cerrar</button>`, C.ink); m.style.zIndex = "9500"; m.querySelector("button:last-child").onclick = () => m.remove(); };
@@ -8463,7 +8496,8 @@ function planAbrir(pl){
       const r = await fetch(PLAN_API, {method: "POST", headers: {"Content-Type": "text/plain;charset=utf-8"}, body: JSON.stringify(cuerpoEnv)});
       const j = await r.json();
       if(!j || !j.ok) throw new Error((j && j.error) || "sin respuesta");
-      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, fecha: j.fecha, extra, area: y.area || (y.aseo ? "Aseo" : ""), hechos: datos.hechos || []});
+      if(ov._borrar) ov._borrar();
+      (PLAN_HOY = PLAN_HOY || []).push({planilla: pl.id, persona: y.nom, hora: j.hora, fecha: j.fecha, extra, area: y.area || (y.aseo ? "Aseo" : ""), hechos: datos.hechos || [], resumen, observaciones: obs, foto: ov._foto ? "1" : ""});
       ov.querySelector("div").innerHTML = `<div style="text-align:center;padding:20px 6px;"><div style="font-size:3rem;">✅</div>
         <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin-top:6px;">Planilla firmada</div>
         <div style="margin-top:6px;">${escH(pl.t)}${extra ? " · " + escH(extra) : ""}</div>
@@ -8577,8 +8611,9 @@ bootDb();
   const actual = sel(), diaCarga = hoyISO();
   let pendiente = false;
   const escribiendo = ()=>{ const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox"; };
+  const ventana = ()=>[...document.body.children].some(e => e.style && e.style.position === "fixed" && (e.style.inset === "0px" || e.id === "plan-ov"));   // Alban 17 nov: con una planilla u otra ventana abierta no se recarga
   const recargar = ()=>{
-    if(escribiendo() || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO || window.TMR_ACTIVO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
+    if(escribiendo() || ventana() || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO || window.TMR_ACTIVO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
     try{ sessionStorage.setItem("auto_recarga", String(Date.now())); }catch(e){}
     location.reload();
   };
@@ -8593,6 +8628,7 @@ bootDb();
     }catch(e){}
   }
   setInterval(revisar, 180000);
+  setInterval(()=>{ if(pendiente && !document.hidden && !escribiendo() && !ventana()) recargar(); }, 5000);
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) revisar(); });
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
