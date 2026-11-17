@@ -4549,6 +4549,7 @@ function rotClienteUI(el, iso, col){
           </div>
           <div style="font-size:0.78rem;color:${C.inkSoft};margin:4px 0 6px;">${mios.length} ${mios.length === 1 ? "rótulo" : "rótulos"} de producto. Cambia cuántos rótulos y cuántas unidades lleva cada uno:</div>
           <div class="rpe" style="display:grid;gap:8px;margin-bottom:10px;"></div>
+          <button type="button" class="isel" style="display:none;width:100%;margin-bottom:8px;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:2px solid ${col.a};background:${C.bg};color:${col.a};border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Imprimir los seleccionados (con su nombre)</button>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             <button type="button" class="ip" ${mios.length ? "" : "disabled"} style="${sel.sinComanda ? "display:none;" : ""}flex:1 1 100%;font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:10px;padding:11px 12px;cursor:pointer;">🖨️ Rótulos de sus productos (con su nombre)</button>
             <span style="display:flex;align-items:center;gap:6px;flex:1 1 100%;"><input type="number" inputmode="numeric" min="1" class="nq" value="1" title="Cuántos rótulos" style="width:3.6em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:9px 6px;border:1.5px solid ${C.line};border-radius:8px;background:#fff;color:#222;color-scheme:light;">
@@ -4565,11 +4566,15 @@ function rotClienteUI(el, iso, col){
         const qs = (ROT_AJ[k] || b.qs).map(Number);
         const row = document.createElement("div");
         row.setAttribute("style", `border:1px solid ${C.line};border-radius:10px;padding:8px 10px;background:${ROT_AJ[k] ? C.bg : "#fff"};`);
-        row.innerHTML = `<div style="display:flex;justify-content:space-between;gap:8px;font-size:0.88rem;"><b>${logEsc(b.name)}</b><span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">pedido ${fmtN(total)}</span></div>
+        row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:0.88rem;"><b>${logEsc(b.name)}</b><span style="display:flex;align-items:center;gap:10px;"><span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};">pedido ${fmtN(total)}</span><input type="checkbox" class="rsel" title="Seleccionar para imprimir" ${ROT_PSEL.has(sel.n + "|" + cod) ? "checked" : ""} style="width:22px;height:22px;margin:0;accent-color:${col.a};cursor:pointer;"></span></div>
           <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;">${qs.map((q,i)=>`<input type="number" inputmode="numeric" min="0" data-i="${i}" value="${q}" title="Rótulo ${i+1}" style="width:3.6em;font-size:1rem;font-family:'IBM Plex Mono',monospace;padding:6px;border:1.5px solid ${C.line};border-radius:8px;text-align:center;">`).join("")}
             <button type="button" class="mas" style="font-size:0.82rem;font-weight:700;border:1.5px solid ${col.a};background:#fff;color:${col.a};border-radius:8px;padding:6px 9px;cursor:pointer;">+ rótulo</button>
             ${qs.length > 1 ? `<button type="button" class="menos" style="font-size:0.82rem;font-weight:700;border:1.5px solid ${C.line};background:#fff;color:${C.inkSoft};border-radius:8px;padding:6px 9px;cursor:pointer;">− rótulo</button>` : ""}
-            ${ROT_AJ[k] ? `<button type="button" class="rst" style="font-size:0.78rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">normal</button>` : ""}</div>`;
+            ${ROT_AJ[k] ? `<button type="button" class="rst" style="font-size:0.78rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">normal</button>` : ""}
+            <button type="button" class="r1" style="margin-left:auto;font-size:0.82rem;font-weight:700;border:none;background:${col.a};color:#fff;border-radius:8px;padding:7px 11px;cursor:pointer;">🖨️ Imprimir</button></div>`;
+        // Alban 17 nov: imprimir solo este producto, o seleccionar varios y imprimirlos juntos
+        row.querySelector(".r1").onclick = ()=>logImprimir(mios.filter(r=>String(r.cod) === String(cod)), iso);
+        row.querySelector(".rsel").onchange = ev=>{ const kk = sel.n + "|" + cod; if(ev.target.checked) ROT_PSEL.add(kk); else ROT_PSEL.delete(kk); rotSelUI(); };
         const guardar = nq => { nq = nq.map(q=>Number(q) || 0).filter(q=>q > 0); if(!nq.length) nq = [total]; if(JSON.stringify(nq) === JSON.stringify(b.qs)) delete ROT_AJ[k]; else ROT_AJ[k] = nq; rotGuardarAj(); pintar(); };
         row.querySelectorAll("input[data-i]").forEach(inp=>{ inp.onchange = ()=>{ const nq = qs.slice(); nq[Number(inp.dataset.i)] = Number(inp.value) || 0; guardar(nq); }; });
         row.querySelector(".mas").onclick = ()=>{ const suma = qs.reduce((t,q)=>t + q, 0); guardar(qs.concat([Math.max(1, total - suma) || 1])); };
@@ -4578,6 +4583,11 @@ function rotClienteUI(el, iso, col){
         rpe.appendChild(row);
       });
       el.querySelector(".in").onclick = ()=>imprimirNombreCliente(sel, iso, Math.max(1, Math.round(Number(el.querySelector(".nq").value) || 1)));
+      const isel = el.querySelector(".isel");
+      const rotSelCods = ()=>Object.keys(base).filter(cod=>ROT_PSEL.has(sel.n + "|" + cod));
+      function rotSelUI(){ const cs = rotSelCods(), n = mios.filter(r=>cs.includes(String(r.cod))).length; isel.style.display = cs.length ? "" : "none"; isel.textContent = `🖨️ Imprimir los ${cs.length} seleccionados (${n} ${n === 1 ? "rótulo" : "rótulos"}, con su nombre)`; }
+      isel.onclick = ()=>{ const cs = rotSelCods(); logImprimir(mios.filter(r=>cs.includes(String(r.cod))), iso); };
+      rotSelUI();
       return;
     }
     el.innerHTML = `<div style="font-size:0.9rem;font-weight:700;margin-bottom:6px;">🏷️ Imprimir el rótulo de un cliente</div>
@@ -4612,6 +4622,7 @@ function rotClienteUI(el, iso, col){
   };
   pintar();
 }
+const ROT_PSEL = new Set();   // Alban 17 nov: productos seleccionados para imprimir (cliente|código)
 function rotuloHTML(r, iso, w, h){
   const pr = r.pr || logProd(r.cod) || [r.name, 0, "", "", ""];   // r.pr: producto elegido del catálogo (22 oct)
   const [nom, dias, cons, ingr, alerg] = pr;
