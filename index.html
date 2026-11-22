@@ -1219,7 +1219,8 @@ function csLista(){
     const d = diasAtras(hoy, i); if(d < CS_TAREAS_DESDE) continue;
     const L = CS_TAREAS[new Date(d + "T12:00:00Z").getUTCDay()]; if(!L) continue;
     const ef = csEfectivo(d); if(ef > hoy) continue;
-    L.forEach(t => { const k = d + "|" + t.id, r = CS_REG[k]; if(r && r.f !== hoy) return;
+    L.forEach(t => { if(t.ped) return;   // Alban 20 nov: sin los "Pedir" (proveedores)
+      const k = d + "|" + t.id, r = CS_REG[k]; if(r && r.f !== hoy) return;
       const prev = out.find(y => y.t.id === t.id);   // la misma tarea de la semana pasada sin hacer: una sola fila
       if(prev){ if(!r) prev.ks.push(k); if(!prev.r || r){ Object.assign(prev, {k, d, ef, r}); prev.ks.push(k); } return; }
       out.push({t, k, d, ef, r, ks: [k]}); });
@@ -2044,6 +2045,490 @@ function usrAdminEl(){
 function confirmar(t){ try{ return window.confirm(t); }catch(e){ return true; } }
 
 // Primera página: elegir categoría
+// ============================================================
+// 🎓 EVALUACIÓN / CAPACITACIÓN (Alban 20 nov 2026)
+// Dos cursos: Manipulación de alimentos (SAN) y Seguridad y salud en el trabajo (SST).
+// Cada semana un módulo (~20 min): 1) repaso de la semana anterior, 2) lectura, 3) cuestionario.
+// Si responde mal: se explica la respuesta y la pregunta se vuelve a hacer al final hasta acertarla.
+// Aprueba con 80 % (respuestas buenas al primer intento). Alban habilita el módulo siguiente.
+// Persona NUEVA: no entra a su perfil hasta aprobar el Módulo 0 (químicos + canecas + tablas).
+// Progreso por persona en estado/CAP-<id> = {SAN:{hab, mods:{id:{ok,nota,fecha,intentos,fallos,rep}}}, SST:{...}, libre, nuevo}
+// ============================================================
+const CAP_APRUEBA = 80;
+const CAP_LANZA = Date.parse("2026-11-20T00:00:00-05:00");   // quien se crea desde hoy es "persona nueva"
+const CAP_CURSOS = [
+ {k:"SAN", t:"Manipulación de alimentos", e:"🧼", col:"#2F6DB5", sub:"BPM · químicos · higiene · temperaturas", mods:[
+  {id:"S0", t:"Módulo 0 · Lo básico obligatorio", d:"Químicos de limpieza y desinfección · colores de canecas · colores de tablas", obligatorio:1,
+   lec:[
+    {h:"🧪 Los productos químicos de Parisina y La Marzzana", p:"Solo se usan estos productos. Está PROHIBIDO usar productos químicos no autorizados. Cada uno tiene su uso, su dosis (ml por litro de agua) y su tiempo. Léelos con calma:"},
+    {quim:1},
+    {h:"⚠️ Reglas de oro con los químicos", li:[
+     "Nunca mezclar químicos entre sí (sobre todo hipoclorito con otros productos o ácidos): pueden salir vapores tóxicos.",
+     "Siempre medir la dosis: ni más ni menos. Más producto no limpia mejor y puede intoxicar o dañar.",
+     "Usar el equipo de protección: guantes siempre; con desengrasantes fuertes e hipoclorito también gafas, tapabocas y delantal.",
+     "El hipoclorito NUNCA va sobre acero inoxidable (mesones, equipos, utensilios): lo oxida.",
+     "Primero se limpia/desengrasa, se enjuaga y DESPUÉS se desinfecta.",
+     "Todo envase de químico debe estar rotulado. Nunca guardar químicos en envases de alimentos ni cerca de alimentos."]},
+    {proc:1},
+    {h:"🗑️ Colores de canecas", tabla:[["🟢 VERDE","Orgánico: cáscaras, pepa de mango, cáscara de huevo, residuos de carne (en bolsa sellada). El pollo se guarda en el congelador hasta el día de la basura."],["⚫ NEGRA","No aprovechable: papel higiénico, servilletas, papel metalizado, cartón con comida, tapabocas."],["⚪ BLANCA","Aprovechable SECO y LIMPIO: plástico, vidrio, metal, papel y cartón."]]},
+    {li:["Recolección: lunes y jueves.","Las canecas de la zona de basura siempre cerradas; nada por fuera.","Las canecas de la zona de alimentos se vacían y se lavan todos los días."]},
+    {h:"🔪 Colores de tablas de corte (obligatorio)", tabla:[["⚪ BLANCA","Lácteos y pan"],["🟡 AMARILLA","Pollo"],["🔴 ROJA","Carnes rojas"],["🟢 VERDE","Vegetales y frutas"],["🔵 AZUL","Pescados y mariscos"]]},
+    {li:["Usar la tabla equivocada contamina el alimento (contaminación cruzada).","Lavar la tabla después de cada uso con detergente; desinfectar al final."]}],
+   q:[
+    ["¿Con qué producto se desinfectan las frutas, verduras y huevos?",["Hipoclorito 15 %","Suma Eden","Suma Grill","Detergente ácido"],1,"Suma Eden es el antibacterial para frutas, verduras y huevos: 1 ml por litro de agua y no requiere enjuague."],
+    ["¿Cuánto tiempo se dejan los huevos en Suma Eden?",["1 minuto","10 minutos","30 minutos","No se desinfectan"],0,"Huevos y frutas de cáscara blanda: 1 minuto. Hojas y frutas de cáscara dura: 5 minutos."],
+    ["¿Qué producto se usa para desinfectar mesones, utensilios, equipos y pisos al final del turno?",["Suma Sanitizer","Suma Eden","Jabón de manos","Vinagre"],0,"Suma Sanitizer (2 a 5 ml por litro), dejar actuar mínimo 10 minutos. Al final del turno no se enjuaga."],
+    ["¿Para qué es el Suma Grill?",["Desinfectar frutas","Desengrasar hornos, planchas, freidora y campanas","Lavar las manos","Limpiar vidrios"],1,"Suma Grill es un desengrasante fuerte para zonas con mucha grasa. Se enjuaga con agua caliente y se usa con guantes, gafas y tapabocas."],
+    ["¿Dónde NUNCA se debe usar hipoclorito?",["En las canecas","En el piso","Sobre acero inoxidable (mesones, equipos, utensilios)","En los traperos"],2,"El hipoclorito oxida el acero inoxidable. Se usa en pisos, paredes, baños, traperos, pocetas y canecas."],
+    ["¿Se pueden mezclar dos químicos para que limpien más?",["Sí, limpia mejor","Solo si son del mismo color","Nunca: puede generar vapores tóxicos","Solo con agua caliente"],2,"Nunca se mezclan químicos. Cada uno se usa solo y con su dosis."],
+    ["Para lavar el piso, ¿cuál es el orden correcto?",["Sanitizer → barrer → detergente","Barrer → detergente multiusos 2 min → enjuagar → Suma Sanitizer en zigzag","Solo agua con hipoclorito","Detergente y dejar sin enjuagar"],1,"Barrer todo (moviendo equipos), señalizar, detergente multiusos 2 minutos, enjuagar y Suma Sanitizer en zigzag. Luego lavar la trapeadora con hipoclorito."],
+    ["¿Qué equipo de protección se usa con desengrasantes fuertes e hipoclorito?",["Ninguno","Solo tapabocas","Guantes, gafas, tapabocas y delantal","Solo gafas"],2,"Son corrosivos e irritantes: guantes (largos), gafas, tapabocas y delantal."],
+    ["Una cáscara de huevo y una pepa de mango van en la caneca…",["Verde (orgánico)","Negra","Blanca","Cualquiera"],0,"Verde = orgánico, en bolsa sellada."],
+    ["Un tapabocas usado y una servilleta sucia van en la caneca…",["Verde","Negra (no aprovechable)","Blanca","Al piso del área de basura"],1,"Negra = no aprovechables: papel higiénico, servilletas, metalizados, tapabocas."],
+    ["Una botella de plástico limpia y seca va en la caneca…",["Blanca (aprovechable)","Verde","Negra","Ninguna"],0,"Blanca = aprovechables secos y limpios: plástico, vidrio, metal, papel, cartón."],
+    ["¿Qué se hace con los residuos de pollo?",["Se botan en la caneca negra","Se guardan en el congelador hasta el día de recolección","Se dejan afuera","Se botan por la poceta"],1,"Solo el pollo se guarda en el congelador hasta el día de sacar la basura (lunes y jueves)."],
+    ["¿Qué tabla se usa para el pollo?",["Blanca","Amarilla","Roja","Verde"],1,"Amarilla = pollo."],
+    ["¿Qué tabla se usa para cortar frutas y verduras?",["Verde","Azul","Roja","Blanca"],0,"Verde = vegetales y frutas."],
+    ["¿Qué tabla se usa para lácteos y pan?",["Roja","Blanca","Amarilla","Azul"],1,"Blanca = lácteos y pan. Roja = carnes rojas, Azul = pescados y mariscos."]]},
+  {id:"S1", t:"Módulo 1 · Higiene personal del manipulador", d:"Presentación personal, uniforme, joyas, celular, heridas y enfermedad",
+   lec:[
+    {h:"👩‍🍳 ¿Quién es manipulador de alimentos?", p:"Toda persona que toca materias primas, ingredientes, empaques, productos en proceso o terminados, equipos y utensilios. La ley (Resolución 2674 de 2013) exige que todos sepan y cumplan las Buenas Prácticas de Manufactura (BPM)."},
+    {h:"✅ Lo que siempre debo cumplir", li:[
+     "Llegar aseado, con ropa y calzado limpios. El uniforme se pone en la empresa, no se viene con él desde la calle.",
+     "Uñas cortas, limpias y SIN esmalte (tampoco transparente).",
+     "Cabello, barba y bigote totalmente cubiertos. La malla o gorro sin adornos.",
+     "Sin joyas ni adornos: anillos, aretes, pulseras, relojes, collares, piercings. Solo pasadores pequeños debajo del gorro.",
+     "Nada en los bolsillos de arriba (lapiceros, termómetros, celular): se pueden caer al producto.",
+     "Delantal y guantes se lavan y desinfectan entre una manipulación y otra."]},
+    {h:"🚫 Lo que está prohibido en la zona de alimentos", li:[
+     "Fumar, comer, mascar chicle, beber o escupir.",
+     "Usar el celular durante cualquier proceso.",
+     "Estornudar o toser sobre el producto (hacerlo hacia el codo, lejos del alimento, y lavarse las manos).",
+     "Probar con los dedos. Si se debe probar, con un cubierto limpio y uno nuevo por cada prueba."]},
+    {h:"🩹 Heridas y enfermedad", li:[
+     "Toda cortada o herida se cubre con material impermeable (curita impermeable + guante).",
+     "Si la herida está en una parte que toca el producto y no se puede cubrir bien, no se trabaja con alimentos.",
+     "Si tengo diarrea, vómito, fiebre, gripa fuerte o infección en la piel: AVISO antes de entrar. Una persona enferma puede enfermar a cientos de clientes."]}],
+   q:[
+    ["¿Cómo deben estar las uñas?",["Largas pero limpias","Cortas, limpias y sin esmalte","Con esmalte transparente","No importa si uso guantes"],1,"Cortas, limpias y sin esmalte. Ni siquiera transparente: se puede desprender y caer al alimento."],
+    ["¿Qué se debe cubrir totalmente?",["Solo el cabello","Cabello, barba y bigote","Solo cuando se hornea","Nada si es corto"],1,"Cabello, barba y bigote, con malla o gorro sin adornos."],
+    ["¿Se puede usar el celular en la zona de producción?",["Sí, en silencio","Solo para música","No, está prohibido durante cualquier proceso","Sí, si me lavo las manos"],2,"El celular está prohibido durante cualquier proceso: es una fuente de contaminación y de distracción."],
+    ["Me corté un dedo. ¿Qué hago?",["Sigo trabajando igual","Lo cubro con material impermeable y guante; si no se puede cubrir bien, no toco alimentos","Lo lavo con agua y sigo","Me pongo alcohol y sigo sin cubrir"],1,"Las heridas se cubren con material impermeable. Si no se puede proteger, no se trabaja en contacto con el producto."],
+    ["Amanecí con diarrea y fiebre. ¿Qué hago?",["Trabajo normal","Aviso a mi jefe antes de entrar a la zona de alimentos","Me tomo una pastilla y no digo nada","Trabajo con guantes"],1,"Siempre se avisa. Una persona enferma no debe trabajar en contacto directo con alimentos."],
+    ["¿Puedo trabajar con mi reloj o un anillo sencillo?",["Sí, si es pequeño","No, ninguna joya ni reloj","Solo el anillo de matrimonio","Sí, con guantes"],1,"Ninguna joya ni reloj: acumulan suciedad y pueden caer al producto."],
+    ["¿Cómo se prueba una preparación?",["Con el dedo limpio","Con un cubierto limpio, uno nuevo por cada prueba","Con la misma cuchara de revolver","No se puede probar nunca"],1,"Siempre con un cubierto limpio y se cambia en cada prueba."],
+    ["¿Dónde NO debo llevar lapiceros o termómetros?",["En los bolsillos de arriba del uniforme","En el locker","En la oficina","En el estuche"],0,"En los bolsillos superiores se pueden caer al producto."]]},
+  {id:"S2", t:"Módulo 2 · Lavado de manos", d:"Cómo y cuándo lavarse las manos",
+   lec:[
+    {h:"🧼 Las manos son la primera fuente de contaminación", p:"La mayoría de las enfermedades por alimentos llegan por manos mal lavadas. Usar guantes NO reemplaza el lavado de manos."},
+    {h:"⏱️ Cómo lavarse (mínimo 20 segundos de frote)", ol:[
+     "Mojar las manos y antebrazos con agua.",
+     "Aplicar jabón líquido neutro del dispensador.",
+     "Frotar palmas, dorso, entre los dedos, pulgares, yemas y uñas, y muñecas: mínimo 20 segundos.",
+     "Enjuagar con abundante agua, de los dedos hacia el codo.",
+     "Secar con toalla de papel desechable (no con el delantal ni con trapos).",
+     "Cerrar la llave con la misma toalla de papel y desinfectar."]},
+    {h:"🔁 ¿Cuándo me lavo las manos?", li:[
+     "Al entrar a la zona de producción y antes de empezar.",
+     "Después de ir al baño (siempre).",
+     "Al cambiar de tarea, sobre todo de producto crudo a producto listo.",
+     "Después de tocar carne cruda, pollo, huevos o la cáscara de huevo.",
+     "Después de tocar basura, canecas, químicos, dinero, el celular, la cara o el cabello.",
+     "Después de toser, estornudar o sonarse.",
+     "Después de cada ausencia del puesto (descanso, almuerzo)."]},
+    {h:"🧤 Guantes", li:["Se cambian cuando se rompen, se ensucian o se cambia de tarea.","Con guantes también se contamina: si toco algo sucio, el guante queda sucio.","Ponerse guantes con las manos ya lavadas."]}],
+   q:[
+    ["¿Cuánto tiempo mínimo se frotan las manos con jabón?",["5 segundos","20 segundos","1 segundo","No importa"],1,"Mínimo 20 segundos de frote, incluyendo uñas, pulgares y entre los dedos."],
+    ["¿Con qué se secan las manos?",["Con el delantal","Con toalla de papel desechable","Con un trapo de cocina","Al aire sacudiéndolas sobre el mesón"],1,"Toalla de papel desechable. El delantal o los trapos tienen bacterias."],
+    ["Después de partir huevos, ¿debo lavarme las manos antes de tocar una crema lista?",["No, si no se ven sucias","Sí, siempre","Solo si es pollo","Solo al final del día"],1,"La cáscara de huevo puede tener Salmonella. Siempre lavar las manos antes de tocar un producto listo."],
+    ["¿Usar guantes reemplaza lavarse las manos?",["Sí","No, primero se lavan las manos y los guantes también se cambian","Solo con guantes nuevos","Sí, si son de nitrilo"],1,"Los guantes no reemplazan el lavado. Se ponen con manos limpias y se cambian al ensuciarse o cambiar de tarea."],
+    ["¿Cuándo es OBLIGATORIO lavarse las manos?",["Solo al llegar","Después de ir al baño, tocar basura, químicos, dinero o celular, y al cambiar de tarea","Solo si se ven sucias","Una vez cada 4 horas"],1,"En todos esos momentos, además de antes de empezar y después de cada ausencia."],
+    ["¿Qué jabón se usa para las manos?",["Detergente multiusos","Jabón líquido neutro del dispensador","Hipoclorito","Suma Sanitizer"],1,"El jabón líquido neutro, puro y sin diluir. Los químicos de limpieza no son para la piel."]]},
+  {id:"S3", t:"Módulo 3 · Contaminación y enfermedades por alimentos", d:"ETA, tipos de contaminación y contaminación cruzada",
+   lec:[
+    {h:"🦠 ¿Qué es una ETA?", p:"Una Enfermedad Transmitida por Alimentos: cuando alguien se enferma por comer un alimento contaminado (diarrea, vómito, fiebre… y en personas mayores, niños o embarazadas puede ser grave). Un solo error puede enfermar a muchos clientes y cerrar la empresa."},
+    {h:"3 tipos de contaminación", tabla:[["🔩 Física","Objetos que caen al alimento: pelos, uñas, joyas, vidrio, plástico, astillas, ganchos, curitas."],["🧪 Química","Restos de químicos de limpieza, exceso de desinfectante, insecticidas, químicos mal guardados."],["🦠 Biológica","Microbios (bacterias, virus, hongos) y parásitos: de manos sucias, alimentos crudos, temperaturas incorrectas, plagas."]]},
+    {h:"🔀 Contaminación cruzada", p:"Es pasar microbios de un alimento crudo o sucio a uno listo para comer, por medio de manos, tablas, cuchillos, trapos o superficies."},
+    {li:["Usar la tabla del color correcto y lavar cuchillos entre un producto y otro.","Nunca poner un producto listo donde estuvo carne o pollo crudo sin lavar y desinfectar.","En la nevera: lo crudo abajo y lo listo arriba, todo tapado.","Si se pone un bulto o caja sobre el mesón, desengrasar y desinfectar el mesón antes de manipular alimentos.","Trabajar de lo limpio a lo sucio sin devolverse: un proceso se termina, se limpia y se guarda antes de empezar otro."]},
+    {h:"🥚 Alimentos de alto riesgo", li:["Huevos y cremas con huevo","Lácteos y cremas","Pollo, carnes y pescados","Salsas, rellenos, arroz y papas cocidas"]}],
+   q:[
+    ["Un pelo dentro de una torta es contaminación…",["Biológica","Física","Química","No es contaminación"],1,"Física: un objeto extraño en el alimento."],
+    ["Restos de desinfectante en un mesón que caen a la masa es contaminación…",["Química","Física","Biológica","Ninguna"],0,"Química: por eso se respeta la dosis y se enjuaga cuando el producto lo indica."],
+    ["¿Qué es contaminación cruzada?",["Mezclar dos recetas","Pasar microbios de lo crudo o sucio a lo listo por manos, tablas, cuchillos o superficies","Cocinar dos cosas a la vez","Usar dos químicos"],1,"Es pasar microbios de un alimento crudo o superficie sucia a un alimento listo."],
+    ["En la nevera, ¿dónde va el pollo crudo?",["Arriba de todo","Abajo, tapado, lejos de lo listo","Al lado de las cremas","Sin tapar para que respire"],1,"Lo crudo abajo y tapado para que no gotee sobre lo listo."],
+    ["Puse un bulto de harina sobre el mesón. ¿Qué hago antes de seguir?",["Nada","Lo sacudo","Desengraso y desinfecto el mesón","Pongo papel encima"],2,"Todo lo que se pone sobre el mesón lo contamina: desengrasar y desinfectar antes de manipular alimentos."],
+    ["¿Qué es una ETA?",["Una enfermedad causada por comer alimentos contaminados","Un tipo de químico","Una máquina","Una planilla"],0,"Enfermedad Transmitida por Alimentos."],
+    ["Corté pollo con un cuchillo. ¿Puedo cortar fruta con el mismo cuchillo?",["Sí, si lo limpio con un trapo","No, primero lavo y desinfecto el cuchillo y uso la tabla verde","Sí, si es rápido","Sí, si la fruta se va a cocinar"],1,"Siempre lavar y desinfectar el utensilio y cambiar a la tabla del color correcto."]]},
+  {id:"S4", t:"Módulo 4 · Temperaturas y cadena de frío", d:"Zona de peligro, neveras, congeladores y registro",
+   lec:[
+    {h:"🌡️ La zona de peligro: 5 °C a 60 °C", p:"Entre 5 °C y 60 °C las bacterias se multiplican muy rápido. Los alimentos deben estar FRÍOS (menos de 5 °C) o CALIENTES (más de 60 °C), y pasar el menor tiempo posible a temperatura ambiente."},
+    {h:"❄️ Rangos de Parisina", tabla:[["Neveras","0 °C a 4 °C"],["Congeladores","−18 °C o menos"]]},
+    {li:["La temperatura se registra 2 veces al día (apertura y cierre) en la planilla.","Termómetros: abajo en los congeladores; arriba y al fondo en las neveras. No taparlos con productos.","Si una temperatura está fuera de rango: avisar DE INMEDIATO al responsable."]},
+    {h:"🚪 Cuidar el frío", li:[
+     "Lo que se saca de la nevera o congelador se devuelve de inmediato (no romper la cadena de frío).",
+     "Nada refrigerado o congelado se deja por fuera.",
+     "Abrir las neveras por las asas; después de cerrar el congelador esperar 20 segundos antes de abrirlo otra vez; no dejar puertas abiertas.",
+     "Descongelar en la nevera, nunca sobre el mesón a temperatura ambiente.",
+     "Un producto descongelado NO se vuelve a congelar.",
+     "Enfriar rápido lo que se cocina (en recipientes bajos) antes de guardarlo en la nevera."]},
+    {h:"🔥 Procesos calientes", p:"Lo que se cocina debe llegar a más de 70 °C en el centro (pollo y carnes molidas sobre todo) y mantenerse caliente a más de 60 °C hasta servirse. Se registra en la planilla de temperaturas en procesos calientes."}],
+   q:[
+    ["¿Cuál es la zona de peligro donde las bacterias crecen rápido?",["Menos de 0 °C","Entre 5 °C y 60 °C","Más de 100 °C","No existe"],1,"Entre 5 °C y 60 °C. Los alimentos se mantienen fríos o calientes, nunca tibios por mucho tiempo."],
+    ["¿Cuál es el rango correcto de las neveras?",["0 a 4 °C","−18 °C","10 a 15 °C","5 a 10 °C"],0,"Neveras: 0 a 4 °C."],
+    ["¿Cuál es el rango correcto de los congeladores?",["0 a 4 °C","−18 °C o menos","−5 °C","10 °C"],1,"Congeladores: −18 °C o menos."],
+    ["¿Cuántas veces al día se registran las temperaturas?",["Una vez a la semana","2 veces: apertura y cierre","Solo si hay problema","Cada hora"],1,"Dos veces al día: al abrir y al cerrar la planta."],
+    ["El congelador marca −8 °C. ¿Qué hago?",["Nada","Aviso de inmediato al responsable y lo anoto","Lo apago","Espero al otro día"],1,"Fuera de rango: avisar de inmediato y dejarlo registrado."],
+    ["¿Cómo se descongela un producto?",["Sobre el mesón toda la noche","En la nevera","Con agua caliente","Al sol"],1,"En la nevera, para que no pase horas en la zona de peligro."],
+    ["Un producto ya descongelado que no se usó…",["Se vuelve a congelar","No se vuelve a congelar","Se deja afuera","Se mezcla con uno nuevo"],1,"Nunca se recongela: las bacterias que crecieron al descongelar siguen ahí."]]},
+  {id:"S5", t:"Módulo 5 · Limpieza y desinfección", d:"Limpiar no es lo mismo que desinfectar · paso a paso",
+   lec:[
+    {h:"🧽 Limpiar ≠ desinfectar", tabla:[["LIMPIAR","Quitar la suciedad y la grasa que se ve (detergente multiusos, desengrasantes)."],["DESINFECTAR","Matar los microbios que no se ven (Suma Sanitizer, Suma Eden, hipoclorito)."]]},
+    {p:"Un desinfectante NO funciona sobre una superficie sucia o grasosa. El orden siempre es:"},
+    {ol:["Retirar residuos (barrer, raspar, quitar sobras).","Lavar / desengrasar con detergente.","Enjuagar con agua.","Desinfectar con el producto y la dosis correcta, respetando el tiempo.","Dejar secar (o enjuagar si el producto lo pide)."]},
+    {proc:1},
+    {h:"🍓 Frutas y verduras", li:["Primero lavar con agua para quitar tierra.","Luego Suma Eden 1 ml/L: cáscara blanda 1 minuto; hojas y cáscara dura 5 minutos.","No requiere enjuague. Se registra en la planilla de Desinfección de alimentos."]},
+    {h:"❄️ Neveras y congeladores", ol:["Apagar y desconectar.","Vaciar.","Descongelar con agua tibia (nunca raspar ni agua caliente).","Quitar rejillas, desengrasar paredes y rejillas y enjuagar.","Limpiar los empaques con cepillo (siempre, aunque se vean limpios).","Desinfectar, secar con servilleta, guardar los productos organizados, conectar y encender."]},
+    {h:"📍 Al cerrar el turno (mi puesto)", li:["Desengrasar y luego desinfectar: mesón, paredes, grifo, poceta, filtro, gramera y basuras.","Mover máquinas y utensilios para limpiar todo.","Nevera limpia y ordenada, nada destapado ni sin rótulo.","Piso según el paso a paso."]}],
+   q:[
+    ["¿Cuál es la diferencia entre limpiar y desinfectar?",["Es lo mismo","Limpiar quita la suciedad visible; desinfectar mata los microbios","Desinfectar es con agua","Limpiar es solo barrer"],1,"Primero se limpia (suciedad y grasa) y luego se desinfecta (microbios)."],
+    ["¿Puedo desinfectar un mesón con grasa sin lavarlo?",["Sí","No, el desinfectante no funciona sobre suciedad: primero se desengrasa y enjuaga","Sí, con más producto","Solo con hipoclorito"],1,"La grasa protege a los microbios. Siempre lavar y enjuagar antes de desinfectar."],
+    ["¿Cuál es el orden correcto?",["Desinfectar → lavar → enjuagar","Retirar residuos → lavar → enjuagar → desinfectar","Enjuagar → desinfectar → barrer","Solo desinfectar"],1,"Retirar residuos, lavar, enjuagar y desinfectar."],
+    ["¿Cuánto tiempo se dejan las hojas (lechuga) en Suma Eden?",["1 minuto","5 minutos","1 hora","No se desinfectan"],1,"Hojas y frutas de cáscara dura: 5 minutos. Cáscara blanda: 1 minuto."],
+    ["¿Cómo se quita el hielo del congelador?",["Con un cuchillo","Con agua caliente hirviendo","Con agua tibia, sin raspar","Con hipoclorito puro"],2,"Con agua tibia. Raspar o agua muy caliente daña el equipo."],
+    ["Los empaques de la nevera se limpian…",["Solo si se ven sucios","Siempre, con cepillo, aunque se vean limpios","Nunca","Una vez al año"],1,"Siempre, aunque se vean limpios: ahí se acumulan hongos."],
+    ["¿Qué se hace con la trapeadora al final?",["Se deja en el balde","Se lava con hipoclorito y queda limpia en el cuarto de aseo","Se guarda húmeda en la cocina","Nada"],1,"Se lava con hipoclorito y los utensilios de aseo quedan limpios, secos y organizados en el cuarto de aseo."]]},
+  {id:"S6", t:"Módulo 6 · Recepción, almacenamiento y rotulado", d:"Recibir mercancía, PEPS, rotular y qué se bota",
+   lec:[
+    {h:"📦 Recepción de materia prima", li:["Revisar fecha de vencimiento, empaque sano (sin roturas, hinchado u oxidado), olor, color y temperatura (lo frío debe llegar frío).","Lo que no cumple se devuelve y se anota en la planilla de Recepción.","Guardar de inmediato lo refrigerado y congelado.","Marcar la mercancía según el orden de llegada."]},
+    {h:"🔄 PEPS: Primero que Entra, Primero que Sale", p:"Lo más viejo se pone adelante y se usa primero; lo nuevo va atrás. Así nada se vence."},
+    {h:"🏷️ Rotulado obligatorio", li:["Todo producto preparado, en proceso o de stock lleva rótulo: nombre del producto, quién lo hizo (código) y fecha de elaboración (el sistema agrega lote, vencimiento y conservación).","Nada destapado ni sin rótulo en neveras y congeladores.","La durabilidad no se puede cambiar sin aprobación del jefe directo."]},
+    {h:"🚫 Lo que se bota", li:["Producto sin etiqueta → a la basura.","Producto vencido → a la basura.","Reimprimir una etiqueta para alargar el vencimiento está PROHIBIDO y es falta grave."]},
+    {h:"🗄️ Almacenar bien", li:["Todo tapado, en canastas o estanterías, nada en el piso.","Bolsas cerradas; bultos limpios y cerrados.","No congelar productos dentro de su molde.","Químicos siempre separados de los alimentos."]}],
+   q:[
+    ["¿Qué significa PEPS?",["Primero que Entra, Primero que Sale","Pedir En Producción Siempre","Pesar Empacar y Sellar","Producto En Proceso Sellado"],0,"Lo que llegó primero se usa primero; lo nuevo va atrás."],
+    ["Encuentro en la nevera un producto sin etiqueta. ¿Qué hago?",["Lo uso rápido","Le pongo una etiqueta de hoy","Se bota","Lo dejo"],2,"Todo producto sin etiqueta se bota: no se sabe qué es ni cuándo se hizo."],
+    ["¿Puedo reimprimir una etiqueta para que el producto dure más?",["Sí, si se ve bien","No, está prohibido y es falta grave","Solo con permiso del compañero","Sí, un día más"],1,"Reimprimir para prolongar el vencimiento está prohibido y es falta grave."],
+    ["¿Qué lleva el rótulo de un producto preparado?",["Solo el nombre","Nombre, quién lo hizo (código) y fecha de elaboración","Solo la fecha","Nada si es para hoy"],1,"Nombre, responsable y fecha. El sistema añade lote, vencimiento y conservación."],
+    ["Llega un pedido de lácteos tibio. ¿Qué hago?",["Lo guardo igual","Lo reviso; si no llega frío no se recibe y se anota en la planilla","Lo pongo en el congelador","Lo dejo afuera"],1,"Lo refrigerado debe llegar frío. Si no cumple, no se recibe y se registra en Recepción."],
+    ["¿Dónde va lo nuevo cuando llega?",["Adelante","Atrás, para usar primero lo más viejo","Encima de todo","En el piso"],1,"Atrás: así se cumple PEPS."]]},
+  {id:"S7", t:"Módulo 7 · Plagas, basuras y agua", d:"Control de plagas, residuos y agua potable",
+   lec:[
+    {h:"🐀 Plagas", p:"Moscas, cucarachas, roedores y hormigas llevan microbios a los alimentos. La mejor forma de controlarlas es no darles comida, agua ni refugio."},
+    {li:["Señales: excrementos, rastros, empaques roídos, insectos vivos o muertos.","Si veo una señal: aviso de inmediato y se anota en la planilla de Presencia de plagas.","Nada de comida expuesta; todo tapado; canecas cerradas; piso sin residuos.","Puertas y mallas cerradas. No usar insecticidas por mi cuenta (solo la empresa autorizada)."]},
+    {h:"🗑️ Basuras (repaso)", li:["Verde: orgánico · Negra: no aprovechable · Blanca: aprovechable seco y limpio.","Recolección: lunes y jueves. Pollo en el congelador hasta ese día.","Canecas del área de basura siempre cerradas y el piso limpio.","Las canecas de la zona de alimentos se vacían y lavan todos los días (hipoclorito 35 ml/L, 30 minutos)."]},
+    {h:"💧 Agua potable", li:["Todos los días se mide el pH y el cloro del agua en un punto diferente.","Primero el agua en el recipiente, luego las pastillas, y se compara el color con la tabla.","Si el resultado no es aceptable: avisar de inmediato.","El recipiente se vacía, se desinfecta y se guarda en su estuche."]},
+    {h:"📋 Planillas obligatorias", p:"Temperaturas, Aseo, Test de cloro y pH, Desinfección de alimentos, Cierre de planta, Presencia de plagas, Recepción de insumos. Se llenan y se firman en la página de Producción (🧼 Sanidad). Si algo NO es aceptable, se informa de inmediato al superior."}],
+   q:[
+    ["Veo excremento de roedor detrás de un bulto. ¿Qué hago?",["Lo limpio y no digo nada","Aviso de inmediato y se anota en la planilla de plagas","Pongo veneno por mi cuenta","Nada"],1,"Siempre se avisa y se registra. Solo la empresa autorizada aplica control de plagas."],
+    ["¿Cuál es la mejor forma de evitar plagas?",["Fumigar cada día","No dejarles comida, agua ni refugio: todo tapado, limpio y canecas cerradas","Dejar la puerta abierta","Tener un gato"],1,"Orden, limpieza y alimentos tapados."],
+    ["¿Qué días se recoge la basura?",["Todos los días","Lunes y jueves","Solo sábados","Cuando se llene"],1,"Lunes y jueves."],
+    ["El test del agua sale fuera del rango. ¿Qué hago?",["Nada","Aviso de inmediato al responsable","Repito hasta que salga bien","Lo anoto como bueno"],1,"Un resultado no aceptable se informa de inmediato."],
+    ["¿Dónde se llenan las planillas de sanidad?",["En un cuaderno","En la página de Producción, sección 🧼 Sanidad","No se llenan","Por WhatsApp"],1,"Se llenan y se firman con el dedo en la página de Producción."],
+    ["En el test de agua, ¿qué va primero?",["Las pastillas","El agua en el recipiente, luego las pastillas","Da igual","El cloro"],1,"Primero el agua, luego las pastillas y se compara el color."]]},
+  {id:"S8", t:"Módulo 8 · Organización del trabajo y cierre", d:"Orden del día, el puesto limpio y los 3 puntos del cierre",
+   lec:[
+    {h:"🧭 Trabajar en orden", li:["Seguir el recap del día y del día siguiente.","Terminar un proceso por completo (guardar, limpiar el mesón) antes de empezar otro.","Lo que no se usa en el siguiente proceso se guarda tapado y/o en refrigeración.","Agrupar tareas parecidas (ej. cortar toda la cebolla de una vez).","No cambiar ninguna fórmula ni procedimiento sin avisar antes a Alban."]},
+    {h:"✋ Manos limpias en todo", p:"Con las manos sucias se ensucian puertas de neveras, timers, botones del horno e interruptores. Para empacar, manos limpias y secas."},
+    {h:"⏰ 45–60 minutos antes de terminar: 3 puntos", tabla:[["1. Recap","Verificar que esté TODO lo que se debe hornear o preparar mañana, rotulado. No confiar en la memoria."],["2. Espacio","Desengrasar y desinfectar mesón, paredes, grifo, poceta, filtro, gramera y basuras; nevera limpia y ordenada; piso."],["3. Responsabilidad de la semana","Las tareas del cronograma (cuarto de aseo, test de agua, hornos, neveras, temperatura…) rotan cada semana e influyen en la bonificación."]]},
+    {h:"✅ Antes de salir", p:"Enviar el check del turno y firmar las planillas en la página de Producción. Si falta algo, el Reloj te avisa al marcar la salida."}],
+   q:[
+    ["Antes de empezar un proceso nuevo debo…",["Dejar el anterior a medias","Terminar el anterior, guardar y limpiar el mesón","Empezar los dos a la vez","Pedir permiso para descansar"],1,"Se termina, se guarda y se limpia antes de empezar otro."],
+    ["¿Cuáles son los 3 puntos del cierre?",["Recap, limpiar mi espacio y la responsabilidad de la semana","Comer, cambiarse, salir","Barrer, apagar luces, irse","Solo limpiar el piso"],0,"Recap del día siguiente + limpiar el espacio + responsabilidad de la semana."],
+    ["¿Puedo cambiar una fórmula si creo que queda mejor?",["Sí","No, sin avisar antes a Alban no se cambia nada","Sí, si a mis compañeros les gusta","Solo los viernes"],1,"Ninguna fórmula ni procedimiento se cambia sin avisar antes. La excepción no es la regla."],
+    ["¿Qué hago antes de marcar la salida?",["Nada","Enviar el check del turno y firmar las planillas","Solo marcar","Avisar por WhatsApp"],1,"Check del turno y planillas firmadas en Producción."],
+    ["¿Por qué importa la responsabilidad de la semana?",["No importa","Se cumple a diario según el cronograma y influye en la bonificación","Es opcional","Solo para el supervisor"],1,"Rota cada semana y su cumplimiento influye en la bonificación."]]}
+ ]},
+ {k:"SST", t:"Seguridad y salud en el trabajo", e:"🦺", col:"#C4791E", sub:"Para todo el equipo de Parisina y La Marzzana", mods:[
+  {id:"T1", t:"Módulo 1 · ¿Por qué pasan los accidentes?", d:"Riesgos de la cocina y reportar todo",
+   lec:[
+    {h:"⚠️ Causas más comunes", li:["Falta de orden y limpieza.","Cosas mal guardadas o apiladas.","Trabajar a las carreras.","Quitar o no usar las protecciones de las máquinas.","Herramientas o equipos dañados.","Bromas durante el trabajo."]},
+    {h:"🔥 Riesgos principales en la planta", li:["Caídas (piso mojado, objetos en el piso).","Cortes y golpes con cuchillos y herramientas.","Quemaduras (hornos, fogón, aceite, vapor).","Contacto con químicos corrosivos.","Sobreesfuerzo al cargar bultos y mala postura.","Incendios y fugas de gas."]},
+    {h:"📣 Reportar SIEMPRE", p:"Todo accidente o casi-accidente (lo que estuvo a punto de pasar) se le cuenta de inmediato al jefe, aunque parezca pequeño. Si te lastimas en el trabajo, se reporta a la ARL: así quedas cubierto. Reportar no es ser 'sapo': es cuidarnos entre todos."}],
+   q:[
+    ["¿Qué se hace con un casi-accidente (algo que estuvo a punto de pasar)?",["Nada, no pasó nada","Se avisa al jefe para corregirlo","Se cuenta solo a los compañeros","Se olvida"],1,"Se reporta: así se corrige antes de que alguien se lastime."],
+    ["Me corté leve en el trabajo. ¿Debo reportarlo?",["No, es poquito","Sí, siempre, para que quede registrado y cubierto por la ARL","Solo si me duele mañana","Solo si sangra mucho"],1,"Todo accidente se reporta de inmediato."],
+    ["¿Cuál es una causa común de accidentes?",["El orden","La falta de orden y limpieza","Usar guantes","Trabajar despacio"],1,"Desorden, apilamientos mal hechos y piso sucio causan muchos accidentes."],
+    ["¿Se puede hacer bromas mientras se trabaja con máquinas o cuchillos?",["Sí, para relajarse","No, distraen y causan accidentes","Solo los viernes","Sí, si son cortas"],1,"Las bromas distraen y causan accidentes."]]},
+  {id:"T2", t:"Módulo 2 · Máquinas y cuchillos", d:"Amasadora, batidora, laminadora, cilindro",
+   lec:[
+    {h:"⚙️ Reglas para TODAS las máquinas", li:["Reconocer dónde está el botón de pare de emergencia.","Poner la rejilla de protección antes de encender (amasadora, laminadora).","Ropa ajustada, pelo recogido y sin pulseras, anillos ni reloj: evitan atrapamientos.","Nunca meter la mano ni un utensilio en la parte que gira.","Limpiar SIEMPRE con la máquina apagada y desconectada.","Desconectar halando el enchufe, nunca el cable.","Batidora: detenerla antes de cambiar la velocidad.","Laminadora: solo personas autorizadas; las manos nunca más allá de las rejillas."]},
+    {h:"🔪 Cuchillos", li:["Cortar sobre tabla estable, hacia afuera del cuerpo.","No dejar cuchillos dentro de la poceta con agua (no se ven).","Si se cae un cuchillo, NO intentar agarrarlo.","Transportarlo con la punta hacia abajo, pegado al cuerpo."]},
+    {p:"No confiarse de la experiencia: siempre atento a los movimientos."}],
+   q:[
+    ["¿Cómo se limpia una máquina?",["Andando, para que sea rápido","Apagada y desconectada","Con la mano adentro","Solo el fin de semana"],1,"Siempre apagada y desconectada."],
+    ["¿Qué se debe quitar antes de usar la amasadora o la laminadora?",["Los zapatos","Pulseras, anillos y reloj; y recoger el pelo","El uniforme","Nada"],1,"Accesorios y pelo suelto pueden quedar atrapados."],
+    ["Se me cae un cuchillo. ¿Qué hago?",["Lo agarro en el aire","Lo dejo caer y me alejo","Lo pateo","Lo atrapo con el pie"],1,"Nunca intentar agarrar un cuchillo que cae."],
+    ["¿Qué se hace antes de cambiar la velocidad de la batidora?",["Nada","Detener la máquina","Subirla de golpe","Meter la mano"],1,"Se detiene siempre antes de cambiar la velocidad."],
+    ["¿Qué debo saber antes de usar una máquina?",["El color","Dónde está el pare de emergencia","Cuánto cuesta","Quién la compró"],1,"Reconocer el pare de emergencia antes de usarla."]]},
+  {id:"T3", t:"Módulo 3 · Quemaduras, hornos y gas", d:"Calor, aceite y olor a gas",
+   lec:[
+    {h:"🔥 Hornos y fogón", li:["Usar guantes térmicos para latas, moldes, ollas y sartenes calientes (NO trapos, paños ni servilletas).","No dejar trapos cerca de las llamas.","Mangos de ollas hacia adentro del fogón.","Limpiar horno y fogón apagados y fríos.","Avisar 'caliente' o 'detrás' al pasar con algo caliente."]},
+    {h:"⛽ Olor a gas", ol:["Cerrar la llave central del gas.","NO prender nada: ni fósforos, ni interruptores, ni celular cerca.","Abrir puertas y ventanas para ventilar.","Avisar al jefe y salir si el olor es fuerte."]},
+    {h:"🩹 Si alguien se quema", li:["Agua a chorro o paños húmedos durante 20 minutos.","Quitar anillos o ropa que no esté pegada.","NO romper ampollas, NO poner cremas, mantequilla, crema dental ni vendas adhesivas.","Cubrir con gasa limpia húmeda y avisar. Si es grande o en la cara: centro médico."]}],
+   q:[
+    ["¿Con qué se saca una lata caliente del horno?",["Con un trapo","Con guantes térmicos","Con el delantal","Con la mano rápido"],1,"Siempre con guantes térmicos, nunca con trapos o servilletas."],
+    ["Huele fuerte a gas. ¿Qué es lo primero?",["Prender la luz para ver","Cerrar la llave central y no producir chispas","Encender el fogón","Llamar desde el lado de la estufa"],1,"Cerrar la llave del gas y no prender nada que haga chispa."],
+    ["Un compañero se quemó la mano. ¿Qué hago?",["Le pongo mantequilla","Agua a chorro 20 minutos y aviso","Le reviento la ampolla","Le pongo crema dental"],1,"Agua 20 minutos. Nunca cremas caseras ni romper ampollas."],
+    ["¿Cómo se limpia el horno?",["Encendido","Apagado y frío","Caliente para que salga la grasa","Con agua dentro funcionando"],1,"Siempre apagado y frío."]]},
+  {id:"T4", t:"Módulo 4 · Químicos y elementos de protección", d:"Riesgo químico y EPP",
+   lec:[
+    {h:"🧪 Trabajar seguro con químicos", li:["Usar solo los productos autorizados, con su dosis.","Nunca mezclar productos (pueden salir gases tóxicos).","Guantes siempre; con desengrasantes fuertes e hipoclorito también gafas, tapabocas y delantal.","No pasar químicos a botellas de bebidas o de alimentos; todo envase rotulado.","Guardar químicos lejos de alimentos y del calor."]},
+    {h:"🦺 Elementos de Protección Personal (EPP)", tabla:[["Guantes de caucho","Químicos, lavado de canecas y pisos"],["Gafas","Desengrasantes, hipoclorito, salpicaduras"],["Tapabocas","Químicos con olor fuerte"],["Delantal impermeable","Desengrasantes y lavado"],["Guantes térmicos","Hornos y fogón"],["Calzado antideslizante cerrado","Siempre en la planta"]]},
+    {h:"👁️ Si cae químico en los ojos o la piel", li:["Ojos: lavar con abundante agua limpia por varios minutos. No frotar ni aplicar gotas.","Piel: lavar con abundante agua.","Avisar de inmediato y llevar la ficha del producto si hay que ir al médico."]}],
+   q:[
+    ["¿Puedo guardar químico en una botella de gaseosa?",["Sí, si la marco","No, nunca en envases de bebidas o alimentos","Sí, si es poquito","Solo agua con hipoclorito"],1,"Alguien puede confundirse y tomarlo. Cada químico en su envase rotulado."],
+    ["Me cayó desengrasante en un ojo. ¿Qué hago?",["Frotar","Lavar con abundante agua limpia y avisar","Poner gotas","Esperar"],1,"Abundante agua limpia, sin frotar, y avisar."],
+    ["¿Qué EPP se usa con hipoclorito?",["Ninguno","Guantes, gafas, tapabocas y delantal","Solo guantes térmicos","Solo gorro"],1,"Es corrosivo: guantes, gafas, tapabocas y delantal."],
+    ["¿Qué calzado se usa en la planta?",["Sandalias","Cerrado y antideslizante","Tacones","Descalzo"],1,"Cerrado y antideslizante para evitar caídas y quemaduras."]]},
+  {id:"T5", t:"Módulo 5 · Caídas, cargas y postura", d:"Piso mojado, levantar bultos y pausas activas",
+   lec:[
+    {h:"🚧 Evitar caídas", li:["Señalizar el piso mojado con el aviso mientras se lava.","Recoger de inmediato lo que se riega.","Pasillos libres: nada de cajas o bultos en el paso.","Usar la escalera para alturas (nunca sillas, canastas ni cajas).","No correr dentro de la planta."]},
+    {h:"🏋️ Levantar cargas (bultos, baldes, bowls)", ol:["Acercarse a la carga y separar los pies.","Doblar las rodillas, espalda recta.","Agarrar firme y subir con la fuerza de las piernas.","No girar la cintura con la carga: girar con los pies.","Si pesa mucho, pedir ayuda o usar el carrito."]},
+    {h:"🧘 Pausas activas", p:"5 a 10 minutos de estiramientos (cuello, hombros, manos, espalda, piernas) ayudan a evitar dolores por estar mucho tiempo de pie o repetir movimientos. El almuerzo es mínimo de 1 hora y se marca la salida en el reloj."}],
+   q:[
+    ["¿Cómo se levanta un bulto de harina?",["Doblando la espalda","Doblando las rodillas, espalda recta y subiendo con las piernas","Con un brazo","Girando la cintura"],1,"Rodillas dobladas, espalda recta, fuerza con las piernas."],
+    ["Estoy lavando el piso. ¿Qué hago primero?",["Nada","Poner el aviso de piso mojado","Apagar la luz","Correr"],1,"Señalizar para que nadie se caiga."],
+    ["Necesito alcanzar algo alto. ¿Qué uso?",["Una canasta","La escalera","Una silla con ruedas","Una caja"],1,"Siempre la escalera."],
+    ["¿Para qué sirven las pausas activas?",["Para perder tiempo","Para prevenir dolores y lesiones por posturas y movimientos repetidos","Para comer","No sirven"],1,"Previenen dolores de espalda, cuello y manos."]]},
+  {id:"T6", t:"Módulo 6 · Incendio y evacuación", d:"Qué hacer si hay fuego",
+   lec:[
+    {h:"🔥 Si hay un incendio", ol:["Mantener la calma.","Cortar la luz y el gas si es posible.","Retirar lo inflamable cercano.","Fuego pequeño: apagarlo con el EXTINTOR. NUNCA con agua (aceite o cables: empeora).","Aceite en llamas en una olla: tapar la olla con una tapa y apagar el fogón.","Al usar el extintor, quedarse entre el fuego y la salida.","Si es grande: salir, cerrando la puerta. Si hay humo, salir agachado.","Desde un lugar seguro, llamar al 123."]},
+    {h:"🧯 Uso del extintor (P-A-S-S)", ol:["Halar el pasador.","Apuntar a la BASE del fuego.","Apretar la manija.","Mover en zigzag de lado a lado."]},
+    {h:"🚪 Evacuación", li:["Conocer las salidas y el punto de encuentro.","No devolverse por objetos personales.","Si se prende la ropa: detenerse, tirarse al piso y rodar; cubrir con una manta."]}],
+   q:[
+    ["Se prende el aceite de una sartén. ¿Qué NO se hace?",["Tapar con una tapa","Echarle agua","Apagar el fogón","Usar el extintor"],1,"Nunca agua sobre aceite: el fuego explota y se riega."],
+    ["¿A qué número se llama en una emergencia en Colombia?",["123","911 de EE.UU.","100","No se llama"],0,"La línea única de emergencias en Colombia es el 123."],
+    ["Con el extintor, ¿a dónde se apunta?",["A las llamas de arriba","A la base del fuego","Al techo","A las personas"],1,"Siempre a la base del fuego, en zigzag."],
+    ["Si se me prende la ropa…",["Corro","Me detengo, me tiro al piso y ruedo","Me echo aceite","Salto"],1,"Detenerse, tirarse y rodar para apagar las llamas."]]},
+  {id:"T7", t:"Módulo 7 · Primeros auxilios básicos", d:"Heridas, golpes, ojos y botiquín",
+   lec:[
+    {h:"🩹 Heridas", tabla:[["Superficial","Lavar con agua y jabón, secar, aplicar yodo y cubrir con un apósito. Nunca alcohol ni algodón en la herida."],["Profunda","Lavar con agua jabonosa, cubrir con gasa y acudir al centro médico."],["Muy sangrante","No manipular: presionar con gasa limpia y acudir al centro médico. No sacar objetos clavados."]]},
+    {h:"🤕 Golpes", p:"Aplicar frío. Si no hay herida, se puede usar el analgésico tópico del botiquín."},
+    {h:"👁️ Algo en el ojo", p:"Lavar con abundante agua limpia. No aplicar gotas ni pomadas, no frotar ni intentar sacarlo."},
+    {h:"📦 Botiquín", p:"Conocer dónde está el botiquín y avisar cuando se use algo para reponerlo. Todo accidente se reporta al jefe y a la ARL."}],
+   q:[
+    ["¿Qué NO se usa en una herida abierta?",["Agua y jabón","Alcohol y algodón","Gasa limpia","Apósito"],1,"Alcohol y algodón no se usan: irritan y dejan fibras."],
+    ["Una herida sangra mucho. ¿Qué hago?",["La lavo frotando","Presiono con gasa limpia y voy al centro médico","Saco lo que tenga clavado","Nada"],1,"Presionar con gasa, no manipular y acudir al médico."],
+    ["Me cayó harina en el ojo. ¿Qué hago?",["Frotar fuerte","Lavar con abundante agua limpia sin frotar","Ponerme gotas","Sacarlo con un palillo"],1,"Agua limpia en abundancia, sin frotar."],
+    ["Me di un golpe sin herida. ¿Qué aplico?",["Calor","Frío","Alcohol","Nada"],1,"Frío para el golpe."]]},
+  {id:"T8", t:"Módulo 8 · Bienestar, horario y conducta", d:"Registro de horas, descansos y respeto",
+   lec:[
+    {h:"🕒 Registro de horas", li:["El código es personal e intransferible: nunca marcar por otra persona.","Registrar después de cambiarse y antes de entrar a la zona de manipulación.","Pausa activa de 5 a 10 minutos; almuerzo mínimo 1 hora, marcando la salida.","Al terminar: check del turno, planillas y marcar la salida."]},
+    {h:"🍽️ Consumo interno", p:"Todo producto que se consuma (incluidos recortes, quemados o sobrantes) se comanda y se confirma con administración antes de consumirlo."},
+    {h:"🤝 Convivencia", li:["Respeto con todos los compañeros; cero acoso o malos tratos.","Si tienes un problema con alguien o te sientes mal, habla con Alban o con la persona de SST.","Descansar bien y tomar agua: una persona cansada se accidenta más."]}],
+   q:[
+    ["¿Puedo marcar la entrada de un compañero con su código?",["Sí, si me lo pide","No, el código es personal e intransferible","Sí, si llega tarde","Solo los lunes"],1,"El código es personal. Marcar por otro es falta grave."],
+    ["¿Cuánto dura mínimo el almuerzo?",["15 minutos","1 hora, marcando la salida","No hay almuerzo","3 horas"],1,"Mínimo 1 hora, marcando la salida en el reloj."],
+    ["Quiero comerme un producto quemado. ¿Qué hago?",["Me lo como","Lo comando y lo confirmo con administración antes","Lo boto","Lo regalo"],1,"Todo consumo interno se comanda y se confirma antes."],
+    ["Un compañero me trata mal. ¿Qué hago?",["Nada","Le contesto igual","Hablo con Alban o con la persona de SST","Renuncio"],2,"Se habla con Alban o con la persona de SST."]]}
+ ]}
+];
+function capCurso(k){ return CAP_CURSOS.find(c=>c.k === k); }
+function capEsManipulador(u){ const a = (u && u.acc) || []; return a.some(x=>["ALL","Panaderia","Comida de sal","Reposteria","Batido","Marzzana","Aseo","Tortas","Topping"].includes(x)); }
+function capCursosDe(u){ return CAP_CURSOS.filter(c=>c.k !== "SAN" || capEsManipulador(u)); }
+function capEsNueva(u, p){ if(!u) return false; if(p && p.nuevo != null) return !!p.nuevo; const m = String(u.id || "").match(/^u(\d{13})/); return !!m && Number(m[1]) >= CAP_LANZA; }
+let CAP_YO = null, CAP_YO_ID = "", CAP_ST = {curso:null, mod:null, paso:"lista"};
+function capCache(id){ try{ return JSON.parse(lsGet("cap_" + id) || "null"); }catch(e){ return null; } }
+async function capLeer(id){ let p = capCache(id); try{ if(DB){ const g = await DB.doc("estado/CAP-" + id).get(); if(g.exists && g.data()) p = g.data(); } }catch(e){} return p || {}; }
+async function capGuardar(id, p){ lsSet("cap_" + id, JSON.stringify(p)); if(id === CAP_YO_ID) CAP_YO = p; if(DB) await DB.doc("estado/CAP-" + id).set(p); }
+async function capCargarYo(){ const u = usrYo(); if(!u) return null; if(CAP_YO_ID !== u.id){ CAP_YO_ID = u.id; CAP_YO = capCache(u.id); } CAP_YO = await capLeer(u.id); lsSet("cap_" + u.id, JSON.stringify(CAP_YO)); return CAP_YO; }
+function capHab(p, k){ return Math.max(0, Number((p && p[k] && p[k].hab) || 0)); }   // índice del último módulo habilitado
+function capModSt(p, k, id){ return (p && p[k] && p[k].mods && p[k].mods[id]) || null; }
+// ¿Persona nueva sin el Módulo 0 aprobado? → solo puede entrar a Evaluación
+function capBloqueado(){
+  if(!usrActivo() || usrEsAdmin()) return false;
+  const u = usrYo(); if(!u) return false;
+  if(CAP_YO_ID !== u.id){ CAP_YO_ID = u.id; CAP_YO = capCache(u.id); setTimeout(()=>capCargarYo().then(()=>{ if(capBloqueado() && activeCat !== "EVAL") render(); }), 0); }
+  const p = CAP_YO || {};
+  if(p.libre || !capEsNueva(u, p) || !capEsManipulador(u)) return false;
+  const m = capModSt(p, "SAN", "S0"); return !(m && m.ok);
+}
+function capMezclar(a){ const b = a.slice(); for(let i = b.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; }
+function capLecturaHTML(m, col){
+  const H = t => `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.12rem;margin:18px 0 6px;color:${col};">${escH(t)}</div>`;
+  return m.lec.map(b => {
+    let h = b.h ? H(b.h) : "";
+    if(b.p) h += `<p style="margin:6px 0;line-height:1.55;">${escH(b.p)}</p>`;
+    if(b.li) h += `<ul style="margin:6px 0;padding-left:22px;line-height:1.55;">${b.li.map(x=>`<li style="margin:4px 0;">${escH(x)}</li>`).join("")}</ul>`;
+    if(b.ol) h += `<ol style="margin:6px 0;padding-left:24px;line-height:1.55;">${b.ol.map(x=>`<li style="margin:4px 0;">${escH(x)}</li>`).join("")}</ol>`;
+    if(b.tabla) h += `<div style="display:grid;gap:6px;margin:8px 0;">${b.tabla.map(([a, x])=>`<div style="display:flex;gap:10px;background:#fff;border:1px solid ${C.line};border-radius:10px;padding:8px 10px;"><b style="flex:0 0 38%;">${escH(a)}</b><span style="flex:1;">${escH(x)}</span></div>`).join("")}</div>`;
+    if(b.quim && typeof QUIM_INFO !== "undefined") h += QUIM_INFO.map(q=>`<div style="background:#fff;border:1px solid ${C.line};border-left:6px solid ${q.col};border-radius:12px;padding:10px 12px;margin:8px 0;">
+        <div style="font-weight:800;font-size:1.02rem;">${q.peligro ? "⚠️ " : ""}${escH(q.n)}</div><div style="font-size:0.88rem;color:${C.inkSoft};">${escH(q.f)}</div>
+        <div style="margin-top:6px;display:grid;gap:4px;">${q.filas.map(f=>`<div style="font-size:0.88rem;border-top:1px dashed ${C.line};padding-top:4px;"><b>${escH(f[0])}</b> · ${escH(f[1])} · ${escH(f[2])} · ⏱️ ${escH(f[3])}</div>`).join("")}</div>
+        <div style="margin-top:6px;font-size:0.86rem;">💡 ${escH(q.rec)}</div>${q.epp && q.epp.length ? `<div style="margin-top:4px;font-size:0.84rem;">${q.epp.map(escH).join(" · ")}</div>` : ""}</div>`).join("");
+    if(b.proc && typeof QUIM_PROC !== "undefined") h += QUIM_PROC.map(pr=>`${H(pr.n)}<ol style="margin:6px 0;padding-left:24px;line-height:1.55;">${pr.pasos.map(x=>`<li style="margin:4px 0;">${escH(x)}</li>`).join("")}</ol>`).join("");
+    return h;
+  }).join("");
+}
+// Cuestionario: una pregunta a la vez; si falla, se explica y la pregunta vuelve al final hasta acertarla.
+function capQuiz(cont, preguntas, col, titulo, alTerminar){
+  const N = preguntas.length, primera = {}, cola = preguntas.map((_, i)=>i), fallos = [];
+  let hechas = 0;
+  const pintar = () => {
+    if(!cola.length){ const buenas = Object.values(primera).filter(Boolean).length; alTerminar({buenas, total: N, nota: Math.round(buenas / N * 100), fallos}); return; }
+    const i = cola[0], q = preguntas[i], ops = capMezclar(q[1].map((t, j)=>({t, j}))), repite = i in primera;
+    cont.innerHTML = `<div style="font-size:0.85rem;color:${C.inkSoft};font-weight:700;">${escH(titulo)} · ${repite ? "🔁 Otra vez" : `Pregunta ${Math.min(hechas + 1, N)} de ${N}`}</div>
+      <div style="font-size:1.12rem;font-weight:700;margin:10px 0 12px;line-height:1.4;">${escH(q[0])}</div>
+      <div class="cq-ops" style="display:grid;gap:8px;">${ops.map(o=>`<button type="button" data-j="${o.j}" style="text-align:left;font-family:'Work Sans',sans-serif;font-size:1rem;background:#fff;border:2px solid ${C.line};border-radius:12px;padding:12px 14px;cursor:pointer;color:${C.ink};">${escH(o.t)}</button>`).join("")}</div>
+      <div class="cq-exp"></div>`;
+    cont.querySelectorAll("[data-j]").forEach(b => b.onclick = () => {
+      const j = Number(b.dataset.j), ok = j === q[2];
+      if(!(i in primera)){ primera[i] = ok; hechas++; if(!ok) fallos.push(i); }
+      cont.querySelectorAll("[data-j]").forEach(x => { x.disabled = true; x.style.cursor = "default"; const xj = Number(x.dataset.j);
+        if(xj === q[2]){ x.style.borderColor = "#2E7D4F"; x.style.background = "#E8F5EC"; } else if(xj === j){ x.style.borderColor = "#B3261E"; x.style.background = "#FDECEA"; } });
+      cola.shift(); if(!ok) cola.push(i);
+      cont.querySelector(".cq-exp").innerHTML = `<div style="margin-top:12px;padding:12px 14px;border-radius:12px;background:${ok ? "#E8F5EC" : "#FDECEA"};border:1.5px solid ${ok ? "#2E7D4F" : "#B3261E"};line-height:1.5;">
+          <b style="color:${ok ? "#2E7D4F" : "#B3261E"};">${ok ? "✅ ¡Correcto!" : "❌ No es así."}</b> ${ok ? "" : `La respuesta correcta es: <b>${escH(q[1][q[2]])}</b>.<br>`}${escH(q[3])}
+          ${ok ? "" : `<div style="margin-top:6px;font-size:0.88rem;">🔁 Esta pregunta te la vuelvo a hacer al final para estar seguros de que quedó clara.</div>`}</div>
+        <button type="button" class="cq-sig" style="margin-top:12px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:${col};color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer;">${ok ? "Siguiente →" : "Entendido →"}</button>`;
+      cont.querySelector(".cq-sig").onclick = () => { pintar(); window.scrollTo(0, 0); };
+    });
+  };
+  pintar();
+}
+function capVolverBtn(t){ return `<button type="button" class="cap-vol" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:600;padding:9px 14px;border-radius:100px;border:1.5px solid ${C.ink};background:#fff;color:${C.ink};cursor:pointer;">← ${escH(t)}</button>`; }
+async function renderCap(){
+  setAccent("ALL"); tintPage("ALL");
+  ["days","cats","aviso","adelantos"].forEach(id=>{ const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
+  const main = document.getElementById("main"); main.innerHTML = "";
+  const w = document.createElement("div"); w.setAttribute("data-cap", "1"); w.setAttribute("style", "margin-top:14px;");
+  main.appendChild(w);
+  if(usrEsAdmin() && CAP_ST.curso !== "YO"){ capAdmin(w); return; }
+  const u = usrYo(); if(!u){ w.innerHTML = "Entra con tu código."; return; }
+  if(!CAP_YO || CAP_YO_ID !== u.id) w.innerHTML = `<div style="color:${C.inkSoft};">Cargando…</div>`;
+  await capCargarYo();
+  if(!document.body.contains(w)) return;
+  capPintarYo(w, u);
+}
+function capPintarYo(w, u){
+  const p = CAP_YO || {}, bloq = capBloqueado(), cursos = capCursosDe(u);
+  const vol = () => { CAP_ST = {curso:null, mod:null, paso:"lista"}; activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  if(CAP_ST.curso && CAP_ST.curso !== "YO" && CAP_ST.mod){ capPintarModulo(w, u, capCurso(CAP_ST.curso), CAP_ST.mod); return; }
+  const c = CAP_ST.curso && CAP_ST.curso !== "YO" ? capCurso(CAP_ST.curso) : null;
+  if(!c){
+    w.innerHTML = `${bloq ? "" : capVolverBtn("Inicio")}
+      <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;margin:14px 0 4px;">🎓 Evaluación</h2>
+      <div style="color:${C.inkSoft};font-size:0.92rem;">Cada semana un módulo de unos 20 minutos: repaso, lectura y preguntas. Se aprueba con ${CAP_APRUEBA} %.</div>
+      ${bloq ? `<div style="margin-top:12px;background:#FDECEA;border:2px solid #B3261E;border-radius:14px;padding:12px 14px;line-height:1.5;"><b style="color:#B3261E;">👋 ${escH(u.nom)}, bienvenido(a) a Parisina.</b><br>Antes de entrar a tu perfil debes aprobar el <b>Módulo 0</b>: los productos químicos, los colores de las canecas y de las tablas. Es muy importante para trabajar seguro.</div>` : ""}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px;">${cursos.map(cc=>{ const hab = capHab(p, cc.k), aprob = cc.mods.filter(m=>(capModSt(p, cc.k, m.id) || {}).ok).length;
+        return `<button type="button" data-c="${cc.k}" style="text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid ${cc.col};border-radius:18px;padding:20px;cursor:pointer;color:${C.ink};display:flex;gap:14px;align-items:center;min-height:104px;">
+          <span style="font-size:2.2rem;">${cc.e}</span><span style="display:flex;flex-direction:column;gap:3px;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.25rem;color:${cc.col};">${escH(cc.t)}</span>
+          <span style="font-size:0.82rem;color:${C.inkSoft};">${aprob} de ${cc.mods.length} módulos aprobados · ${escH(cc.sub)}</span></span></button>`; }).join("")}</div>`;
+    if(w.querySelector(".cap-vol")) w.querySelector(".cap-vol").onclick = vol;
+    w.querySelectorAll("[data-c]").forEach(b => b.onclick = () => { CAP_ST = {curso: b.dataset.c, mod: null, paso: "lista"}; capPintarYo(w, u); window.scrollTo(0,0); });
+    return;
+  }
+  const hab = capHab(p, c.k);
+  w.innerHTML = `${capVolverBtn("Evaluación")}
+    <h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin:14px 0 4px;color:${c.col};">${c.e} ${escH(c.t)}</h2>
+    <div style="display:grid;gap:10px;margin-top:14px;">${c.mods.map((m, i)=>{ const st = capModSt(p, c.k, m.id), abierto = i <= hab;
+      const est = st && st.ok ? `✅ Aprobado · ${st.nota} %` : st && st.intentos ? `❌ No aprobado (${st.nota} %) · vuelve a intentarlo` : abierto ? "▶️ Disponible" : "🔒 Alban lo habilita cuando apruebes el anterior";
+      return `<button type="button" data-m="${m.id}" ${abierto ? "" : "disabled"} style="text-align:left;font-family:'Work Sans',sans-serif;background:${abierto ? "#fff" : C.bg};border:2px solid ${st && st.ok ? "#2E7D4F" : abierto ? c.col : C.line};border-radius:14px;padding:14px 16px;cursor:${abierto ? "pointer" : "default"};color:${C.ink};opacity:${abierto ? 1 : .6};">
+        <div style="font-weight:800;">${escH(m.t)}</div><div style="font-size:0.85rem;color:${C.inkSoft};margin-top:2px;">${escH(m.d)}</div>
+        <div style="font-size:0.85rem;margin-top:6px;font-weight:700;color:${st && st.ok ? "#2E7D4F" : st && st.intentos ? "#B3261E" : abierto ? c.col : C.inkSoft};">${est}</div></button>`; }).join("")}</div>`;
+  w.querySelector(".cap-vol").onclick = () => { CAP_ST = {curso:"YO", mod:null, paso:"lista"}; capPintarYo(w, u); window.scrollTo(0,0); };
+  w.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { CAP_ST = {curso: c.k, mod: b.dataset.m, paso: "inicio"}; capPintarYo(w, u); window.scrollTo(0,0); });
+}
+function capPintarModulo(w, u, c, mid){
+  const p = CAP_YO || {}, i = c.mods.findIndex(m=>m.id === mid), m = c.mods[i], prev = i > 0 ? c.mods[i - 1] : null;
+  const st = capModSt(p, c.k, m.id) || {};
+  const volLista = () => { CAP_ST = {curso: c.k, mod: null, paso: "lista"}; capPintarYo(w, u); window.scrollTo(0,0); };
+  const card = `background:${C.paper};border:1.5px solid ${C.line};border-radius:16px;padding:16px;margin-top:12px;`;
+  const btn = (cls, t, alt) => `<button type="button" class="${cls}" style="margin-top:14px;width:100%;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;background:${alt ? "#fff" : c.col};color:${alt ? c.col : "#fff"};border:2px solid ${c.col};border-radius:12px;padding:13px;cursor:pointer;">${t}</button>`;
+  const head = `${capVolverBtn("Módulos")}<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.35rem;margin:14px 0 2px;color:${c.col};">${escH(m.t)}</h2><div style="color:${C.inkSoft};font-size:0.9rem;">${escH(m.d)}</div>`;
+  const paso = CAP_ST.paso;
+  const guardarMod = async (cambio) => { const q = JSON.parse(JSON.stringify(CAP_YO || {})); q[c.k] = q[c.k] || {hab: 0, mods: {}}; q[c.k].mods = q[c.k].mods || {};
+    q[c.k].mods[m.id] = Object.assign({}, q[c.k].mods[m.id] || {}, cambio); q.nom = u.nom; try{ await capGuardar(u.id, q); }catch(e){ CAP_YO = q; lsSet("cap_" + u.id, JSON.stringify(q)); } };
+  if(paso === "inicio"){
+    w.innerHTML = `${head}<div style="${card}line-height:1.6;"><b>Cómo funciona (≈ 20 minutos):</b><ol style="margin:6px 0;padding-left:22px;">${prev ? `<li>🔁 <b>Repaso</b> de la semana anterior: ${escH(prev.t)}.</li>` : ""}<li>📖 <b>Lectura</b> del módulo, con calma.</li><li>📝 <b>Preguntas.</b> Si fallas una, te explico la respuesta y te la vuelvo a preguntar.</li></ol>Apruebas con ${CAP_APRUEBA} % de respuestas buenas al primer intento.${st.ok ? `<div style="margin-top:8px;color:#2E7D4F;font-weight:700;">✅ Ya lo aprobaste con ${st.nota} %. Puedes repasarlo cuando quieras.</div>` : ""}</div>
+      ${btn("cm-ir", prev ? "🔁 Empezar con el repaso" : "📖 Empezar la lectura")}`;
+    w.querySelector(".cap-vol").onclick = volLista;
+    w.querySelector(".cm-ir").onclick = () => { CAP_ST.paso = prev ? "repaso" : "leer"; capPintarModulo(w, u, c, mid); window.scrollTo(0,0); };
+    return;
+  }
+  if(paso === "repaso"){
+    w.innerHTML = `${head}<div class="cm-q" style="${card}"></div>`;
+    w.querySelector(".cap-vol").onclick = volLista;
+    const pq = capMezclar(prev.q).slice(0, 5);
+    capQuiz(w.querySelector(".cm-q"), pq, c.col, "🔁 Repaso · " + prev.t, async r => {
+      await guardarMod({rep: {nota: r.nota, fecha: hoyISO(), fallos: r.fallos.map(k=>pq[k][0])}});
+      w.querySelector(".cm-q").innerHTML = `<div style="font-size:1.1rem;font-weight:800;">🔁 Repaso terminado: ${r.buenas} de ${r.total} al primer intento.</div><div style="margin-top:6px;color:${C.inkSoft};">Las que fallaste ya quedaron explicadas. Ahora la lectura de esta semana.</div>${btn("cm-ir", "📖 Ir a la lectura")}`;
+      w.querySelector(".cm-ir").onclick = () => { CAP_ST.paso = "leer"; capPintarModulo(w, u, c, mid); window.scrollTo(0,0); };
+    });
+    return;
+  }
+  if(paso === "leer"){
+    w.innerHTML = `${head}<div style="${card}">${capLecturaHTML(m, c.col)}</div>${btn("cm-ir", "✅ Ya leí todo · ir a las preguntas")}`;
+    w.querySelector(".cap-vol").onclick = volLista;
+    const b = w.querySelector(".cm-ir"), t0 = Date.now(); b.disabled = true; b.style.opacity = ".5";
+    const espera = () => { const s = Math.max(0, 90 - Math.round((Date.now() - t0) / 1000)); if(!document.body.contains(b)) return;
+      if(s > 0){ b.textContent = `📖 Lee con calma… (${s} s)`; setTimeout(espera, 1000); } else { b.disabled = false; b.style.opacity = "1"; b.textContent = "✅ Ya leí todo · ir a las preguntas"; } };
+    espera();
+    b.onclick = () => { CAP_ST.paso = "quiz"; capPintarModulo(w, u, c, mid); window.scrollTo(0,0); };
+    return;
+  }
+  if(paso === "quiz"){
+    w.innerHTML = `${head}<div class="cm-q" style="${card}"></div>`;
+    w.querySelector(".cap-vol").onclick = volLista;
+    const qs = capMezclar(m.q);
+    capQuiz(w.querySelector(".cm-q"), qs, c.col, "📝 " + m.t, async r => {
+      const ok = r.nota >= CAP_APRUEBA, ant = capModSt(CAP_YO, c.k, m.id) || {};
+      await guardarMod({ok: ok || !!ant.ok, nota: ant.ok ? Math.max(ant.nota || 0, r.nota) : r.nota, fecha: hoyISO(), intentos: (ant.intentos || 0) + 1, fallos: r.fallos.map(k=>qs[k][0]), ult: r.nota});
+      const sig = c.mods[i + 1], bloqAntes = c.k === "SAN" && m.id === "S0";
+      w.querySelector(".cm-q").innerHTML = `<div style="text-align:center;"><div style="font-size:3rem;">${ok ? "🎉" : "📖"}</div>
+        <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;color:${ok ? "#2E7D4F" : "#B3261E"};">${ok ? "¡Aprobado!" : "Todavía no"}</div>
+        <div style="font-size:1.2rem;font-weight:800;margin-top:4px;">${r.buenas} de ${r.total} · ${r.nota} %</div>
+        <div style="margin-top:8px;color:${C.inkSoft};line-height:1.5;">${ok ? (bloqAntes ? "Ya puedes entrar a tu perfil. ¡Bienvenido(a)!" : sig ? "Alban habilitará el siguiente módulo la próxima semana." : "Terminaste todos los módulos de este curso. ¡Excelente!") : `Necesitas ${CAP_APRUEBA} %. Vuelve a leer con calma y repite las preguntas.`}</div></div>
+        ${ok ? btn("cm-fin", bloqAntes ? "🏠 Entrar a mi perfil" : "← Volver a los módulos") : btn("cm-rep", "📖 Volver a leer y repetir") + btn("cm-fin", "← Volver a los módulos", 1)}`;
+      if(w.querySelector(".cm-rep")) w.querySelector(".cm-rep").onclick = () => { CAP_ST.paso = "leer"; capPintarModulo(w, u, c, mid); window.scrollTo(0,0); };
+      w.querySelector(".cm-fin").onclick = () => { if(ok && bloqAntes){ CAP_ST = {curso:null, mod:null, paso:"lista"}; activeCat = "HOME"; render(); window.scrollTo(0,0); return; } volLista(); };
+    });
+  }
+}
+// ---- Admin: ver a todos y habilitar el módulo siguiente ----
+async function capAdmin(w){
+  const lista = usrLista().filter(u=>usrCod(u));
+  w.innerHTML = `${capVolverBtn("Inicio")}<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.6rem;margin:14px 0 4px;">🎓 Evaluación · Admin</h2>
+    <div style="color:${C.inkSoft};font-size:0.9rem;line-height:1.5;">Cada persona hace su módulo de la semana por separado. Cuando apruebe, tú habilitas el siguiente. Las personas nuevas no entran a su perfil hasta aprobar el Módulo 0 de Manipulación.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;"><button type="button" class="ca-todos" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:2px solid #2E7D4F;background:#fff;color:#2E7D4F;border-radius:10px;padding:9px 14px;cursor:pointer;">✅ Habilitar el siguiente a todos los que aprobaron</button>
+    <button type="button" class="ca-yo" style="font-family:'Work Sans',sans-serif;font-size:0.9rem;font-weight:700;border:2px solid ${C.ink};background:#fff;color:${C.ink};border-radius:10px;padding:9px 14px;cursor:pointer;">👀 Ver los cursos como operador</button></div>
+    <div class="ca-l" style="margin-top:14px;color:${C.inkSoft};">Cargando…</div>`;
+  w.querySelector(".cap-vol").onclick = () => { activeCat = "HOME"; render(); window.scrollTo(0,0); };
+  w.querySelector(".ca-yo").onclick = () => { CAP_ST = {curso:"YO", mod:null, paso:"lista"}; renderCap(); };
+  const P = {}; await Promise.all(lista.map(async u => { P[u.id] = await capLeer(u.id); }));
+  if(!document.body.contains(w)) return;
+  const L = w.querySelector(".ca-l"); L.style.color = C.ink;
+  const listos = []; lista.forEach(u => capCursosDe(u).forEach(c => { const p = P[u.id] || {}, h = capHab(p, c.k), m = c.mods[h]; if(m && h < c.mods.length - 1 && (capModSt(p, c.k, m.id) || {}).ok) listos.push([u, c]); }));
+  w.querySelector(".ca-todos").textContent = `✅ Habilitar el siguiente a todos los que aprobaron (${listos.length})`;
+  w.querySelector(".ca-todos").onclick = async () => { if(!listos.length) return; if(!confirm(`¿Habilitar el siguiente módulo a ${listos.length}?`)) return;
+    for(const [u, c] of listos){ const p = JSON.parse(JSON.stringify(P[u.id] || {})); p[c.k] = p[c.k] || {hab: 0, mods: {}}; p[c.k].hab = capHab(p, c.k) + 1; p[c.k].hfe = hoyISO(); P[u.id] = p; await capGuardar(u.id, p); }
+    capAdmin(w); };
+  L.innerHTML = lista.map(u => { const p = P[u.id] || {}, nueva = capEsNueva(u, p), bloq = nueva && !p.libre && capEsManipulador(u) && !(capModSt(p, "SAN", "S0") || {}).ok;
+    return `<div style="background:${C.paper};border:1.5px solid ${bloq ? "#B3261E" : C.line};border-radius:14px;padding:12px 14px;margin-bottom:10px;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><b style="font-size:1.05rem;flex:1;">${escH(u.nom)}</b><span style="font-size:0.8rem;color:${C.inkSoft};">${escH(u.puesto || "")}</span>
+        ${nueva ? `<span style="font-size:0.78rem;font-weight:700;color:${bloq ? "#B3261E" : "#2E7D4F"};">🆕 ${bloq ? "bloqueada hasta el Módulo 0" : "nueva"}</span>` : ""}</div>
+      ${capCursosDe(u).map(c => { const h = capHab(p, c.k), m = c.mods[h], st = capModSt(p, c.k, m.id) || {}, aprob = c.mods.filter(x=>(capModSt(p, c.k, x.id) || {}).ok).length;
+        return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;border-top:1px solid ${C.line};padding-top:8px;">
+          <span style="flex:1;min-width:200px;font-size:0.9rem;">${c.e} <b>${escH(c.t)}</b> · ${aprob}/${c.mods.length}<br><span style="color:${C.inkSoft};">Actual: ${escH(m.t)} — ${st.ok ? `<b style="color:#2E7D4F;">✅ ${st.nota} %</b> (${escH(st.fecha || "")})` : st.intentos ? `<b style="color:#B3261E;">❌ ${st.ult} % · ${st.intentos} intento(s)</b>` : "pendiente"}</span></span>
+          <button type="button" data-ver="${u.id}|${c.k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;color:${C.ink};border-radius:9px;padding:7px 10px;cursor:pointer;">📋 Detalle</button>
+          ${h < c.mods.length - 1 ? `<button type="button" data-hab="${u.id}|${c.k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;border:none;background:${st.ok ? "#2E7D4F" : C.inkSoft};color:#fff;border-radius:9px;padding:8px 11px;cursor:pointer;">🔓 Habilitar ${escH(c.mods[h + 1].t.split(" · ")[0])}</button>` : ""}</div>`; }).join("")}
+      ${nueva ? `<button type="button" data-lib="${u.id}" style="margin-top:8px;font-family:'Work Sans',sans-serif;font-size:0.8rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">${p.libre ? "Volver a bloquear hasta el Módulo 0" : "Dejarla entrar sin el Módulo 0"}</button>` : `<button type="button" data-nue="${u.id}" style="margin-top:8px;font-family:'Work Sans',sans-serif;font-size:0.8rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Marcar como persona nueva (bloquear hasta el Módulo 0)</button>`}</div>`; }).join("");
+  const upd = async (id, f) => { const p = JSON.parse(JSON.stringify(P[id] || {})); f(p); P[id] = p; await capGuardar(id, p); capAdmin(w); };
+  L.querySelectorAll("[data-hab]").forEach(b => b.onclick = () => { const [id, k] = b.dataset.hab.split("|"), u = lista.find(x=>x.id === id), c = capCurso(k), p = P[id] || {}, h = capHab(p, k), st = capModSt(p, k, c.mods[h].id) || {};
+    if(!st.ok && !confirm(`${u.nom} todavía no aprobó «${c.mods[h].t}». ¿Habilitar igual el siguiente?`)) return;
+    upd(id, q => { q[k] = q[k] || {hab: 0, mods: {}}; q[k].hab = h + 1; q[k].hfe = hoyISO(); }); });
+  L.querySelectorAll("[data-lib]").forEach(b => b.onclick = () => upd(b.dataset.lib, q => { q.libre = !q.libre; }));
+  L.querySelectorAll("[data-nue]").forEach(b => b.onclick = () => { if(confirm("¿Bloquear a esta persona hasta que apruebe el Módulo 0?")) upd(b.dataset.nue, q => { q.nuevo = true; q.libre = false; }); });
+  L.querySelectorAll("[data-ver]").forEach(b => b.onclick = () => { const [id, k] = b.dataset.ver.split("|"), u = lista.find(x=>x.id === id), c = capCurso(k), p = P[id] || {}, h = capHab(p, k);
+    const md = capaModal(`<div style="text-align:left;"><div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.2rem;">${c.e} ${escH(u.nom)} · ${escH(c.t)}</div>
+      ${c.mods.map((m, i) => { const st = capModSt(p, k, m.id) || {};
+        return `<div style="border-top:1px solid ${C.line};padding:8px 0;font-size:0.9rem;"><b>${escH(m.t)}</b> ${i <= h ? "" : "🔒"}<br>
+          ${st.intentos ? `${st.ok ? "✅" : "❌"} ${st.nota} % · ${st.intentos} intento(s) · ${escH(st.fecha || "")}${st.fallos && st.fallos.length ? `<div style="color:#B3261E;font-size:0.84rem;margin-top:3px;">Falló: ${st.fallos.map(escH).join(" · ")}</div>` : ""}` : `<span style="color:${C.inkSoft};">${i <= h ? "Habilitado, sin hacer" : "No habilitado"}</span>`}
+          ${st.rep ? `<div style="font-size:0.84rem;color:${C.inkSoft};">🔁 Repaso: ${st.rep.nota} %</div>` : ""}</div>`; }).join("")}</div>
+      <button type="button" class="cm-x" style="margin-top:12px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:11px 22px;cursor:pointer;">Cerrar</button>`, c.col);
+    md.querySelector(".cm-x").onclick = () => md.remove(); });
+}
+
 function renderHome(){
   setTimeout(compraViernesAviso, 400);   // Alban 24 oct: viernes = compra semanal
   setAccent("ALL"); tintPage("ALL");
@@ -2113,6 +2598,16 @@ function renderHome(){
       </span>`;
     rB.onclick = ()=>{ activeCat = "RECETARIO"; render(); window.scrollTo(0,0); };
     grid.appendChild(rB); }
+  // Alban 20 nov: tarjeta "Evaluación" (capacitación semanal: manipulación de alimentos y SST)
+  if(usrYo() || usrEsAdmin()) { const eB = document.createElement("button");
+    eB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid #2E7D4F;border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
+    eB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">🎓</span>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;color:#2E7D4F;">Evaluación</span>
+        <span style="font-size:0.8rem;color:${C.inkSoft};">${usrEsAdmin() ? "Ver a todos · habilitar módulos" : "Manipulación de alimentos · Seguridad y salud en el trabajo"}</span>
+      </span>`;
+    eB.onclick = ()=>{ CAP_ST = {curso:null, mod:null, paso:"lista"}; activeCat = "EVAL"; render(); window.scrollTo(0,0); };
+    grid.appendChild(eB); }
   // Alban 23 oct: "Mensajes" va como tarjeta grande, igual que las categorías
   { const colM = PALETTE.Oficina || PALETTE.ALL;
     const msgB = document.createElement("button");
@@ -6216,6 +6711,8 @@ function render(){
   setTimeout(ponerTitulo, 0);
   setTimeout(adelRecordatorio, 0);   // Alban 30 oct
   if(usrNecesitaLogin() && activeCat !== "ADMIN" && activeCat !== "MSG"){ renderLogin(); return; }   // Alban 22 oct: cada persona entra con su código
+  if(activeCat !== "EVAL" && activeCat !== "ADMIN" && capBloqueado()){ activeCat = "EVAL"; CAP_ST = {curso:"SAN", mod:null, paso:"lista"}; }   // Alban 20 nov: persona nueva → primero el Módulo 0
+  if(activeCat === "EVAL"){ if(!document.querySelector("[data-cap]")) renderCap(); return; }
   if(activeCat === "HOME"){ renderHome(); return; }
   if(activeCat === "MSG"){ if(!document.querySelector("[data-msg]")) renderMensajes(); return; }
   if(activeCat === "CALC"){ if(!document.querySelector("[data-calc]")) renderCalc(); return; }
@@ -8623,7 +9120,7 @@ bootDb();
   const escribiendo = ()=>{ const a = document.activeElement; return a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "checkbox"; };
   const ventana = ()=>[...document.body.children].some(e => e.style && e.style.position === "fixed" && (e.style.inset === "0px" || e.id === "plan-ov"));   // Alban 17 nov: con una planilla u otra ventana abierta no se recarga
   const recargar = ()=>{
-    if(escribiendo() || ventana() || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO || window.TMR_ACTIVO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
+    if(escribiendo() || ventana() || document.querySelector("[data-cap] .cm-q") || window.LLAMADA_ACTIVA || window.VOZ_GRABANDO || window.TMR_ACTIVO){ pendiente = true; return; }   // no recargar en plena llamada ni con una nota de voz sin enviar
     try{ sessionStorage.setItem("auto_recarga", String(Date.now())); }catch(e){}
     location.reload();
   };
@@ -8638,7 +9135,7 @@ bootDb();
     }catch(e){}
   }
   setInterval(revisar, 180000);
-  setInterval(()=>{ if(pendiente && !document.hidden && !escribiendo() && !ventana()) recargar(); }, 5000);
+  setInterval(()=>{ if(pendiente && !document.hidden && !escribiendo() && !ventana() && !document.querySelector("[data-cap] .cm-q")) recargar(); }, 5000);
   document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) revisar(); });
   document.addEventListener("focusout", ()=>{ if(pendiente) setTimeout(()=>{ if(!escribiendo()) recargar(); }, 1500); });
 })();
