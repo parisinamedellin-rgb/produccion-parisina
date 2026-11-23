@@ -2529,6 +2529,28 @@ async function capAdmin(w){
     md.querySelector(".cm-x").onclick = () => md.remove(); });
 }
 
+// Alban 23 nov: en la vista admin, la portada va en 3 grupos (Producción · Admin · Accesorios), cada uno en orden alfabético
+const HOME_GRUPOS = [
+  ["Producción", ["Panadería","Comida de sal","Repostería","Batido","Logística","La Marzzana","Control de aseo","Rotular","Comprar","Sanidad"]],
+  ["Admin", ["Backup","Acceso a usuarios","Ventas","Recetario","Evaluación"]],
+  ["Accesorios", ["Mensajes","Calculadora","Timers","Registrarse"]]
+];
+function homeAgrupar(grid){
+  const st = grid.getAttribute("style"), norm = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const tit = c => { const s = c.querySelectorAll("span"); return (s[2] ? s[2].textContent : c.textContent).trim(); };
+  const cards = [...grid.children], usados = new Set(), wrap = document.createElement("div");
+  const grupos = HOME_GRUPOS.map(([n, L]) => [n, cards.filter(c => L.some(x => norm(x) === norm(tit(c))))]);
+  grupos.forEach(g => g[1].forEach(c => usados.add(c)));
+  const resto = cards.filter(c => !usados.has(c)); if(resto.length) grupos[2][1].push(...resto);
+  grupos.forEach(([n, L]) => { if(!L.length) return;
+    L.sort((a,b) => tit(a).localeCompare(tit(b), "es", {sensitivity:"base"}));
+    const h = document.createElement("div");
+    h.setAttribute("style", `margin-top:26px;font-family:'Work Sans',sans-serif;font-size:0.78rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:${C.inkSoft};border-bottom:1px solid ${C.line || "#ddd"};padding-bottom:6px;`);
+    h.textContent = n; wrap.appendChild(h);
+    const g = document.createElement("div"); g.setAttribute("style", st.replace("margin-top:18px", "margin-top:12px"));
+    L.forEach(c => g.appendChild(c)); wrap.appendChild(g); });
+  grid.replaceWith(wrap);
+}
 function renderHome(){
   setTimeout(compraViernesAviso, 400);   // Alban 24 oct: viernes = compra semanal
   setAccent("ALL"); tintPage("ALL");
@@ -2674,6 +2696,7 @@ function renderHome(){
         <span style="font-size:0.8rem;color:${C.inkSoft};">Marcar entrada y salida</span>
       </span>`;
     grid.appendChild(rB); }
+  if(usrEsAdmin()) try{ homeAgrupar(grid); }catch(e){ console.warn(e); }   // Alban 23 nov
   main.appendChild(todo);
   const yo = usrYo();
   if(yo){ const u = document.createElement("div"); u.setAttribute("style", `margin-top:6px;text-align:center;font-size:0.8rem;color:${C.inkSoft};`);
