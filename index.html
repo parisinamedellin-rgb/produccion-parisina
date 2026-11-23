@@ -2353,7 +2353,7 @@ function capLecturaHTML(m, col){
     if(b.ol) h += `<ol style="margin:6px 0;padding-left:24px;line-height:1.55;">${b.ol.map(x=>`<li style="margin:4px 0;">${escH(x)}</li>`).join("")}</ol>`;
     if(b.tabla) h += `<div style="display:grid;gap:6px;margin:8px 0;">${b.tabla.map(([a, x])=>`<div style="display:flex;gap:10px;background:#fff;border:1px solid ${C.line};border-radius:10px;padding:8px 10px;"><b style="flex:0 0 38%;">${escH(a)}</b><span style="flex:1;">${escH(x)}</span></div>`).join("")}</div>`;
     if(b.quim && typeof QUIM_INFO !== "undefined") h += QUIM_INFO.map(q=>`<div style="background:#fff;border:1px solid ${C.line};border-left:6px solid ${q.col};border-radius:12px;padding:10px 12px;margin:8px 0;">
-        <div style="font-weight:800;font-size:1.02rem;">${q.peligro ? "⚠️ " : ""}${escH(q.n)}</div><div style="font-size:0.88rem;color:${C.inkSoft};">${escH(q.f)}</div>
+        <div style="font-weight:800;font-size:1.02rem;">${q.peligro ? "⚠️ " : ""}${escH(q.n)}</div>${quimDestHTML(q)}<div style="font-size:0.88rem;color:${C.inkSoft};">${escH(quimResto(q))}</div>
         <div style="margin-top:6px;display:grid;gap:4px;">${q.filas.map(f=>`<div style="font-size:0.88rem;border-top:1px dashed ${C.line};padding-top:4px;"><b>${escH(f[0])}</b> · ${escH(f[1])} · ${escH(f[2])} · ⏱️ ${escH(f[3])}</div>`).join("")}</div>
         <div style="margin-top:6px;font-size:0.86rem;">💡 ${escH(q.rec)}</div>${q.epp && q.epp.length ? `<div style="margin-top:4px;font-size:0.84rem;">${q.epp.map(escH).join(" · ")}</div>` : ""}</div>`).join("");
     if(b.proc && typeof QUIM_PROC !== "undefined") h += QUIM_PROC.map(pr=>`${H(pr.n)}<ol style="margin:6px 0;padding-left:24px;line-height:1.55;">${pr.pasos.map(x=>`<li style="margin:4px 0;">${escH(x)}</li>`).join("")}</ol>`).join("");
@@ -8739,6 +8739,21 @@ const QUIM_INFO = [
     ["Manos (antes de empezar, al cambiar de tarea, después del baño)","Puro, sin diluir","Dispensador · frotar 20 segundos","Enjuagar con agua y secar"]],
     rec:"No mezclar con hipoclorito ni con ácidos. Guardar tapado, en lugar fresco y seco (15–30 °C), lejos del sol. Si cae en los ojos, enjuagar con abundante agua.", epp:[]}
 ];
+// Alban 23 nov: lo que hace el producto (función) y lo fundamental, en rojo y grande
+[["Suma Eden", "Antibacterial orgánico"],
+ ["Suma Sanitizer", "Desinfectante", "⏱️ Dejar actuar mínimo 10 minutos"],
+ ["Suma Grill", "Desengrasante", "🦺 Guantes · gafas · tapabocas · delantal · manga larga"],
+ ["Detergente ácido industrial", "Desengrasante", "🦺 Guantes · gafas · tapabocas · delantal · manga larga"],
+ ["Hipoclorito de sodio 15 %", "Desinfectante", "🚫 Nunca sobre acero inoxidable"],
+ ["Detergente industrial pH neutro (multiusos)", "Desengrasante multiusos"],
+ ["Jabón líquido neutro (manos y cuerpo)", "Lavado de manos"]
+].forEach(([n, fun, clave]) => { const q = QUIM_INFO.find(x => x.n === n); if(q){ q.fun = fun; if(clave) q.clave = clave; } });
+function quimDestHTML(q){
+  if(!q || !q.fun) return "";
+  return `<span style="display:block;margin-top:4px;font-family:'Work Sans',sans-serif;font-weight:900;font-size:1.35rem;line-height:1.15;letter-spacing:0.02em;text-transform:uppercase;color:#B3261E;">${escH(q.fun)}</span>`
+    + (q.clave ? `<span style="display:block;margin-top:4px;font-weight:800;font-size:1.08rem;line-height:1.3;color:#B3261E;">${escH(q.clave)}</span>` : "");
+}
+function quimResto(q){ const p = String(q.f || "").split(" · "); return q.fun && p.length > 1 ? p.slice(1).join(" · ") : (q.fun ? "" : q.f); }
 const QUIM_PROC = [
   {n:"🧹 Limpieza del piso", pasos:["Barrer con la escoba llegando a todas las esquinas y rincones. Mover los equipos para barrer toda la zona.","Señalizar la zona. Remojar el piso con agua y aplicar el Detergente multiusos con dispensador tipo cremera.","Dejar actuar 2 minutos.","Enjuagar y luego, con el atomizador de Suma Sanitizer, aplicar por toda el área en zigzag.","Lavar la trapeadora con hipoclorito y dejar limpios los demás utensilios en el Cuarto de aseo."]},
   {n:"🥚 Lavado y desinfección de huevos", pasos:["Inspeccionar: si el cascarón tiene grieta o rotura, se descarta de inmediato.","Si queda suciedad pegada, lavar con cepillo y agua.","Sumergir en Suma Eden (1 ml/L) y dejar actuar 1 minuto. No es necesario enjuagar."]}
@@ -8746,7 +8761,7 @@ const QUIM_PROC = [
 function quimSeccionHTML(col){
   const c = col || C.ink;
   const prod = QUIM_INFO.map(q => `<details style="background:#fff;border:1.5px solid ${C.line};border-left:6px solid ${q.col};border-radius:12px;padding:10px 12px;">
-      <summary style="cursor:pointer;font-weight:700;font-size:1.02rem;">${escH(q.n)}${q.peligro ? ` <span style="font-size:0.75rem;font-weight:800;color:#fff;background:#B3261E;border-radius:6px;padding:2px 7px;">⚠️ MUY PELIGROSO</span>` : ""} <span style="display:block;font-weight:400;font-size:0.82rem;color:${C.inkSoft};">${escH(q.f)}</span>${q.epp && q.epp.length ? `<span style="display:block;font-weight:600;font-size:0.8rem;color:${q.peligro ? "#B3261E" : C.ink};margin-top:3px;">🦺 ${escH(q.epp.map(e => e.replace(/^\S+\s/, "")).join(" · "))}</span>` : ""}</summary>
+      <summary style="cursor:pointer;font-weight:700;font-size:1.02rem;">${escH(q.n)}${q.peligro ? ` <span style="font-size:0.75rem;font-weight:800;color:#fff;background:#B3261E;border-radius:6px;padding:2px 7px;">⚠️ MUY PELIGROSO</span>` : ""} ${quimDestHTML(q)}<span style="display:block;font-weight:400;font-size:0.82rem;color:${C.inkSoft};">${escH(quimResto(q))}</span>${q.epp && q.epp.length && !String(q.clave || "").startsWith("🦺") ? `<span style="display:block;font-weight:600;font-size:0.8rem;color:${q.peligro ? "#B3261E" : C.ink};margin-top:3px;">🦺 ${escH(q.epp.map(e => e.replace(/^\S+\s/, "")).join(" · "))}</span>` : ""}</summary>
       ${q.epp && q.epp.length ? `<div style="margin-top:10px;background:${q.peligro ? "#FDECEA" : "#FBF3DA"};border:2px solid ${q.peligro ? "#B3261E" : "#C4791E"};border-radius:12px;padding:10px 12px;">
         <div style="font-weight:800;font-size:0.95rem;color:${q.peligro ? "#B3261E" : "#8A5A00"};">${q.peligro ? "⚠️ Producto muy peligroso (corrosivo): NO se usa sin esta protección" : "🦺 Protección obligatoria"}</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">${q.epp.map(e => `<span style="background:#fff;border:1.5px solid ${q.peligro ? "#B3261E" : "#C4791E"};border-radius:100px;padding:5px 11px;font-size:0.9rem;font-weight:700;">${escH(e)}</span>`).join("")}</div></div>` : ""}
