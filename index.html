@@ -6569,6 +6569,23 @@ function renderRotularCliente(main, col){
   box.setAttribute("style", `margin-top:12px;position:relative;background:${col.a};color:#fff;border-radius:14px;padding:12px 14px;`);
   main.appendChild(box);
   rotClienteUI(box, RT_CLI_FECHA, col);
+  // Alban 24 nov: debajo del buscador, la lista de los clientes del día (sin los productos); al tocar uno se abre su rótulo
+  const lc = document.createElement("div"); lc.setAttribute("style", "margin-top:14px;");
+  main.appendChild(lc);
+  const pintarLista = ()=>{
+    if(ROT_SEL != null){ lc.innerHTML = ""; return; }
+    const iso = RT_CLI_FECHA, peds = logPedidos(iso), rots = logRotulos(iso);
+    if(!peds.length){ lc.innerHTML = `<div style="font-size:0.9rem;color:${C.inkSoft};font-style:italic;padding:8px 4px;">No hay comandas para este día.</div>`; return; }
+    lc.innerHTML = `<div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.1rem;margin:0 0 8px;">👥 Clientes del día (${peds.length})</div>
+      <div style="display:grid;gap:6px;">${peds.map((p, i)=>{ const n = rots.filter(r=>String(r.n) === String(p.n)).length;
+        return `<button type="button" data-i="${i}" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;font-family:'Work Sans',sans-serif;font-size:0.95rem;background:#fff;color:${C.ink};border:1.5px solid ${C.line};border-radius:12px;padding:11px 14px;cursor:pointer;">
+          <span>👤</span><span style="flex:1;min-width:0;font-weight:600;">${logEsc(p.cli)}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.75rem;color:${C.inkSoft};white-space:nowrap;">#${logEsc(p.n)}${p.h ? " · " + logEsc(p.h) : ""}</span>
+          <span style="font-size:0.75rem;font-weight:700;color:${col.a};background:${C.bg};border-radius:100px;padding:3px 9px;white-space:nowrap;">🏷️ ${n}</span></button>`; }).join("")}</div>`;
+    lc.querySelectorAll("button[data-i]").forEach(b=>{ b.onclick = ()=>{ ROT_SEL = peds[Number(b.dataset.i)].n; ROT_QCLI = ""; render(); window.scrollTo(0, 0); }; });
+  };
+  box.addEventListener("click", ()=>setTimeout(pintarLista, 0));
+  pintarLista();
 }
 // ---- Rotular › Consumidor final (Alban 22 oct): buscar también por cliente o # de comanda ----
 function rotDiaCorto(iso){ try{ const f = fmtDay(iso); return iso === hoyISO() ? "hoy" : f.dow.slice(0,3).toLowerCase() + " " + f.dm; }catch(e){ return iso; } }
