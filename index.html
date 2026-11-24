@@ -5347,8 +5347,10 @@ function renderRotulos(main, col){
     row.innerHTML = `<span style="min-width:44px;text-align:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1.05rem;background:${C.bg};border:1px solid ${C.line};border-radius:8px;padding:5px 6px;">${g.l.length}</span>
       <span style="flex:1;min-width:0;"><span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.85rem;color:${col.a};background:${C.bg};border:1px solid ${C.line};border-radius:6px;padding:1px 6px;margin-right:6px;">${logEsc(cod)}</span><span style="font-size:0.95rem;">${logEsc(g.name)}</span>
         <span class="clis" style="display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;"></span></span>
-      <button type="button" class="pp" style="font-size:0.8rem;font-weight:600;color:${col.a};background:none;border:1px solid ${col.a};border-radius:8px;padding:7px 10px;cursor:pointer;font-family:'Work Sans',sans-serif;">🖨️</button>`;
+      <span style="display:flex;flex-direction:column;gap:5px;flex:0 0 auto;"><button type="button" class="ppc" title="Un rótulo por caja, con el nombre del cliente" style="font-size:0.8rem;font-weight:700;color:#fff;background:${col.a};border:1px solid ${col.a};border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'Work Sans',sans-serif;white-space:nowrap;">🖨️ Con cliente</button>
+        <button type="button" class="pp" title="Sin el nombre del cliente" style="font-size:0.72rem;font-weight:600;color:${col.a};background:none;border:1px solid ${col.a};border-radius:8px;padding:5px 8px;cursor:pointer;font-family:'Work Sans',sans-serif;white-space:nowrap;">🖨️ Sin nombre</button></span>`;   // Alban 24 nov: imprimir un producto para todos los clientes, con el nombre de cada cliente
     row.querySelector(".pp").onclick = ()=>logImprimir(g.l, iso);
+    row.querySelector(".ppc").onclick = ()=>logImprimir(g.l.map(r=>Object.assign({}, r, {conCli: true})), iso);
     card.appendChild(row);
     // un botón por cliente: "Cliente (10 + 5) ✏️" → editor de cuánto lleva cada rótulo
     const porCli = {};
@@ -5390,7 +5392,7 @@ function renderRotulos(main, col){
         const me = ed.querySelector(".menos"); if(me) me.onclick = ()=>{ qs.pop(); pintar(); };
         const guardar = ()=>{ qs = qs.map(q=>Number(q) || 0).filter(q=>q > 0); if(!qs.length) qs = [total]; ROT_AJ[k] = qs; rotGuardarAj(); };
         ed.querySelector(".ok").onclick = ()=>{ guardar(); ROT_ABIERTO[ak] = false; render(); };
-        ed.querySelector(".imp").onclick = ()=>{ guardar(); const r0 = pc.l[0]; logImprimir(qs.map(q=>Object.assign({}, r0, {q})), iso); render(); };
+        ed.querySelector(".imp").onclick = ()=>{ guardar(); const r0 = pc.l[0]; logImprimir(qs.map(q=>Object.assign({}, r0, {q, conCli: true})), iso); render(); };
         const rs = ed.querySelector(".rst"); if(rs) rs.onclick = ()=>{ delete ROT_AJ[k]; rotGuardarAj(); ROT_ABIERTO[ak] = false; render(); };
       };
       pintar();
