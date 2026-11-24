@@ -1713,6 +1713,181 @@ function renderBackup(){
 }
 // Alban 11 nov: Recetario (solo admin). Todas las fórmulas; el backup se copia solo cada hora a un Google Sheet.
 const REC_SHEET_URL = "https://docs.google.com/spreadsheets/d/1_P6yEycAlrhvp391AFLm02WYU3ibXfgxuiXcPz0b5Vw/edit";
+// ===== Alban 24 nov: tarjeta "Ensayos por aprobar" (solo admin): revisar el ensayo, ajustar y aprobar =====
+var ENSX = {lista: null, sel: null, f: null, K: 1, quitados: [], com: "", msg: "", busy: false};
+function ensPendContar(){
+  try{ const e = (typeof ENS_EST === "object" && ENS_EST && Object.keys(ENS_EST).length) ? ENS_EST : JSON.parse(lsGet("ens_est_cache") || "{}");
+    return Object.keys(e).filter(k => e[k] && e[k].estado === "por_aprobar").length; }catch(x){ return 0; }
+}
+function ensBadgePintar(n){
+  document.querySelectorAll("[data-ensbadge]").forEach(b => { b.textContent = String(n); b.style.display = n > 0 ? "flex" : "none"; });
+  const c = document.querySelector("[data-enscard]");
+  if(c){ c.style.borderColor = n > 0 ? "#A3252B" : C.ink; const s = c.querySelector("[data-enssub]");
+    if(s){ if(!s.dataset.orig) s.dataset.orig = s.textContent; s.textContent = n > 0 ? (n === 1 ? "1 ensayo por revisar" : n + " ensayos por revisar") : s.dataset.orig; s.style.color = n > 0 ? "#A3252B" : C.inkSoft; s.style.fontWeight = n > 0 ? "700" : "400"; } }
+  try{ if(document.querySelector("[data-ensadm]") && !ENSX.abierto) ensAdmPanel(); }catch(e){}
+}
+async function ensBadgeRefrescar(){
+  const api = ensApi();
+  if(api){ try{ const r = await fetch(api + "?estados=1&t=" + Date.now(), {credentials: "omit"}); const j = await r.json(); if(j && j.ok){ ENS_EST = j.estados || {}; lsSet("ens_est_cache", JSON.stringify(ENS_EST)); } }catch(e){} }
+  ensBadgePintar(ensPendContar());
+}
+if(!window.__ensBadgeT){ window.__ensBadgeT = setInterval(() => { try{ if(!document.hidden && document.querySelector("[data-ensbadge]")) ensBadgeRefrescar(); }catch(e){} }, 120000); }
+function ensAdmCambios(e){
+  const out = [];
+  (e.pasos || []).forEach(p => (p.items || []).forEach(it => {
+    const dif = it.nuevo || !it.usado || (it.cant !== "" && it.cant != null && Number(it.cant) !== Number(it.cant_formula));
+    if(dif) out.push((it.nuevo ? "+ " : !it.usado ? "✗ no usó " : "") + it.ing + (it.usado || it.nuevo ? ": " + (it.cant_formula != null && !it.nuevo ? it.cant_formula + " → " : "") + it.cant + " " + (it.u || "") : ""));
+  }));
+  return out;
+}
+function ensAdmMontar(){
+  const w = document.createElement("div"); w.setAttribute("data-ensadm", "1");
+  w.onclick = ev => { const b = ev.target && ev.target.closest ? ev.target.closest("[data-ea]") : null; if(b) ensAdmClick(b.getAttribute("data-ea")); };
+  w.oninput = ensAdmInput;
+  ENSX.abierto = false; ENSX.sel = null; ENSX.lista = null; ENSX.f = null;
+  ensAdmPanel(w); ensBadgeRefrescar();
+  return w;
+}
+function ensAdmPanel(w){
+  w = w || document.querySelector("[data-ensadm]"); if(!w) return;
+  const n = ensPendContar();
+  w.innerHTML = `<div data-ea="abrirpanel" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:${C.paper};border:2px solid ${n > 0 ? "#A3252B" : C.line};border-radius:14px;padding:14px 16px;cursor:pointer;">
+    <span style="display:flex;flex-direction:column;gap:3px;"><span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">🧪 Ensayos por aprobar</span>
+    <span style="font-size:0.82rem;color:${n > 0 ? "#A3252B" : C.inkSoft};font-weight:${n > 0 ? "700" : "400"};">${n > 0 ? (n === 1 ? "1 ensayo por revisar" : n + " ensayos por revisar") : "Nada pendiente ✅"} · toca para revisar</span></span>
+    <span style="display:flex;align-items:center;gap:10px;"><span data-ensbadge style="display:${n > 0 ? "flex" : "none"};min-width:30px;height:30px;padding:0 8px;border-radius:100px;background:#A3252B;color:#fff;font-weight:800;font-size:0.95rem;align-items:center;justify-content:center;">${n}</span><span style="color:${C.inkSoft};">▸</span></span></div>`;
+}
+function ensAdmVer(){ try{ const w = document.querySelector("[data-ensadm]"); if(w && w.scrollIntoView) w.scrollIntoView({block: "start"}); }catch(e){} }
+function ensAdmTop(){ return `<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;"><h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.4rem;margin:0;">🧪 Ensayos por aprobar</h2><button type="button" data-ea="cerrar" style="font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;background:#fff;border:1.5px solid ${C.line};border-radius:100px;padding:7px 14px;cursor:pointer;color:${C.ink};">Cerrar ✕</button></div>`; }
+function ensAdmAviso(txt, reintentar){ return `<div style="margin-top:14px;background:#FBE6E4;border:1.5px solid #A3252B;border-radius:14px;padding:14px 16px;">${escH(txt)}${reintentar ? `<div style="margin-top:10px;"><button type="button" data-ea="recargar" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#fff;border:1.5px solid #A3252B;color:#A3252B;border-radius:100px;padding:8px 16px;cursor:pointer;">Reintentar</button></div>` : ""}</div>`; }
+async function ensAdmLista(recargar){
+  const w = document.querySelector("[data-ensadm]"); if(!w) return;
+  ENSX.sel = null; ENSX.f = null;
+  const cab = ensAdmTop(); ENSX.abierto = true;
+  if(recargar || !ENSX.lista){
+    w.innerHTML = cab + `<div style="color:${C.inkSoft};margin-top:10px;">Cargando…</div>`;
+    if(!REC_CLAVE){ REC_CLAVE = prompt("Clave de gerente:") || ""; }
+    if(!REC_CLAVE){ w.innerHTML = cab + ensAdmAviso("Necesito la clave de gerente para ver los ensayos.", true); return; }
+    try{ const j = await recPost({tipo: "rec_ens_pend", clave: REC_CLAVE});
+      if(j && j.ok){ ENSX.lista = j.lista || []; }
+      else { REC_CLAVE = ""; ENSX.lista = null; w.innerHTML = cab + ensAdmAviso((j && j.error === "clave incorrecta") ? "Clave incorrecta." : "No se pudo cargar: " + ((j && j.error) || "error"), true); return; }
+    }catch(e){ ENSX.lista = null; w.innerHTML = cab + ensAdmAviso("Sin conexión. Intenta otra vez.", true); return; }
+  }
+  const L = ENSX.lista; ensBadgePintar(L.length);
+  const msg = ENSX.msg ? `<div style="margin-top:12px;background:#E3F3E8;border:1.5px solid #2E7D4F;border-radius:12px;padding:10px 14px;font-weight:700;">${escH(ENSX.msg)}</div>` : ""; ENSX.msg = "";
+  const h = L.length ? L.map((it, i) => {
+    const e = it.e || {}, K = ensN(e.factor) || 1, nc = it.e ? ensAdmCambios(e).length : 0, r = e.rend || {};
+    return `<div data-ea="abrir:${i}" style="background:${C.paper};border:1.5px solid ${C.line};border-radius:14px;padding:13px 15px;margin-top:10px;cursor:pointer;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><b style="font-size:1.05rem;">${escH(e.nombre || it.code)}</b>${ensTag("por_aprobar")}</div>
+      <div style="font-size:0.8rem;color:${C.inkSoft};margin-top:2px;">${escH(e.persona || "")} · ${escH(it.desde || "")}${K !== 1 ? " · hizo ×" + K : ""}</div>
+      <div style="font-size:0.86rem;margin-top:6px;">${!it.e ? "No pude leer el detalle (ensayo muy largo)." : nc ? "✏️ " + nc + (nc === 1 ? " cambio" : " cambios") + " vs. la fórmula" : "✔️ La hizo tal cual la fórmula"}${r.peso_total ? " · salió " + escH(String(r.peso_total)) + " g" : ""}</div></div>`;
+  }).join("") : `<div style="margin-top:14px;background:#E3F3E8;border:1.5px solid #2E7D4F;border-radius:14px;padding:16px;">🎉 No hay ensayos por aprobar.</div>`;
+  w.innerHTML = cab + msg + (L.length ? `<div style="font-size:0.85rem;color:${C.inkSoft};">Toca un ensayo para revisarlo, ajustarlo y aprobarlo.</div>` : "") + h;
+}
+function ensAdmAbrir(i){
+  const it = ENSX.lista[i]; if(!it) return; ENSX.sel = it; ENSX.com = "";
+  const e = it.e;
+  if(!e){ ENSX.f = null; ENSX.quitados = []; ENSX.K = 1; ensAdmEditor(); return; }
+  const K = ensN(e.factor) || 1;
+  const f0 = it.f || {code: it.code, nombre: e.nombre || it.code, area: e.area || "", subgrupo: "", estado: "por_ensayar", duda_area: "", rinde: 1, unidad: e.unidad || "g", proteina: "", pasos: [], usos: [], nota: "", validada: "", historial: []};
+  const g = ensAplicar(f0, e), quitados = [];
+  (e.pasos || []).forEach((p, pi) => { let k = 0; (p.items || []).forEach(x => {
+    if(x.usado || x.nuevo){ const gi = g.pasos[pi].items[k++]; const fb = x.cant_base != null ? x.cant_base : (ensN(x.cant_formula) != null ? ensR(ensN(x.cant_formula) / K, 2) : null);
+      gi._h = x.nuevo ? "nuevo en el ensayo" : (fb != null ? "fórmula actual " + fb + " · " : "") + "ensayo " + x.cant + (K !== 1 ? " (×" + K + ")" : ""); }
+    else quitados.push(x.ing); }); });
+  ENSX.f = g; ENSX.quitados = quitados; ENSX.K = K; ensAdmEditor();
+}
+function ensAdmEditor(){
+  const w = document.querySelector("[data-ensadm]"); if(!w) return;
+  const it = ENSX.sel, e = it.e || {}, g = ENSX.f, K = ENSX.K, r = e.rend || {}, h = e.horno || {}, c = e.carne || {};
+  const IS = `font-family:'Work Sans',sans-serif;font-size:0.95rem;padding:8px 10px;border:1.5px solid ${C.line};border-radius:10px;background:#fff;color:${C.ink};min-width:0;`;
+  const BS = `font-family:'Work Sans',sans-serif;font-size:0.85rem;font-weight:700;background:#fff;border:1.5px solid ${C.line};border-radius:100px;padding:7px 13px;cursor:pointer;color:${C.ink};`;
+  const volver = `<button type="button" data-ea="volver" style="margin-top:18px;font-family:'Work Sans',sans-serif;font-size:0.85rem;background:none;border:none;color:${C.inkSoft};cursor:pointer;padding:6px 0;">← Volver a la lista</button>`;
+  const cambios = it.e ? ensAdmCambios(e) : [];
+  let html = volver + `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;margin:4px 0 2px;">🧪 ${escH(e.nombre || it.code)}</h2><div style="font-size:0.8rem;color:${C.inkSoft};">${escH(it.code)} · ${ensTag("por_aprobar")}</div>`;
+  html += `<div style="margin-top:12px;background:#FFF8E8;border:1.5px solid #E8D5A8;border-radius:12px;padding:12px 14px;font-size:0.9rem;line-height:1.5;">
+    <div><b>Quién:</b> ${escH(e.persona || "—")} · <b>Fecha:</b> ${escH(it.desde || "—")}${K !== 1 ? ` · <b>Hizo la fórmula ×${K}</b> (abajo se guarda la fórmula base, dividida entre ${K})` : ""}</div>
+    ${it.e ? `<div><b>Rendimiento del ensayo:</b> peso total ${escH(String(r.peso_total || "—"))} g${r.estado ? " (" + escH(r.estado) + ")" : ""} · ${escH(String(r.unidades || "—"))} ${escH(e.unidad || "unid.")} · ${escH(String(r.g_unidad || "—"))} g c/u${e.rinde_formula ? ` <span style="color:${C.inkSoft};">(fórmula: rinde ${escH(String(e.rinde_formula))})</span>` : ""}</div>` : ""}
+    ${h.temp || h.min ? `<div><b>Horno:</b> ${escH(String(h.temp || "—"))} °C · ${escH(String(h.min || "—"))} min</div>` : ""}
+    ${c.crudo ? `<div><b>Prueba de carne:</b> cruda ${escH(String(c.crudo))} g · limpia ${escH(String(c.limpio || "—"))} g · ${escH(String(c.g_crudo_porcion || "—"))} g de carne cruda por porción</div>` : ""}
+    ${e.obs ? `<div style="margin-top:4px;"><b>Observaciones:</b> ${escH(e.obs)}</div>` : ""}
+    ${cambios.length ? `<div style="margin-top:6px;"><b>Cambios vs. la fórmula:</b><br>${cambios.map(escH).join("<br>")}</div>` : (it.e ? `<div style="margin-top:6px;"><b>Cambios:</b> ninguno, la hizo tal cual.</div>` : "")}
+    ${ENSX.quitados.length ? `<div style="margin-top:4px;color:#A3252B;"><b>No usó:</b> ${ENSX.quitados.map(escH).join(", ")} (se quitan de la fórmula)</div>` : ""}</div>`;
+  if(!g){
+    html += ensAdmAviso("No pude leer el detalle de este ensayo (quedó muy largo). Puedes devolverlo a ensayar.", false) + `<div style="margin-top:14px;"><button type="button" data-ea="devolver" style="${BS}border-color:#A3252B;color:#A3252B;">↩️ Devolver a ensayar</button></div>`;
+    w.innerHTML = html; return;
+  }
+  html += `<h3 style="font-family:'Fraunces',serif;font-size:1.15rem;margin:18px 0 4px;">Fórmula base que se va a guardar</h3><div style="font-size:0.82rem;color:${C.inkSoft};">Puedes cambiar lo que quieras antes de aprobar.</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <label style="flex:2;min-width:200px;font-size:0.78rem;color:${C.inkSoft};">Nombre<input data-ai="nombre" value="${escH(g.nombre || "")}" style="${IS}width:100%;"></label>
+      <label style="flex:1;min-width:90px;font-size:0.78rem;color:${C.inkSoft};">Rinde<input data-ai="rinde" value="${escH(String(g.rinde == null ? "" : g.rinde))}" inputmode="decimal" style="${IS}width:100%;"></label>
+      <label style="flex:1;min-width:90px;font-size:0.78rem;color:${C.inkSoft};">Unidad<input data-ai="unidad" value="${escH(g.unidad || "")}" style="${IS}width:100%;"></label></div>`;
+  html += (g.pasos || []).map((p, pi) => `<div style="margin-top:12px;border:1.5px solid ${C.line};border-radius:12px;padding:10px 12px;background:${C.paper};">
+    <textarea data-ai="titulo:${pi}" rows="2" style="${IS}width:100%;font-weight:700;resize:vertical;">${escH(p.titulo || "")}</textarea>
+    ${(p.items || []).map((x, ii) => `<div style="margin-top:8px;"><div style="display:flex;gap:6px;align-items:center;">
+      <input data-ai="ing:${pi}:${ii}" value="${escH(x.ing || "")}" style="${IS}flex:1;">
+      <input data-ai="cant:${pi}:${ii}" value="${escH(String(x.cant == null ? "" : x.cant))}" inputmode="decimal" style="${IS}width:84px;text-align:right;font-weight:700;">
+      <input data-ai="u:${pi}:${ii}" value="${escH(x.u || "")}" style="${IS}width:58px;">
+      <button type="button" data-ea="delIng:${pi}:${ii}" style="${BS}padding:7px 10px;">🗑</button></div>
+      ${x._h ? `<div style="font-size:0.74rem;color:${C.inkSoft};margin:2px 0 0 4px;">${escH(x._h)}</div>` : ""}</div>`).join("")}
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;"><button type="button" data-ea="addIng:${pi}" style="${BS}">+ ingrediente</button><button type="button" data-ea="delPaso:${pi}" style="${BS}">Quitar paso</button></div></div>`).join("");
+  html += `<div style="margin-top:10px;"><button type="button" data-ea="addPaso" style="${BS}">+ Agregar paso</button></div>
+    <label style="display:block;margin-top:14px;font-size:0.78rem;color:${C.inkSoft};">Nota de la fórmula<textarea data-ai="nota" rows="3" style="${IS}width:100%;resize:vertical;">${escH(g.nota || "")}</textarea></label>
+    <label style="display:block;margin-top:10px;font-size:0.78rem;color:${C.inkSoft};">Comentario de la aprobación (opcional)<input data-ai="com" value="${escH(ENSX.com || "")}" style="${IS}width:100%;"></label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin:18px 0 30px;">
+      <button type="button" data-ea="aprobar" style="flex:1;min-width:220px;font-family:'Work Sans',sans-serif;font-size:1.05rem;font-weight:700;border:none;border-radius:14px;padding:14px;color:#fff;background:#2E7D4F;cursor:pointer;">✅ Aprobar y guardar como fórmula base</button>
+      <button type="button" data-ea="devolver" style="font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;border:1.5px solid #A3252B;border-radius:14px;padding:14px 18px;color:#A3252B;background:#fff;cursor:pointer;">↩️ Devolver a ensayar</button></div>`;
+  w.innerHTML = html;
+}
+function ensAdmInput(ev){
+  const t = ev.target, a = t && t.getAttribute ? t.getAttribute("data-ai") : null; if(!a || !ENSX.f) return;
+  const q = a.split(":"), g = ENSX.f, v = t.value;
+  if(q[0] === "nombre") g.nombre = v; else if(q[0] === "rinde") g.rinde = v; else if(q[0] === "unidad") g.unidad = v; else if(q[0] === "nota") g.nota = v; else if(q[0] === "com") ENSX.com = v;
+  else if(q[0] === "titulo") g.pasos[+q[1]].titulo = v;
+  else { const x = g.pasos[+q[1]].items[+q[2]]; if(q[0] === "ing") x.ing = v; else if(q[0] === "cant") x.cant = v; else if(q[0] === "u") x.u = v; }
+}
+function ensAdmClick(a){
+  const q = String(a).split(":"), g = ENSX.f;
+  if(q[0] === "cerrar"){ ENSX.abierto = false; ENSX.sel = null; ENSX.f = null; ensAdmPanel(); }
+  else if(q[0] === "abrirpanel"){ ensAdmLista(true); }
+  else if(q[0] === "recargar") ensAdmLista(true);
+  else if(q[0] === "volver"){ ensAdmLista(false); ensAdmVer(); }
+  else if(q[0] === "abrir"){ ensAdmAbrir(+q[1]); ensAdmVer(); }
+  else if(q[0] === "addIng" && g){ g.pasos[+q[1]].items.push({ing: "", cant: "", u: "g"}); ensAdmEditor(); }
+  else if(q[0] === "delIng" && g){ g.pasos[+q[1]].items.splice(+q[2], 1); ensAdmEditor(); }
+  else if(q[0] === "addPaso" && g){ g.pasos.push({titulo: "Nuevo paso", items: []}); ensAdmEditor(); }
+  else if(q[0] === "delPaso" && g){ if(!g.pasos[+q[1]].items.length || confirm("¿Quitar este paso con sus ingredientes?")){ g.pasos.splice(+q[1], 1); ensAdmEditor(); } }
+  else if(q[0] === "aprobar") ensAdmAprobar();
+  else if(q[0] === "devolver") ensAdmDevolver();
+}
+async function ensAdmAprobar(){
+  if(ENSX.busy || !ENSX.f || !ENSX.sel) return;
+  const it = ENSX.sel, g = JSON.parse(JSON.stringify(ENSX.f));
+  g.nombre = String(g.nombre || "").trim();
+  g.pasos = (g.pasos || []).map(p => ({titulo: String(p.titulo || "").trim(), items: (p.items || []).filter(i => String(i.ing || "").trim()).map(i => ({ing: String(i.ing).trim(), cant: ensN(i.cant) == null ? 0 : ensN(i.cant), u: String(i.u || "g").trim() || "g"}))})).filter(p => p.titulo || p.items.length);
+  if(ensN(g.rinde) != null) g.rinde = ensN(g.rinde);
+  if(!g.nombre || !g.pasos.length){ alert("Falta el nombre o los ingredientes."); return; }
+  if(!confirm("¿Aprobar «" + g.nombre + "» y guardarla como fórmula base confirmada?")) return;
+  const e = it.e || {}, K = ENSX.K, com = String(ENSX.com || "").trim();
+  const hoy = new Date().toLocaleDateString("es-CO", {timeZone: "America/Bogota"});
+  const hist = hoy + ": ensayo de " + (e.persona || "?") + " (" + (it.desde || "") + (K !== 1 ? ", ×" + K : "") + ") aprobado por Alban" + (com ? " — " + com : "");
+  ENSX.busy = true;
+  try{ const j = await recPost({tipo: "rec_ens_aprobar", clave: REC_CLAVE, id: it.id, formula: g, hist: hist, comentario: com});
+    if(j && j.ok){ ENSX.lista = ENSX.lista.filter(x => x.id !== it.id); ENSX.msg = "✅ Aprobada: " + g.nombre; ENSX.busy = false; try{ if(ENS_EST[it.code]) ENS_EST[it.code].estado = "confirmada"; }catch(x){} ensBadgeRefrescar(); try{ ensCargar(true); }catch(x){} ensAdmLista(false); ensAdmVer(); return; }
+    alert("No se pudo aprobar: " + ((j && j.error) || "error"));
+  }catch(err){ alert("Sin conexión. Intenta otra vez."); }
+  ENSX.busy = false;
+}
+async function ensAdmDevolver(){
+  if(ENSX.busy || !ENSX.sel) return;
+  const com = prompt("¿Qué hay que corregir? (lo ve el operador)"); if(com == null) return;
+  if(!String(com).trim()){ alert("Escribe qué hay que corregir."); return; }
+  const it = ENSX.sel; ENSX.busy = true;
+  try{ const j = await recPost({tipo: "rec_ens_rechazar", clave: REC_CLAVE, id: it.id, comentario: String(com).trim()});
+    if(j && j.ok){ ENSX.lista = ENSX.lista.filter(x => x.id !== it.id); ENSX.msg = "↩️ Devuelta a ensayar: " + ((it.e && it.e.nombre) || it.code); ENSX.busy = false; try{ if(ENS_EST[it.code]) ENS_EST[it.code].estado = "por_ensayar"; }catch(x){} ensBadgeRefrescar(); ensAdmLista(false); ensAdmVer(); return; }
+    alert("No se pudo devolver: " + ((j && j.error) || "error"));
+  }catch(err){ alert("Sin conexión. Intenta otra vez."); }
+  ENSX.busy = false;
+}
 function renderRecetarioAdm(){
   setAccent("ALL"); tintPage("ALL");
   ["days","cats","aviso","adelantos"].forEach(id => { const x = document.getElementById(id); if(x){ x.innerHTML = ""; x.style.display = "none"; } });
@@ -1727,6 +1902,7 @@ function renderRecetarioAdm(){
       <span style="font-size:0.82rem;color:${C.inkSoft};">Backup en Google Sheet (Drive › Produccion Parisina Backup). Se actualiza solo cada hora.</span></span>
     <a href="${REC_SHEET_URL}" target="_blank" rel="noopener" style="font-family:'Work Sans',sans-serif;font-size:0.95rem;font-weight:700;background:#1E7B45;color:#fff;border-radius:100px;padding:10px 16px;text-decoration:none;">📊 Abrir backup</a>`;
   w.appendChild(h);
+  w.appendChild(ensAdmMontar());   // Alban 24 nov: ensayos por aprobar, dentro del Recetario
   w.appendChild(recEquiposEl());   // Alban 11 nov
   w.appendChild(armadoEl());
   w.appendChild(ensSeccionEl());
@@ -2719,10 +2895,11 @@ function renderHome(){
     rB.innerHTML = `<span style="font-size:2.2rem;line-height:1;">📖</span>
       <span style="display:flex;flex-direction:column;gap:3px;">
         <span style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;">Recetario</span>
-        <span style="font-size:0.8rem;color:${C.inkSoft};">Todas las fórmulas · backup</span>
-      </span>`;
+        <span data-enssub style="font-size:0.8rem;color:${C.inkSoft};">Todas las fórmulas · backup</span>
+      </span><span data-ensbadge style="display:none;position:absolute;top:-9px;right:-6px;min-width:30px;height:30px;padding:0 8px;border-radius:100px;background:#A3252B;color:#fff;font-weight:800;font-size:0.95rem;align-items:center;justify-content:center;box-shadow:0 0 0 3px #fff;"></span>`;
+    rB.setAttribute("data-enscard", "1"); rB.style.position = "relative";   // Alban 24 nov: avisito rojo con los ensayos por aprobar
     rB.onclick = ()=>{ activeCat = "RECETARIO"; render(); window.scrollTo(0,0); };
-    grid.appendChild(rB); }
+    grid.appendChild(rB); ensBadgePintar(ensPendContar()); ensBadgeRefrescar(); }
   // Alban 20 nov: tarjeta "Evaluación" (capacitación semanal: manipulación de alimentos y SST)
   if(usrYo() || usrEsAdmin()) { const eB = document.createElement("button");
     eB.setAttribute("style", `text-align:left;font-family:'Work Sans',sans-serif;background:${C.paper};border:2px solid #2E7D4F;border-radius:18px;padding:22px 20px;cursor:pointer;color:${C.ink};display:flex;align-items:center;gap:16px;min-height:104px;`);
