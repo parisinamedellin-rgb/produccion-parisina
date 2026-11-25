@@ -4983,22 +4983,61 @@ function logParada(p){
   if(m){ try{ return decodeURIComponent(m[1].replace(/\+/g," ")); }catch(e){} }
   return [p.dir, (p.barrio || "").split(" - ")[0], "Antioquia, Colombia"].filter(Boolean).join(", ");
 }
+// Alban 25 nov: los mensajeros van por NOMBRE (lista de la app de mensajeros, laparisina.co/mensajeria) y sin reparto automático:
+// cada comanda queda sin mensajero hasta que Logística toca el nombre. Al tocar "Enviar", la comanda le aparece al mensajero en su app.
+const MSJ_API = "https://script.google.com/macros/s/AKfycbyjWJmS27F81rPi7_GiqlW-DviWmvnDsoJ1-VQTQndMd4dzJde2TFp3WQH1XrYCHwVMEw/exec", MSJ_KEY = "log-parisina-2026";
+let MSJ = [], MSJ_T = 0;
+try{ MSJ = JSON.parse(lsGet("msj_lista") || "[]") || []; }catch(e){ MSJ = []; }
+function msjLista(){
+  const cnt = {};
+  MSJ.forEach(m=>{ const f = String(m.nombre || "").trim().split(/\s+/)[0]; cnt[f] = (cnt[f] || 0) + 1; });
+  return MSJ.map(m=>{ const w = String(m.nombre || "").trim().split(/\s+/); return {id: String(m.id), nombre: String(m.nombre || ""), corto: cnt[w[0]] > 1 && w[1] ? w[0] + " " + w[1] : w[0]}; });
+}
+function msjNombre(id){ const m = msjLista().find(x=>x.id === String(id)); return m ? m.corto : ""; }
+function msjCargar(){
+  if(Date.now() - MSJ_T < 10 * 60 * 1000 || typeof fetch !== "function") return;
+  MSJ_T = Date.now();
+  try{ fetch(MSJ_API + "?api=mensajeros", {redirect: "follow"}).then(r=>r.json()).then(j=>{
+    if(!(j && j.ok && Array.isArray(j.mensajeros))) return;
+    const a = JSON.stringify(j.mensajeros);
+    if(a !== JSON.stringify(MSJ)){ MSJ = j.mensajeros; lsSet("msj_lista", a); if(typeof LOGM !== "undefined" && LOGM.includes(activeCat)) render(); }
+  }).catch(()=>{ MSJ_T = 0; }); }catch(e){ MSJ_T = 0; }
+}
+async function msjApi(params){
+  for(let i = 0; i < 3; i++){
+    try{ const r = await fetch(MSJ_API + "?k=" + encodeURIComponent(MSJ_KEY) + "&" + params, {redirect: "follow"}); const j = await r.json(); if(j) return j; }catch(e){}
+    await new Promise(r=>setTimeout(r, 1500));
+  }
+  return {ok: false, error: "red"};
+}
+function msjAviso(html){
+  const m = capaModal(`<div style="font-size:1.05rem;line-height:1.5;">${html}</div><button type="button" style="margin-top:14px;font-family:'Work Sans',sans-serif;font-size:1rem;font-weight:700;background:${C.ink};color:#fff;border:none;border-radius:12px;padding:11px 22px;cursor:pointer;">Entendido</button>`, "#B3261E");
+  m.querySelector("button").onclick = ()=>m.remove();
+}
+function msjDe(iso, n){ const id = ((LOG_STATE.ruta || {})[iso] || {})[n]; return id != null && msjNombre(id) ? String(id) : ""; }
+// Enviar / regresar un pedido: marca el estado y avisa a la app del mensajero
+function pedEnviar(iso, p, enviar){
+  const id = msjDe(iso, p.n);
+  empGuardar(iso, d=>{ if(enviar) d.env[p.n] = true; else delete d.env[p.n]; });
+  if(p.rec) return;
+  if(enviar && id) msjApi("api=salida&m=" + encodeURIComponent(id) + "&n=" + encodeURIComponent(p.n)).then(j=>{
+    if(!j.ok) msjAviso(`⚠️ No se pudo avisar a la app de <b>${logEsc(msjNombre(id))}</b> (comanda #${logEsc(p.n)}).<br>Que la registre a mano en su app.`); });
+  if(!enviar) msjApi("api=anular&n=" + encodeURIComponent(p.n));
+}
 function logRutas(iso){
+  msjCargar();
   const ped = logPedidos(iso);
   const rec = ped.filter(p=>p.rec), sinDir = ped.filter(p=>!p.rec && !p.dir && !p.maps);
   const env = ped.filter(p=>!p.rec && (p.dir || p.maps));
   const man = (LOG_STATE.ruta || {})[iso] || {};
-  const r = {1:[], 2:[]};
-  env.forEach(p=>{ const k = man[p.n] || (ZONAS_SUR.has(p.zona) ? 2 : 1); r[k].push(p); });
-  // si todo cayó en un solo mensajero, se reparte por zona (mitad y mitad), salvo que se haya movido a mano
-  if((!r[1].length || !r[2].length) && env.length > 3 && !Object.keys(man).length){
-    const todos = [...r[1], ...r[2]].sort((a,b)=>(a.zona||99)-(b.zona||99));
-    const mitad = Math.ceil(todos.length / 2);
-    r[1] = todos.slice(0, mitad); r[2] = todos.slice(mitad);
-  }
+  const L = msjLista(), r = {}, sinMsj = [];
+  L.forEach(m=>{ r[m.id] = []; });
+  env.forEach(p=>{ const k = man[p.n]; if(k != null && r[String(k)]) r[String(k)].push(p); else sinMsj.push(p); });
   const orden = (a,b)=> (a.h || "99") < (b.h || "99") ? -1 : (a.h || "99") > (b.h || "99") ? 1 : (a.zona||99) - (b.zona||99);
-  r[1].sort(orden); r[2].sort(orden);
-  return {r, rec, sinDir};
+  L.forEach(m=>r[m.id].sort(orden)); sinMsj.sort(orden);
+  // compatibilidad con la vista vieja "Ruta" (oculta): 1 y 2 = los dos primeros mensajeros de la lista
+  [1,2].forEach(k=>{ if(!(k in r)) Object.defineProperty(r, k, {value: (L[k-1] && r[L[k-1].id]) || [], enumerable: false}); });
+  return {r, rec, sinDir, sinMsj, L};
 }
 function logLinksRuta(lista){
   // Google Maps admite 9 paradas intermedias por enlace: si hay más, se parte en varios tramos
@@ -5013,7 +5052,10 @@ function logLinksRuta(lista){
 async function logMover(iso, n, a){
   LOG_STATE.ruta = LOG_STATE.ruta || {};
   const m = Object.assign({}, LOG_STATE.ruta[iso] || {});
-  m[n] = a;
+  const antes = m[n];
+  if(String(antes) === String(a)) delete m[n]; else m[n] = a;   // Alban 25 nov: tocar el mismo nombre otra vez = quitar el mensajero
+  // si el pedido ya estaba enviado, se le quita al mensajero anterior y se le pasa al nuevo en su app
+  try{ if(typeof empDia === "function" && empDia(iso).env[n]){ const nuevoId = m[n]; msjApi("api=anular&n=" + encodeURIComponent(n)).then(()=>{ if(nuevoId != null && msjNombre(nuevoId)) return msjApi("api=salida&m=" + encodeURIComponent(nuevoId) + "&n=" + encodeURIComponent(n)); }); } }catch(e){}
   // se guardan solo los días de hoy en adelante
   const hoy = hoyISO(), nuevo = {};
   Object.keys(LOG_STATE.ruta).forEach(d=>{ if(d >= hoy) nuevo[d] = LOG_STATE.ruta[d]; });
@@ -6052,7 +6094,7 @@ function renderTablero(main, col){
       box.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           ${p.h ? `<span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;background:${info.c};color:#fff;border-radius:6px;padding:2px 7px;">${p.h}</span>` : ""}
           <span style="flex:1;font-weight:700;font-size:0.9rem;line-height:1.25;">${logEsc(p.cli)}</span>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};white-space:nowrap;">#${logEsc(p.n)}${p.rec ? " · 🏠" : a ? " · 🛵" + a : ""}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:${C.inkSoft};white-space:nowrap;">#${logEsc(p.n)}${p.rec ? " · 🏠" : a ? " · 🛵 " + logEsc(a) : ""}</span>
         </div>` + bulLinea(f) + its.map(i=>`<div style="display:flex;align-items:center;gap:8px;padding:3px 0;font-size:0.88rem;">
           ${conCasilla ? `<button type="button" data-e="${i.ix}" style="width:24px;height:24px;flex:none;border-radius:6px;border:1.5px solid ${info.c};background:#fff;cursor:pointer;padding:0;"></button>` : `<span style="width:8px;height:8px;border-radius:50%;background:${info.c};flex:none;margin:0 8px;"></span>`}
           <span style="font-family:'IBM Plex Mono',monospace;font-weight:700;min-width:2.2em;text-align:right;">${fmtN(i.q)}</span>
@@ -6077,9 +6119,9 @@ function renderTablero(main, col){
     const r = document.createElement("div");
     r.setAttribute("style", `display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid ${C.line};`);
     r.innerHTML = `${p.h ? `<span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;background:${EST_INFO.LISTO.c};color:#fff;border-radius:6px;padding:2px 7px;">${p.h}</span>` : ""}
-      <span style="flex:1;font-weight:700;font-size:0.9rem;">${logEsc(p.cli)}<span style="display:block;font-weight:400;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)} · ${p.rec ? "🏠 Recoge" : a ? "🛵 Mensajero " + a : "sin mensajero"}</span></span>
+      <span style="flex:1;font-weight:700;font-size:0.9rem;">${logEsc(p.cli)}<span style="display:block;font-weight:400;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)} · ${p.rec ? "🏠 Recoge" : a ? "🛵 " + logEsc(a) : "sin mensajero"}</span></span>
       <button type="button" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:8px 12px;border-radius:8px;border:none;background:${EST_INFO.ENV.c};color:#fff;cursor:pointer;">🛵 Enviar</button>`;
-    r.querySelector("button").onclick = ()=>empGuardar(iso, d=>{ d.env[p.n] = true; });
+    r.querySelector("button").onclick = ()=>{ if(!p.rec && (p.dir || p.maps) && !a){ msjAviso("🛵 Elige primero el <b>mensajero</b> de la comanda #" + logEsc(p.n) + " en <b>Pedidos</b>."); return; } pedEnviar(iso, p, true); };
     const bl = bulLinea(f);
     if(bl){ r.style.flexWrap = "wrap"; const x = document.createElement("div"); x.setAttribute("style", "flex-basis:100%;"); x.innerHTML = bl; r.appendChild(x); }
     L.appendChild(r);
@@ -6107,26 +6149,24 @@ function bulLinea(f){
 }
 // mensajero asignado (1 / 2) según Entregas
 function asignacion(iso, n){
-  const {r} = logRutas(iso);
-  if(r[1].some(p=>p.n === n)) return 1;
-  if(r[2].some(p=>p.n === n)) return 2;
-  return 0;
+  const id = msjDe(iso, n);
+  return id ? msjNombre(id) : 0;   // Alban 25 nov: nombre del mensajero (o 0 si no tiene)
 }
 function renderPedidos(main, col){
-  const iso = activeDate, {r, rec, sinDir} = logRutas(iso);
+  const iso = activeDate, {r, rec, sinDir, sinMsj, L: MSJL} = logRutas(iso);
   const asig = {};
-  [1,2].forEach(k=>r[k].forEach((p,i)=>{ asig[p.n] = {m:k, i:i+1}; }));
+  MSJL.forEach(m=>r[m.id].forEach((p,i)=>{ asig[p.n] = {m:m.id, nom:m.corto, i:i+1}; }));
   const orden = (a,b)=> (a.h || "99") < (b.h || "99") ? -1 : (a.h || "99") > (b.h || "99") ? 1 : (a.zona||99) - (b.zona||99);
   const todos = logPedidos(iso).slice().sort(orden);
   const FL = {}; todos.forEach(p=>{ FL[p.n] = pedFlujo(iso, p); });   // Alban 9 oct: hecho → empacado → enviado
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Pedidos</h2>
-    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">${todos.length} ${todos.length === 1 ? "comanda" : "comandas"} en orden de entrega. Toca 🛵 1 o 🛵 2 para asignar el mensajero (se cambia también en Entregas).</div>`;
+    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">${todos.length} ${todos.length === 1 ? "comanda" : "comandas"} en orden de entrega. Toca el nombre del 🛵 mensajero para asignarlo. Al tocar <b>Enviar</b>, la comanda le aparece en su app.</div>`;
   main.appendChild(head);
   const fil = document.createElement("div");
   fil.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
-  [["T","Todos",todos.length],["1","🛵 Mensajero 1",r[1].length],["2","🛵 Mensajero 2",r[2].length],["R","🏠 Recogen",rec.length]].forEach(([k,l,n])=>{
+  [["T","Todos",todos.length]].concat(MSJL.map(m=>[m.id, "🛵 " + m.corto, r[m.id].length]), [["S","⚠️ Sin mensajero",sinMsj.length],["R","🏠 Recogen",rec.length]]).forEach(([k,l,n])=>{
     const on = PED_FILTRO === k, b = document.createElement("button");
     b.type = "button"; b.textContent = `${l} · ${n}`;
     b.setAttribute("style", `font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;padding:8px 13px;border-radius:100px;border:1.5px solid ${on ? col.a : C.line};background:${on ? col.a : C.paper};color:${on ? "#fff" : C.ink};cursor:pointer;`);
@@ -6168,7 +6208,7 @@ function renderPedidos(main, col){
   main.appendChild(bus);
   const qIn = bus.querySelector(".pq"), qX = bus.querySelector(".px"), qS = bus.querySelector(".ps"), qR = bus.querySelector(".pr"), qC = bus.querySelector(".pc");
   qIn.value = PED_Q;
-  const lista = todos.filter(p=> (PED_FILTRO === "T" || (PED_FILTRO === "R" ? p.rec : asig[p.n] && String(asig[p.n].m) === PED_FILTRO)) && (PED_EST === "T" || FL[p.n].est === PED_EST));
+  const lista = todos.filter(p=> (PED_FILTRO === "T" || (PED_FILTRO === "R" ? p.rec : PED_FILTRO === "S" ? sinMsj.includes(p) : asig[p.n] && String(asig[p.n].m) === PED_FILTRO)) && (PED_EST === "T" || FL[p.n].est === PED_EST));
   if(!lista.length){ const v = document.createElement("div"); v.setAttribute("style", `font-size:0.9rem;color:${C.inkSoft};font-style:italic;padding:16px 4px;`); v.textContent = "No hay pedidos aquí."; main.appendChild(v); return; }
   const din = n=> "$" + Math.round(Number(n) || 0).toLocaleString("es-CO");
   const wrap = document.createElement("div");
@@ -6197,7 +6237,7 @@ function renderPedidos(main, col){
     }).join("");
     const estado = p.rec ? `<span style="color:#2E6B3A;">🏠 Recoge en Parisina</span>`
       : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>`
-      : a ? `<span style="color:${col.a};">🛵 Mensajero ${a.m} · parada ${a.i}</span>` : "";
+      : a ? `<span style="color:${col.a};">🛵 ${logEsc(a.nom)} · parada ${a.i}</span>` : `<span style="color:#B3261E;">⚠️ Sin mensajero</span>`;
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700;font-size:1.05rem;"><span>${logEsc(String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."))}</span><span style="text-align:right;">${logEsc(p.cod)}${p.h ? ` <span style="font-size:0.9rem;color:#222;white-space:nowrap;">${p.cod ? "· " : ""}🕐 ${logEsc(p.h)}</span>` : ""}</span></div>
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:#666;margin-top:2px;"><span>${iso.split("-").reverse().map(Number).join("/")}</span>${p.h && !fl.env ? `<span data-cd="${Date.parse(iso + "T" + p.h + ":00-05:00")}" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;white-space:nowrap;"></span>` : ""}</div>   ${""/* Alban 25 nov: cuenta regresiva hasta la hora del pedido */}
@@ -6222,22 +6262,23 @@ function renderPedidos(main, col){
         ${p.horario ? `<div style="font-size:0.72rem;color:#666;">Horario: ${logEsc(p.horario)}</div>` : ""}
       </div>
       <div style="flex:1;"></div>
-      <div style="margin-top:10px;padding-top:9px;border-top:1px solid ${C.line};display:flex;align-items:center;gap:8px;font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;">
+      <div style="margin-top:10px;padding-top:9px;border-top:1px solid ${C.line};display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;">
         <span style="flex:1;">${estado}</span>
         <button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? "🛵 Enviado ✓ · ↩️" : "Enviar"}</button>
         ${p.maps ? `<a href="${logEsc(p.maps)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:1.1rem;" title="Abrir en Maps">📍</a>` : ""}
-        ${!p.rec && !sd ? [1,2].map(k=>`<button type="button" data-m="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === k ? col.a : "#fff"};color:${a && a.m === k ? "#fff" : col.a};cursor:pointer;">🛵 ${k}</button>`).join("") : ""}
+        ${!p.rec && !sd ? `<span style="flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;"><span style="font-size:1rem;">🛵</span>` + (MSJL.length ? MSJL.map(m=>`<button type="button" data-m="${logEsc(m.id)}" title="${logEsc(m.nombre)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === m.id ? col.a : "#fff"};color:${a && a.m === m.id ? "#fff" : col.a};cursor:pointer;">${logEsc(m.corto)}</button>`).join("") : `<span style="font-weight:500;color:${C.inkSoft};">cargando mensajeros…</span>`) + `</span>` : ""}
       </div>`;
-    card.querySelectorAll("button[data-m]").forEach(b=>{ b.onclick = ()=>logMover(iso, p.n, Number(b.dataset.m)); });
+    card.querySelectorAll("button[data-m]").forEach(b=>{ b.onclick = ()=>logMover(iso, p.n, b.dataset.m); });
     card.querySelectorAll("button[data-e]").forEach(b=>{ b.onclick = ()=>{
       const it = fl.its[Number(b.dataset.e)], k = empKey(p.n, it.nm), v = !it.emp;
       empGuardar(iso, d=>{ if(v) d.emp[k] = true; else delete d.emp[k]; });
     }; });
     card.querySelector(".envb").onclick = ()=>{
       const eb = card.querySelector(".envb");
+      if(!fl.env && !p.rec && !sd && !a){ eb.textContent = "🛵 Elige primero el mensajero"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 25 nov
       if(!fl.env && fl.est !== "LISTO" && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "¿Enviar sin estar listo? Toca otra vez"; eb.style.background = "#FDECEA"; return; }
       if(fl.env && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "↩️ ¿Regresar a NO enviados? Toca otra vez"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 4 nov: producto dañado / faltó algo
-      empGuardar(iso, d=>{ if(fl.env) delete d.env[p.n]; else d.env[p.n] = true; });
+      pedEnviar(iso, p, !fl.env);
     };
     card.dataset.s = pedNorm([p.n, String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."), p.cod, p.cli, p.para, p.dir, p.comp, p.barrio, p.nota].concat((p.todo || p.items || []).map(x=>x[1] + " " + x[0])).join(" | "));
     card.dataset.cli = pedNorm([p.n, p.cod, p.cli, p.para].join(" "));
