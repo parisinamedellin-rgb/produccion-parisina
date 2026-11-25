@@ -5714,11 +5714,37 @@ function esPanPan(iso, cod, nm){
   return !!(u && u.some(([g, sub])=>g === "Panaderia" && sub === "Panes"));
 }
 // resumen de un pedido
+// Alban 25 nov: en el Tablero de tortas cada palito es una torta, pero el chulo de la torta solo se marcaba al tachar TODAS.
+// Ahora Logística reparte las tortas ya tachadas entre los pedidos, en orden de entrega: un pedido sale "hecho" cuando le alcanzan.
+function tortEstadoPed(iso, p, cod, nm){
+  const map = ubicaciones(iso), pr = (typeof LOGISTICA !== "undefined" && LOGISTICA.prod) || {};
+  let u = map[String(nm).trim()];
+  if(!u && pr[cod]) u = map[String(pr[cod][0]).trim()];
+  const tu = (u || []).filter(([g])=>g === "Tortas");
+  if(!tu.length) return null;
+  const n0 = String(tu[0][2]).trim(), day = (DATA[iso] || {}).Tortas || {};
+  let tot = 0, hech = 0;
+  tu.forEach(([g, sub, n])=>{ const b = [iso, g, sub, n].join("::"), q = Math.max(0, Math.round(((day[sub] || []).find(x=>x[0] === n) || [0, 0])[1]));
+    tot += q; hech += COMPLETED[b] ? q : tortHechas(b, q); });
+  if(tot && hech >= tot) return "hecho";
+  if(!hech) return "falta";
+  const es = x=>[x[1], pr[x[0]] && pr[x[0]][0]].some(t=>t && String(t).trim() === n0);
+  let resto = hech;
+  for(const o of logPedidos(iso)){
+    for(const it of (o.todo || o.items || []).filter(es)){
+      const q = Number(it[2]) || 0;
+      if(String(o.n) === String(p.n) && String(it[1]) === String(nm)) return resto >= q ? "hecho" : "falta";
+      resto -= q;
+    }
+  }
+  return "falta";
+}
 function pedFlujo(iso, p){
   const d = empDia(iso);
   const its = (p.todo || p.items || []).map(([c, nm, q])=>{
     const emp = !!d.emp[empKey(p.n, nm)];
     let prod = prodEstado(iso, p.h, c, nm);
+    const pt = tortEstadoPed(iso, p, c, nm); if(pt) prod = pt;   // Alban 25 nov: tortas por palitos del tablero
     if(emp && prod === "falta") prod = "hecho";   // si ya se empacó, ya estaba hecho
     const cong = esCongeladoPan(iso, c, nm);
     return {c, nm, q, prod, emp, cong, pan: cong && esPanPan(iso, c, nm)};
