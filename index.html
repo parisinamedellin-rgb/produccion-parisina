@@ -5739,6 +5739,26 @@ function tortEstadoPed(iso, p, cod, nm){
   }
   return "falta";
 }
+// Alban 25 nov: cuenta regresiva en cada comanda (Logística › Pedidos), se actualiza cada segundo
+function pedCuentaTick(){
+  const ahora = Date.now();
+  document.querySelectorAll("[data-cd]").forEach(el => {
+    const t = Number(el.dataset.cd); if(!t) return;
+    let s = Math.round((t - ahora) / 1000), txt, c;
+    if(s > 24 * 3600){ el.textContent = ""; return; }
+    if(s >= 0){
+      const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), ss = s % 60;
+      txt = "⏳ " + (h ? h + " h " + String(m).padStart(2, "0") + " min" : m + " min " + String(ss).padStart(2, "0") + " s");
+      c = s <= 15 * 60 ? "#B3261E" : s <= 60 * 60 ? "#C4791E" : "#2E6B3A";
+    } else {
+      s = -s; const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60);
+      txt = "⚠️ Atrasado " + (h ? h + " h " + String(m).padStart(2, "0") + " min" : m + " min"); c = "#B3261E";
+    }
+    if(el.textContent !== txt) el.textContent = txt;
+    el.style.color = c;
+  });
+}
+if(!window._pedCuenta){ window._pedCuenta = setInterval(pedCuentaTick, 1000); }
 function pedFlujo(iso, p){
   const d = empDia(iso);
   const its = (p.todo || p.items || []).map(([c, nm, q])=>{
@@ -6179,8 +6199,8 @@ function renderPedidos(main, col){
       : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>`
       : a ? `<span style="color:${col.a};">🛵 Mensajero ${a.m} · parada ${a.i}</span>` : "";
     card.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:1.05rem;"><span>${logEsc(String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."))}</span><span>${logEsc(p.cod)}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#666;margin-top:2px;"><span>${iso.split("-").reverse().map(Number).join("/")}</span><span style="font-weight:700;color:#222;font-size:0.9rem;">${p.h ? "🕐 " + p.h : ""}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700;font-size:1.05rem;"><span>${logEsc(String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."))}</span><span style="text-align:right;">${logEsc(p.cod)}${p.h ? ` <span style="font-size:0.9rem;color:#222;white-space:nowrap;">${p.cod ? "· " : ""}🕐 ${logEsc(p.h)}</span>` : ""}</span></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:#666;margin-top:2px;"><span>${iso.split("-").reverse().map(Number).join("/")}</span>${p.h && !fl.env ? `<span data-cd="${Date.parse(iso + "T" + p.h + ":00-05:00")}" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;white-space:nowrap;"></span>` : ""}</div>   ${""/* Alban 25 nov: cuenta regresiva hasta la hora del pedido */}
       ${""/* aviso de pago quitado por Alban 6 oct */}
       <div style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;color:${ei.c};background:${ei.bg};border-radius:8px;padding:6px 10px;">
         <span>${ei.e} ${ei.t}</span>
