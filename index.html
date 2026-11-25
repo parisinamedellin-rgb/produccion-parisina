@@ -6237,7 +6237,7 @@ function renderPedidos(main, col){
     }).join("");
     const estado = p.rec ? `<span style="color:#2E6B3A;">🏠 Recoge en Parisina</span>`
       : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>`
-      : a ? `<span style="color:${col.a};">🛵 ${logEsc(a.nom)} · parada ${a.i}</span>` : `<span style="color:#B3261E;">⚠️ Sin mensajero</span>`;
+      : a ? `<span style="color:${col.a};">🛵 ${logEsc(a.nom)} · parada ${a.i}</span>` : "";   // Alban 25 nov: sin el texto "Sin mensajero"
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700;font-size:1.05rem;"><span>${logEsc(String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."))}</span><span style="text-align:right;">${logEsc(p.cod)}${p.h ? ` <span style="font-size:0.9rem;color:#222;white-space:nowrap;">${p.cod ? "· " : ""}🕐 ${logEsc(p.h)}</span>` : ""}</span></div>
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:#666;margin-top:2px;"><span>${iso.split("-").reverse().map(Number).join("/")}</span>${p.h && !fl.env ? `<span data-cd="${Date.parse(iso + "T" + p.h + ":00-05:00")}" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;white-space:nowrap;"></span>` : ""}</div>   ${""/* Alban 25 nov: cuenta regresiva hasta la hora del pedido */}
@@ -7737,7 +7737,7 @@ function aseoDelArea(fam, iso){
   return (ASEO_EQUIPO_DEF[fam] || []).map(n=>({nom: n, zona: aseoZona(aseoPuesto(n), iso)}));
 }
 function aseoExtras(fam, iso){ const w = aseoW(iso), out = [];
-  if((w % 2 === 0 && fam === "Panaderia") || (w % 2 !== 0 && fam === "Batido")) out.push("Congelador 5 esta semana");
+  if((w % 2 === 0 && fam === "Panaderia") || (w % 2 !== 0 && fam === "Batido")) out.push("Congelador 4 esta semana");
   return out; }
 function aseoDetalleHTML(zona){
   const t = ASEO_TAREAS[zona], sab = new Date(hoyISO() + "T12:00:00").getDay() === 6;
@@ -8427,7 +8427,7 @@ function sanTareasDe(p, fam){
   const ex = aseoExtras(fam);
   // Alban 3 nov: cada tarea empieza con el lugar ("Cuarto de aseo – …", "Agua – …", "Temperatura – …", "Hornos – …")
   const pre = (z, x) => (z === "Cuarto de aseo, agua y temperatura" ? (/pH|cloro|color seg|recipiente de la muestra/i.test(x) ? "Agua" : /temperatura|term[oó]metro/i.test(x) ? "Temperatura" : "Cuarto de aseo") : z) + " – " + x;
-  return {zona: p.zona, d: (t.d || []).filter(t => !esPlan(t)).map(x => pre(p.zona, x)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 5 (esta semana le toca a esta área)"] : []), pl: PLR};
+  return {zona: p.zona, d: (t.d || []).filter(t => !esPlan(t)).map(x => pre(p.zona, x)), s: (t.s || []).concat(ex.length ? ["Limpieza completa del congelador 4 (esta semana le toca a esta área)"] : []), pl: PLR};
 }
 function sanPlanEstado(w){
   // Alban 4 nov: debajo de "Enviar check del turno", aviso de las planillas obligatorias que faltan
@@ -8923,29 +8923,30 @@ function callSeccionBind(w){ w.querySelectorAll(".c-call").forEach(b => b.onclic
 const PLAN_API = "https://script.google.com/macros/s/AKfycbwoMqguxKxvNB5T3EZ5XetV_sUBX2iQ-WhG234nEBg8X6aj_b74U293tTwjYbYCcnjN/exec";
 // Alban 3 nov: lista alineada con las fichas de químicos (sin Aerowash ni Soft Care Plus Foam; Break Up Chlor → Hipoclorito 15 %)
 const PLAN_QUIM = [["1","Detergente industrial pH neutro (multiusos)"],["2","Suma Grill (desengrasante)"],["3","Suma Sanitizer (desinfectante)"],["4","Suma Eden (frutas, verduras y huevos)"],["5","Hipoclorito de sodio 15 % (desinfectar)"],["6","Detergente ácido industrial (desengrasar)"],["7","Jabón líquido neutro (manos)"]];
-const PLAN_EQUIPOS_FRIO = ["Nevera #1","Nevera #4","Nevera #8","Nevera #11","Congelador #2","Congelador #3","Congelador #5","Congelador #6","Congelador #7","Congelador #9","Congelador #10"];
+// Alban 25 nov: números nuevos de los equipos de frío (antes → ahora): 1→1 · 3→2 · 4→3 · 5→4 · 6→5 · 7→6 · 8→7 · 10→8 · 2→9 · 9→10 · 11→11
+const PLAN_EQUIPOS_FRIO = ["Nevera #1","Congelador #2","Nevera #3","Congelador #4","Congelador #5","Congelador #6","Nevera #7","Congelador #8","Congelador #9","Congelador #10","Nevera #11"];
 const PLANILLAS = [
   {id:"ASEO_BAT", cod:"PLD-F-02", t:"Control de aseo – Batido", quien:{area:"Batido"}, tipo:"aseo", items:[
     ["Bowl grande, pequeño y plano",7],["Canastas de huevos",43],["Canastas, canecas",4],["Moldes tortas",70],["Espátula codo, miserable, cuchillo sierra, liras, globo de mano",8],
     ["Paredes"],["Piso",1],["Mesones, repisas",4],["Diluidores, mangueras, tarros de almacenamiento",4],["Lavaplatos, jabonera",2],["Timer",1],["Canecas residuos",1],["Tomas eléctricos",1],["Esponjas y trapos",4],
-    ["Selladora, calculadora, báscula",3],["Batidora 20 L, rejilla, base",2],["Congelador #5",1],["Congelador #6",1],["Congelador #9",1]]},
+    ["Selladora, calculadora, báscula",3],["Batidora 20 L, rejilla, base",2],["Congelador #4",1],["Congelador #5",1],["Congelador #10",1]]},
   {id:"ASEO_SAL", cod:"PLD-F-02", t:"Control de aseo – Comida de sal", quien:{area:"Comida de sal"}, tipo:"aseo", items:[
     ["Bowl, ollas, sartenes"],["Jarras, vasos, platos"],["Tijeras, espátulas, cuchillos, cucharas, tenedores, miserables, brochas, cortadores, moldes, otros"],["Tablas para picar"],
     ["Paredes"],["Piso",1],["Lavaplatos, mesón, repisas, jabonera",4],["Estufa, parrillas, quemadores",6],["Canecas de residuos",2],["Canastas",2],["Esponjas y trapos",4],["Tomas eléctricos, timer, calculadora",4],
-    ["Licuadora",2],["Mixer",1],["Microondas, plato",2],["Selladora",1],["Báscula",1],["Procesadora",1],["Nevera #11",1],["Congelador #7",1]]},
+    ["Licuadora",2],["Mixer",1],["Microondas, plato",2],["Selladora",1],["Báscula",1],["Procesadora",1],["Nevera #11",1],["Congelador #6",1]]},
   {id:"ASEO_DES", cod:"PLD-F-02", t:"Control de aseo – Despacho", quien:{area:"Logistica"}, tipo:"aseo", items:[
-    ["Tijeras",1],["Cinta",1],["Paredes"],["Piso",1],["Mesón",1],["Tomas eléctricos",4],["Basurera blanca",1],["Repisas",2],["Cortinas",1],["Nevera #4",1],["Portátil, base, cables",3],["Impresora, cables",2]]},
+    ["Tijeras",1],["Cinta",1],["Paredes"],["Piso",1],["Mesón",1],["Tomas eléctricos",4],["Basurera blanca",1],["Repisas",2],["Cortinas",1],["Nevera #3",1],["Portátil, base, cables",3],["Impresora, cables",2]]},
   {id:"ASEO_MAN", cod:"PLD-F-02", t:"Control de aseo – Zona de manipulación de alimentos", quien:{aseo:true}, tipo:"aseo", items:[
     ["Extintores",2],["Ventanas (repostería, despacho, hornos, cuarto de aseo)",4],["Tomas eléctricos"],["Bandejas",10],["Horno 1",1],["Horno 2",1],["Horno 3",1],["Campana, estufa, hornillas",3],["Carretillas",1],["Cuarto de aseo",1],["Base de los bultos",1],
     ["Techos y mallas (bodega plásticos, batidos, despacho)",4],["Ambiente"],["Ventiladores",4],["Impresoras, monitores, cables, portátil",5],["Microondas, plato",2],["Diluidores, mangueras, tarros de almacenamiento",6],["Nevera #1",1]]},
   {id:"ASEO_PAN", cod:"PLD-F-02", t:"Control de aseo – Panadería", quien:{area:"Panaderia"}, tipo:"aseo", items:[
     ["Cuchillos, cubiertos, cucharas medidoras, espátulas, brocha, raspadoras, cortadores pizza, rodillos, cortadores pasteles",14],["Moldes plásticos",5],["Moldes de aluminio",5],["Reglas",3],["Rodillo hojaldre",1],["Tabla blanca",1],
     ["Paredes"],["Lavaplatos, mesón, repisas, jabonera",5],["Piso",1],["Mesones",1],["Esponjas y trapos",4],["Canastas",2],["Cortinas, puerta",2],["Tomas eléctricos",2],
-    ["Mojadora",1],["Laminadora, brocha laminadora",2],["Báscula",1],["Calculadora",1],["Congelador #2",1],["Congelador #10",1],["Congelador #5",1]]},   // Alban 4 nov: responsables de neveras/congeladores
+    ["Mojadora",1],["Laminadora, brocha laminadora",2],["Báscula",1],["Calculadora",1],["Congelador #9",1],["Congelador #8",1],["Congelador #4",1]]},   // Alban 4 nov: responsables de neveras/congeladores
   {id:"ASEO_REP", cod:"PLD-F-02", t:"Control de aseo – Repostería", quien:{area:"Reposteria"}, tipo:"aseo", items:[
     ["Bowl grande y pequeño",6],["Mangas, jarra, cucharas medidoras",16],["Bailarinas, tijeras, rodillos",5],["Brocha, espátulas, miserables, cortadores, boquillas, cuchillos, moldes tartas",26],["Moldes tartas",40],["Tabla blanca",1],
     ["Paredes"],["Piso",1],["Mesón, repisas, imán",5],["Lavaplatos, escurridor, jabonera, esponjas y trapos",7],["Canecas de residuos",2],["Canastas, carpetas",7],["Tomas eléctricos, timers",3],
-    ["Batidora grande (8 L), gancho, escudo, globo, base",5],["Microondas, plato",2],["Batidora KitchenAid, aspas",3],["Báscula",2],["Batidora de mano, ganchos",3],["Procesadora, tapa, cuchillas",3],["Congelador #3",1],["Nevera #8",1]]},
+    ["Batidora grande (8 L), gancho, escudo, globo, base",5],["Microondas, plato",2],["Batidora KitchenAid, aspas",3],["Báscula",2],["Batidora de mano, ganchos",3],["Procesadora, tapa, cuchillas",3],["Congelador #2",1],["Nevera #7",1]]},
   {id:"ASEO_ZC", cod:"PLD-F-02", t:"Control de aseo – Zonas comunes", quien:{aseo:true}, tipo:"aseo", items:[
     ["Extintores"],["Ventanas y persianas (cuarto de descanso, oficina)"],["Tomas eléctricos, caja de llaves"],["Escritorio, comedor, sillas, forros del comedor"],["Puertas, reja, muebles, estantería de bolsos, lockers, estantería zapatos, repisas de vajilla"],
     ["Paredes, fachada, jardinera"],["Pisos"],["Baño (orinal, inodoro, espejo, ventana, jabonera, lavamanos, utensilios baño)"],["Canecas de residuos"],["Ventiladores, escalera"],["Ambiente"],
@@ -9011,7 +9012,7 @@ function planNevHecho(pl, eq){ const DIAS = ["dom","lun","mar","mié","jue","vie
   return r ? DIAS[new Date(r.fecha + "T12:00:00").getDay()] + " " + +String(r.fecha).slice(8) : ""; }
 function planNevPend(pl){ return (pl.items || []).map(it => it[0]).filter(n => aseoCat(n) === "nev" && aseoItemHoy(pl, n) && !planNevHecho(pl, n)); }
 // Alban 4 nov: el Congelador 5 es de Batido una semana y de Panadería la otra (aseoExtras)
-function aseoItemHoy(pl, n){ return n !== "Congelador #5" || aseoExtras((pl.quien || {}).area || "").length > 0; }
+function aseoItemHoy(pl, n){ return n !== "Congelador #4" || aseoExtras((pl.quien || {}).area || "").length > 0; }
 const PLAN_DIAS = {D:[1,2,3,4,5,6], LJ:[1,4], MV:[2,5], M:[2], W:[3], L:[1], S:[1,2,3,4,5,6], X:[1,2,3,4,5,6]};
 const PLAN_OPC = {S:"(semanal)", X:"(1 vez al mes)"};
 let PLAN_HOY = null, PLAN_HOY_T = 0, PLAN_VEZ_PRE = null;   // registros firmados hoy (del servidor): [{planilla, persona, hora, extra}]
