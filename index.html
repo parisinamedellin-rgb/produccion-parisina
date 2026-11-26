@@ -5016,7 +5016,11 @@ function msjAviso(html){
 }
 function msjDe(iso, n){ const id = ((LOG_STATE.ruta || {})[iso] || {})[n]; return id != null && msjNombre(id) ? String(id) : ""; }
 // Enviar / regresar un pedido: marca el estado y avisa a la app del mensajero
+const PED_LOCK = {};
 function pedEnviar(iso, p, enviar){
+  const kl = iso + "|" + p.n + "|" + (enviar ? 1 : 0);
+  if(PED_LOCK[kl] && Date.now() - PED_LOCK[kl] < 4000) return;   // Alban 26 nov: evita doble toque
+  PED_LOCK[kl] = Date.now();
   const id = msjDe(iso, p.n);
   empGuardar(iso, d=>{ if(enviar) d.env[p.n] = true; else delete d.env[p.n]; });
   if(p.rec) return;
@@ -5060,7 +5064,8 @@ async function logMover(iso, n, a){
   const hoy = hoyISO(), nuevo = {};
   Object.keys(LOG_STATE.ruta).forEach(d=>{ if(d >= hoy) nuevo[d] = LOG_STATE.ruta[d]; });
   nuevo[iso] = m; LOG_STATE.ruta = nuevo;
-  await logGuardar(); render();
+  render();   // Alban 26 nov: se ve al instante, guardado en segundo plano
+  logGuardar();
 }
 function renderEntregas(main, col){
   const iso = activeDate, {r, rec, sinDir} = logRutas(iso);
@@ -6121,7 +6126,7 @@ function renderTablero(main, col){
     r.innerHTML = `${p.h ? `<span style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;background:${EST_INFO.LISTO.c};color:#fff;border-radius:6px;padding:2px 7px;">${p.h}</span>` : ""}
       <span style="flex:1;font-weight:700;font-size:0.9rem;">${logEsc(p.cli)}<span style="display:block;font-weight:400;font-size:0.75rem;color:${C.inkSoft};">#${logEsc(p.n)} · ${p.rec ? "🏠 Recoge" : a ? "🛵 " + logEsc(a) : "sin mensajero"}</span></span>
       <button type="button" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:8px 12px;border-radius:8px;border:none;background:${EST_INFO.ENV.c};color:#fff;cursor:pointer;">🛵 Enviar</button>`;
-    r.querySelector("button").onclick = ()=>{ if(!p.rec && (p.dir || p.maps) && !a){ msjAviso("🛵 Elige primero el <b>mensajero</b> de la comanda #" + logEsc(p.n) + " en <b>Pedidos</b>."); return; } pedEnviar(iso, p, true); };
+    r.querySelector("button").onclick = ()=>{ if(!p.rec && (p.dir || p.maps) && !a){ msjAviso("🛵 Elige primero el <b>mensajero</b> de la comanda #" + logEsc(p.n) + " en <b>Pedidos</b>."); return; } const bt = r.querySelector("button"); bt.disabled = true; bt.textContent = "⏳ Enviando…"; bt.style.opacity = ".6"; pedEnviar(iso, p, true); };
     const bl = bulLinea(f);
     if(bl){ r.style.flexWrap = "wrap"; const x = document.createElement("div"); x.setAttribute("style", "flex-basis:100%;"); x.innerHTML = bl; r.appendChild(x); }
     L.appendChild(r);
@@ -6278,6 +6283,7 @@ function renderPedidos(main, col){
       if(!fl.env && !p.rec && !sd && !a){ eb.textContent = "🛵 Elige primero el mensajero"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 25 nov
       if(!fl.env && fl.est !== "LISTO" && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "¿Enviar sin estar listo? Toca otra vez"; eb.style.background = "#FDECEA"; return; }
       if(fl.env && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "↩️ ¿Regresar a NO enviados? Toca otra vez"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 4 nov: producto dañado / faltó algo
+      eb.disabled = true; eb.textContent = fl.env ? "⏳ Regresando…" : "⏳ Enviando…"; eb.style.opacity = ".6";
       pedEnviar(iso, p, !fl.env);
     };
     card.dataset.s = pedNorm([p.n, String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."), p.cod, p.cli, p.para, p.dir, p.comp, p.barrio, p.nota].concat((p.todo || p.items || []).map(x=>x[1] + " " + x[0])).join(" | "));
