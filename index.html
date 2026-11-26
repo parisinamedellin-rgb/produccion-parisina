@@ -4991,7 +4991,7 @@ try{ MSJ = JSON.parse(lsGet("msj_lista") || "[]") || []; }catch(e){ MSJ = []; }
 function msjLista(){
   const cnt = {};
   MSJ.forEach(m=>{ const f = String(m.nombre || "").trim().split(/\s+/)[0]; cnt[f] = (cnt[f] || 0) + 1; });
-  return MSJ.map(m=>{ const w = String(m.nombre || "").trim().split(/\s+/); return {id: String(m.id), nombre: String(m.nombre || ""), corto: cnt[w[0]] > 1 && w[1] ? w[0] + " " + w[1] : w[0]}; });
+  return MSJ.map(m=>{ const w = String(m.nombre || "").trim().split(/\s+/); return {id: String(m.id), nombre: String(m.nombre || ""), corto: cnt[w[0]] > 1 && w[1] ? w[0] + " " + w[1] : w[0]}; }).concat([{id: "T", nombre: "Tercero", corto: "Tercero"}]);   // Alban 26 nov: "Tercero" = lo lleva alguien sin app
 }
 function msjNombre(id){ const m = msjLista().find(x=>x.id === String(id)); return m ? m.corto : ""; }
 function msjCargar(){
@@ -5023,17 +5023,25 @@ function pedEnviar(iso, p, enviar){
   PED_LOCK[kl] = Date.now();
   const id = msjDe(iso, p.n);
   empGuardar(iso, d=>{ if(enviar) d.env[p.n] = true; else delete d.env[p.n]; });
-  if(p.rec && !id) return;   // recogido en Parisina: no hay nada que avisar a la app
+  if((p.rec && !id) || id === "T") return;   // recogido en Parisina o tercero (sin app): no hay nada que avisar
   if(enviar && id) msjApi("api=salida&m=" + encodeURIComponent(id) + "&n=" + encodeURIComponent(p.n)).then(j=>{
     if(!j.ok) msjAviso(`⚠️ No se pudo avisar a la app de <b>${logEsc(msjNombre(id))}</b> (comanda #${logEsc(p.n)}).<br>Que la registre a mano en su app.`); });
   if(!enviar) msjApi("api=anular&n=" + encodeURIComponent(p.n));
+}
+// Alban 26 nov: tocar el nombre del mensajero = asignar Y enviar de una vez (si ya estaba enviado, solo cambia de mensajero)
+function pedCon(iso, p, id){
+  id = String(id);
+  const ya = String(msjDe(iso, p.n)) === id;
+  if(empDia(iso).env[p.n]){ if(!ya) logMover(iso, p.n, id); return; }
+  if(!ya) logMover(iso, p.n, id);
+  pedEnviar(iso, p, true);
 }
 function logRutas(iso){
   msjCargar();
   const ped = logPedidos(iso);
   const rec = ped.filter(p=>p.rec), sinDir = ped.filter(p=>!p.rec && !p.dir && !p.maps);
   const man = (LOG_STATE.ruta || {})[iso] || {};
-  const env = ped.filter(p=>p.rec ? man[p.n] != null : (p.dir || p.maps));   // Alban 26 nov: un "recoge" con mensajero asignado se reparte como domicilio
+  const env = ped.filter(p=>man[p.n] != null || (!p.rec && (p.dir || p.maps)));   // Alban 26 nov: un "recoge" con mensajero asignado se reparte como domicilio
   const L = msjLista(), r = {}, sinMsj = [];
   L.forEach(m=>{ r[m.id] = []; });
   env.forEach(p=>{ const k = man[p.n]; if(k != null && r[String(k)]) r[String(k)].push(p); else sinMsj.push(p); });
@@ -5059,7 +5067,7 @@ async function logMover(iso, n, a){
   const antes = m[n];
   if(String(antes) === String(a)) delete m[n]; else m[n] = a;   // Alban 25 nov: tocar el mismo nombre otra vez = quitar el mensajero
   // si el pedido ya estaba enviado, se le quita al mensajero anterior y se le pasa al nuevo en su app
-  try{ if(typeof empDia === "function" && empDia(iso).env[n]){ const nuevoId = m[n]; msjApi("api=anular&n=" + encodeURIComponent(n)).then(()=>{ if(nuevoId != null && msjNombre(nuevoId)) return msjApi("api=salida&m=" + encodeURIComponent(nuevoId) + "&n=" + encodeURIComponent(n)); }); } }catch(e){}
+  try{ if(typeof empDia === "function" && empDia(iso).env[n]){ const nuevoId = m[n]; msjApi("api=anular&n=" + encodeURIComponent(n)).then(()=>{ if(nuevoId != null && String(nuevoId) !== "T" && msjNombre(nuevoId)) return msjApi("api=salida&m=" + encodeURIComponent(nuevoId) + "&n=" + encodeURIComponent(n)); }); } }catch(e){}
   // se guardan solo los días de hoy en adelante
   const hoy = hoyISO(), nuevo = {};
   Object.keys(LOG_STATE.ruta).forEach(d=>{ if(d >= hoy) nuevo[d] = LOG_STATE.ruta[d]; });
@@ -6163,14 +6171,15 @@ function renderPedidos(main, col){
   const asig = {};
   MSJL.forEach(m=>r[m.id].forEach((p,i)=>{ asig[p.n] = {m:m.id, nom:m.corto, i:i+1}; }));
   const orden = (a,b)=> (a.h || "99") < (b.h || "99") ? -1 : (a.h || "99") > (b.h || "99") ? 1 : (a.zona||99) - (b.zona||99);
-  const todos = logPedidos(iso).slice().sort(orden);
+  // Alban 26 nov: los pedidos del mismo cliente van uno al lado del otro
+  const todos = (()=>{ const o = logPedidos(iso).slice().sort(orden), g = new Map(); o.forEach(p=>{ const k = pedNorm(p.cli) || ("#" + p.n); if(!g.has(k)) g.set(k, []); g.get(k).push(p); }); return [].concat(...g.values()); })();
   const FL = {}; todos.forEach(p=>{ FL[p.n] = pedFlujo(iso, p); });
   const recSolo = p=>p.rec && !asig[p.n];   // Alban 26 nov: recoge en Parisina y sin mensajero
   todos.forEach(p=>{ if(recSolo(p) && FL[p.n].est === "LISTO") FL[p.n].est = "REC"; });   // Alban 9 oct: hecho → empacado → enviado
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Pedidos</h2>
-    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">${todos.length} ${todos.length === 1 ? "comanda" : "comandas"} en orden de entrega. Toca el nombre del 🛵 mensajero para asignarlo. Al tocar <b>Enviar</b>, la comanda le aparece en su app.</div>`;
+    <div style="font-size:0.86rem;color:${C.inkSoft};line-height:1.5;">${todos.length} ${todos.length === 1 ? "comanda" : "comandas"} en orden de entrega. Toca el nombre del 🛵 mensajero: la comanda se le envía en ese momento y le aparece en su app. <b>Tercero</b> = lo lleva alguien sin app.</div>`;
   main.appendChild(head);
   const fil = document.createElement("div");
   fil.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;");
@@ -6222,16 +6231,13 @@ function renderPedidos(main, col){
   const wrap = document.createElement("div");
   wrap.setAttribute("style", "display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:14px;");
   // Alban 13 oct: los pedidos ya ENVIADOS bajan al final, en su propio bloque "🛵 Enviados"; arriba quedan solo los pendientes
-  const pendientes = lista.filter(p=>!FL[p.n].env), enviados = lista.filter(p=>FL[p.n].env);
-  if(enviados.length && pendientes.length){
-    const sep = document.createElement("div");
-    sep.dataset.s = ""; sep.dataset.sep = "1";
-    sep.setAttribute("style", `grid-column:1 / -1;margin-top:10px;padding:10px 14px;border-radius:10px;background:${EST_INFO.ENV.bg};color:${EST_INFO.ENV.c};font-family:'Work Sans',sans-serif;font-weight:700;font-size:0.95rem;`);
-    sep.textContent = `🛵 Enviados · ${enviados.length}`;
-    enviados._sep = sep;
-  }
-  pendientes.concat(enviados).forEach((p, idx)=>{
-    if(enviados._sep && idx === pendientes.length) wrap.appendChild(enviados._sep);
+  const pendientes = lista.filter(p=>!FL[p.n].env && !recSolo(p)), recoger = lista.filter(p=>!FL[p.n].env && recSolo(p)), enviados = lista.filter(p=>FL[p.n].env);
+  const mkSep = (txt, info)=>{ const sep = document.createElement("div"); sep.dataset.s = ""; sep.dataset.sep = "1"; sep.setAttribute("style", `grid-column:1 / -1;margin-top:10px;padding:10px 14px;border-radius:10px;background:${info.bg};color:${info.c};font-family:'Work Sans',sans-serif;font-weight:700;font-size:0.95rem;`); sep.textContent = txt; return sep; };
+  const seps = {};   // Alban 26 nov: subcategoría "Para recoger en Parisina" entre los pendientes y los enviados
+  if(recoger.length && (pendientes.length || enviados.length)) seps[pendientes.length] = mkSep(`🏠 Para recoger en Parisina · ${recoger.length}`, EST_INFO.REC);
+  if(enviados.length && (pendientes.length || recoger.length)) seps[pendientes.length + recoger.length] = mkSep(`🛵 Enviados · ${enviados.length}`, EST_INFO.ENV);
+  pendientes.concat(recoger, enviados).forEach((p, idx)=>{
+    if(seps[idx]) wrap.appendChild(seps[idx]);
     const a = asig[p.n], sd = !p.rec && !p.dir && !p.maps;
     const pagoPend = /aprobar/i.test(p.pago || "");
     const card = document.createElement("div");
@@ -6244,8 +6250,8 @@ function renderPedidos(main, col){
         <span style="min-width:22px;text-align:right;">${fmtN(q)}</span><span style="flex:1;${emp ? "text-decoration:line-through;opacity:.6;" : ""}">${logEsc(nm).toUpperCase()}${cong ? ` <span title="Lo empaca Panadería" style="font-size:0.75rem;">🧊</span>` : ""}</span><span style="color:#777;">${logEsc(c)}</span></div>`;
     }).join("");
     const estado = recSolo(p) ? `<span style="color:#2E6B3A;">🏠 Recoge en Parisina</span>`
-      : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>`
-      : a ? `<span style="color:${col.a};">🛵 ${logEsc(a.nom)} · parada ${a.i}</span>` : "";   // Alban 25 nov: sin el texto "Sin mensajero"
+      : a ? `<span style="color:${col.a};">🛵 ${logEsc(a.nom)} · parada ${a.i}</span>`
+      : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>` : "";   // Alban 25 nov: sin el texto "Sin mensajero"
     card.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700;font-size:1.05rem;"><span>${logEsc(String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."))}</span><span style="text-align:right;">${logEsc(p.cod)}${p.h ? ` <span style="font-size:0.9rem;color:#222;white-space:nowrap;">${p.cod ? "· " : ""}🕐 ${logEsc(p.h)}</span>` : ""}</span></div>
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:#666;margin-top:2px;"><span>${iso.split("-").reverse().map(Number).join("/")}</span>${p.h && !fl.env ? `<span data-cd="${Date.parse(iso + "T" + p.h + ":00-05:00")}" style="font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:0.9rem;white-space:nowrap;"></span>` : ""}</div>   ${""/* Alban 25 nov: cuenta regresiva hasta la hora del pedido */}
@@ -6272,16 +6278,20 @@ function renderPedidos(main, col){
       <div style="flex:1;"></div>
       <div style="margin-top:10px;padding-top:9px;border-top:1px solid ${C.line};display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;">
         <span style="flex:1;">${estado}</span>
-        <button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? (recSolo(p) ? "🏠 Recogido ✓ · ↩️" : "🛵 Enviado ✓ · ↩️") : (recSolo(p) ? "🏠 Ya recogido" : "Enviar")}</button>
+        ${(fl.env || recSolo(p)) ? `<button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? (recSolo(p) ? "🏠 Recogido ✓ · ↩️" : "🛵 Enviado ✓ · ↩️") : (recSolo(p) ? "🏠 Ya recogido" : "Enviar")}</button>` : ""}
         ${p.maps ? `<a href="${logEsc(p.maps)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:1.1rem;" title="Abrir en Maps">📍</a>` : ""}
-        ${!sd ? `<span style="flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;"><span style="font-size:1rem;">🛵</span>` + (MSJL.length ? MSJL.map(m=>`<button type="button" data-m="${logEsc(m.id)}" title="${logEsc(m.nombre)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === m.id ? col.a : "#fff"};color:${a && a.m === m.id ? "#fff" : col.a};cursor:pointer;">${logEsc(m.corto)}</button>`).join("") : `<span style="font-weight:500;color:${C.inkSoft};">cargando mensajeros…</span>`) + `</span>` : ""}
+        ${true ? `<span style="flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;"><span style="font-size:1rem;">🛵</span>` + (MSJL.length ? MSJL.map(m=>`<button type="button" data-m="${logEsc(m.id)}" title="${logEsc(m.nombre)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === m.id ? col.a : "#fff"};color:${a && a.m === m.id ? "#fff" : col.a};cursor:pointer;">${logEsc(m.corto)}</button>`).join("") : `<span style="font-weight:500;color:${C.inkSoft};">cargando mensajeros…</span>`) + `</span>` : ""}
       </div>`;
-    card.querySelectorAll("button[data-m]").forEach(b=>{ b.onclick = ()=>logMover(iso, p.n, b.dataset.m); });
+    card.querySelectorAll("button[data-m]").forEach(b=>{ b.onclick = ()=>{
+      if(!fl.env && fl.est !== "LISTO" && fl.est !== "REC" && !b.dataset.ok){ b.dataset.ok = "1"; const t0 = b.textContent; b.textContent = "¿Aún no está listo? Toca otra vez"; setTimeout(()=>{ if(b.isConnected){ delete b.dataset.ok; b.textContent = t0; } }, 4000); return; }
+      pedCon(iso, p, b.dataset.m);
+    }; });
     card.querySelectorAll("button[data-e]").forEach(b=>{ b.onclick = ()=>{
       const it = fl.its[Number(b.dataset.e)], k = empKey(p.n, it.nm), v = !it.emp;
       empGuardar(iso, d=>{ if(v) d.emp[k] = true; else delete d.emp[k]; });
     }; });
-    card.querySelector(".envb").onclick = ()=>{
+    const envb0 = card.querySelector(".envb");
+    if(envb0) envb0.onclick = ()=>{
       const eb = card.querySelector(".envb");
       if(!fl.env && !p.rec && !sd && !a){ eb.textContent = "🛵 Elige primero el mensajero"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 25 nov
       if(!fl.env && fl.est !== "LISTO" && fl.est !== "REC" && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "¿Enviar sin estar listo? Toca otra vez"; eb.style.background = "#FDECEA"; return; }
