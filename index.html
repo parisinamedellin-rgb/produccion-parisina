@@ -5023,7 +5023,7 @@ function pedEnviar(iso, p, enviar){
   PED_LOCK[kl] = Date.now();
   const id = msjDe(iso, p.n);
   empGuardar(iso, d=>{ if(enviar) d.env[p.n] = true; else delete d.env[p.n]; });
-  if(p.rec) return;
+  if(p.rec && !id) return;   // recogido en Parisina: no hay nada que avisar a la app
   if(enviar && id) msjApi("api=salida&m=" + encodeURIComponent(id) + "&n=" + encodeURIComponent(p.n)).then(j=>{
     if(!j.ok) msjAviso(`⚠️ No se pudo avisar a la app de <b>${logEsc(msjNombre(id))}</b> (comanda #${logEsc(p.n)}).<br>Que la registre a mano en su app.`); });
   if(!enviar) msjApi("api=anular&n=" + encodeURIComponent(p.n));
@@ -5032,8 +5032,8 @@ function logRutas(iso){
   msjCargar();
   const ped = logPedidos(iso);
   const rec = ped.filter(p=>p.rec), sinDir = ped.filter(p=>!p.rec && !p.dir && !p.maps);
-  const env = ped.filter(p=>!p.rec && (p.dir || p.maps));
   const man = (LOG_STATE.ruta || {})[iso] || {};
+  const env = ped.filter(p=>p.rec ? man[p.n] != null : (p.dir || p.maps));   // Alban 26 nov: un "recoge" con mensajero asignado se reparte como domicilio
   const L = msjLista(), r = {}, sinMsj = [];
   L.forEach(m=>{ r[m.id] = []; });
   env.forEach(p=>{ const k = man[p.n]; if(k != null && r[String(k)]) r[String(k)].push(p); else sinMsj.push(p); });
@@ -5826,6 +5826,7 @@ const EST_INFO = {
   PROD:  {t:"Falta producción", e:"🔴", c:"#B3261E", bg:"#FDECEA"},
   EMP:   {t:"Falta empacar",    e:"📦", c:"#9A5B00", bg:"#FFF3DC"},
   LISTO: {t:"Listo para enviar", e:"✅", c:"#2E6B3A", bg:"#E6F4EA"},
+  REC:   {t:"Para recoger en Parisina", e:"🏠", c:"#6B3F8C", bg:"#F1E8F7"},   // Alban 26 nov
   ENV:   {t:"Enviado",          e:"🛵", c:"#3D4F7A", bg:"#E8EDF7"}
 };
 function bandejasSugeridas(its){
@@ -6163,7 +6164,9 @@ function renderPedidos(main, col){
   MSJL.forEach(m=>r[m.id].forEach((p,i)=>{ asig[p.n] = {m:m.id, nom:m.corto, i:i+1}; }));
   const orden = (a,b)=> (a.h || "99") < (b.h || "99") ? -1 : (a.h || "99") > (b.h || "99") ? 1 : (a.zona||99) - (b.zona||99);
   const todos = logPedidos(iso).slice().sort(orden);
-  const FL = {}; todos.forEach(p=>{ FL[p.n] = pedFlujo(iso, p); });   // Alban 9 oct: hecho → empacado → enviado
+  const FL = {}; todos.forEach(p=>{ FL[p.n] = pedFlujo(iso, p); });
+  const recSolo = p=>p.rec && !asig[p.n];   // Alban 26 nov: recoge en Parisina y sin mensajero
+  todos.forEach(p=>{ if(recSolo(p) && FL[p.n].est === "LISTO") FL[p.n].est = "REC"; });   // Alban 9 oct: hecho → empacado → enviado
   const head = document.createElement("div");
   head.setAttribute("style", "margin-top:16px;");
   head.innerHTML = `<h2 style="font-family:'Fraunces',serif;font-weight:700;font-size:1.3rem;margin:0 0 4px;">Pedidos</h2>
@@ -6182,7 +6185,7 @@ function renderPedidos(main, col){
   // estados del pedido (Alban 9 oct)
   const filE = document.createElement("div");
   filE.setAttribute("style", "display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;");
-  [["T","Todos los estados",todos.length], ...["PROD","EMP","LISTO","ENV"].map(k=>[k, EST_INFO[k].e + " " + EST_INFO[k].t, todos.filter(p=>FL[p.n].est === k).length])].forEach(([k,l,n])=>{
+  [["T","Todos los estados",todos.length], ...["PROD","EMP","LISTO","REC","ENV"].map(k=>[k, EST_INFO[k].e + " " + EST_INFO[k].t, todos.filter(p=>FL[p.n].est === k).length])].forEach(([k,l,n])=>{
     const on = PED_EST === k, info = EST_INFO[k], b = document.createElement("button");
     b.type = "button"; b.textContent = `${l} · ${n}`;
     const c = info ? info.c : col.a;
@@ -6240,7 +6243,7 @@ function renderPedidos(main, col){
         <button type="button" data-e="${ix}" title="${emp ? "Empacado" : "Marcar empacado"}" style="width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:5px;border:1.5px solid ${emp ? "#2E6B3A" : "#999"};background:${emp ? "#2E6B3A" : "#fff"};color:#fff;font-size:0.75rem;font-weight:700;cursor:pointer;padding:0;">${emp ? "✓" : ""}</button>
         <span style="min-width:22px;text-align:right;">${fmtN(q)}</span><span style="flex:1;${emp ? "text-decoration:line-through;opacity:.6;" : ""}">${logEsc(nm).toUpperCase()}${cong ? ` <span title="Lo empaca Panadería" style="font-size:0.75rem;">🧊</span>` : ""}</span><span style="color:#777;">${logEsc(c)}</span></div>`;
     }).join("");
-    const estado = p.rec ? `<span style="color:#2E6B3A;">🏠 Recoge en Parisina</span>`
+    const estado = recSolo(p) ? `<span style="color:#2E6B3A;">🏠 Recoge en Parisina</span>`
       : sd ? `<span style="color:#A33;">⚠️ Sin dirección</span>`
       : a ? `<span style="color:${col.a};">🛵 ${logEsc(a.nom)} · parada ${a.i}</span>` : "";   // Alban 25 nov: sin el texto "Sin mensajero"
     card.innerHTML = `
@@ -6269,9 +6272,9 @@ function renderPedidos(main, col){
       <div style="flex:1;"></div>
       <div style="margin-top:10px;padding-top:9px;border-top:1px solid ${C.line};display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:600;">
         <span style="flex:1;">${estado}</span>
-        <button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? "🛵 Enviado ✓ · ↩️" : "Enviar"}</button>
+        <button type="button" class="envb" style="font-family:'Work Sans',sans-serif;font-size:0.8rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${EST_INFO.ENV.c};background:${fl.env ? EST_INFO.ENV.c : "#fff"};color:${fl.env ? "#fff" : EST_INFO.ENV.c};cursor:pointer;">${fl.env ? (recSolo(p) ? "🏠 Recogido ✓ · ↩️" : "🛵 Enviado ✓ · ↩️") : (recSolo(p) ? "🏠 Ya recogido" : "Enviar")}</button>
         ${p.maps ? `<a href="${logEsc(p.maps)}" target="_blank" rel="noopener" style="text-decoration:none;font-size:1.1rem;" title="Abrir en Maps">📍</a>` : ""}
-        ${!p.rec && !sd ? `<span style="flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;"><span style="font-size:1rem;">🛵</span>` + (MSJL.length ? MSJL.map(m=>`<button type="button" data-m="${logEsc(m.id)}" title="${logEsc(m.nombre)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === m.id ? col.a : "#fff"};color:${a && a.m === m.id ? "#fff" : col.a};cursor:pointer;">${logEsc(m.corto)}</button>`).join("") : `<span style="font-weight:500;color:${C.inkSoft};">cargando mensajeros…</span>`) + `</span>` : ""}
+        ${!sd ? `<span style="flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;"><span style="font-size:1rem;">🛵</span>` + (MSJL.length ? MSJL.map(m=>`<button type="button" data-m="${logEsc(m.id)}" title="${logEsc(m.nombre)}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;padding:6px 10px;border-radius:8px;border:1.5px solid ${col.a};background:${a && a.m === m.id ? col.a : "#fff"};color:${a && a.m === m.id ? "#fff" : col.a};cursor:pointer;">${logEsc(m.corto)}</button>`).join("") : `<span style="font-weight:500;color:${C.inkSoft};">cargando mensajeros…</span>`) + `</span>` : ""}
       </div>`;
     card.querySelectorAll("button[data-m]").forEach(b=>{ b.onclick = ()=>logMover(iso, p.n, b.dataset.m); });
     card.querySelectorAll("button[data-e]").forEach(b=>{ b.onclick = ()=>{
@@ -6281,9 +6284,9 @@ function renderPedidos(main, col){
     card.querySelector(".envb").onclick = ()=>{
       const eb = card.querySelector(".envb");
       if(!fl.env && !p.rec && !sd && !a){ eb.textContent = "🛵 Elige primero el mensajero"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 25 nov
-      if(!fl.env && fl.est !== "LISTO" && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "¿Enviar sin estar listo? Toca otra vez"; eb.style.background = "#FDECEA"; return; }
+      if(!fl.env && fl.est !== "LISTO" && fl.est !== "REC" && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "¿Enviar sin estar listo? Toca otra vez"; eb.style.background = "#FDECEA"; return; }
       if(fl.env && !eb.dataset.ok){ eb.dataset.ok = "1"; eb.textContent = "↩️ ¿Regresar a NO enviados? Toca otra vez"; eb.style.background = "#FDECEA"; eb.style.color = "#B3261E"; return; }   // Alban 4 nov: producto dañado / faltó algo
-      eb.disabled = true; eb.textContent = fl.env ? "⏳ Regresando…" : "⏳ Enviando…"; eb.style.opacity = ".6";
+      eb.disabled = true; eb.textContent = fl.env ? "⏳ Regresando…" : (recSolo(p) ? "⏳ Guardando…" : "⏳ Enviando…"); eb.style.opacity = ".6";
       pedEnviar(iso, p, !fl.env);
     };
     card.dataset.s = pedNorm([p.n, String(p.n).replace(/\B(?=(\d{3})+(?!\d))/g, "."), p.cod, p.cli, p.para, p.dir, p.comp, p.barrio, p.nota].concat((p.todo || p.items || []).map(x=>x[1] + " " + x[0])).join(" | "));
