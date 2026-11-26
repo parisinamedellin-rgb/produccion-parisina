@@ -5484,7 +5484,7 @@ function rotuloHTML(r, iso, w, h){
   return `<div class="rot" style="width:${w}mm;height:${h}mm;box-sizing:border-box;padding:${r.conCli && r.cli ? ROT_MARGEN_SUP_CLI_MM : ROT_MARGEN_SUP_MM}mm 3mm 2.5mm;overflow:hidden;font-family:Arial,Helvetica,sans-serif;color:#000;background:#fff;display:flex;flex-direction:column;justify-content:flex-start;text-align:center;line-height:1.18;font-size:7pt;">
     <div style="font-size:1.25em;text-align:right;">Elaboración:&nbsp; ${ddmmyy(iso)}&nbsp;&nbsp;&nbsp; Vence:&nbsp; ${ddmmyy(masDias(iso, dias))}</div>
     <div style="font-size:1.25em;text-align:right;">Lote:&nbsp;&nbsp; ${lote}</div>
-    ${r.conCli && r.cli ? `<div style="font-size:1.9em;font-weight:700;line-height:1.1;text-align:left;border:0.3mm solid #000;border-radius:1mm;padding:.6mm 1.5mm;margin-top:.8mm;">Cliente: ${logEsc(r.cli)}</div>` : ""}
+    ${r.conCli && r.cli ? `<div style="font-size:1.9em;font-weight:700;line-height:1.1;text-align:center;border:0.3mm solid #000;border-radius:1mm;padding:.6mm 1.5mm;margin-top:.8mm;">${logEsc(r.cli)}</div>` : ""}
     <div style="font-size:min(2.1em, ${ROT_NOM_MAX}pt);font-weight:700;margin:1.2mm 0;text-transform:uppercase;">${logEsc(nom)}</div>
     ${cons ? `<div>${logEsc(cons)}</div>` : ""}
     ${ingr ? `<div style="font-style:italic;margin-top:.6mm;">${logEsc(ingr)}</div>` : ""}
