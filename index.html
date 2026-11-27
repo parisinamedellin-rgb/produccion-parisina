@@ -7790,6 +7790,9 @@ function aseoDelArea(fam, iso){
   if(r.length) return r;
   return (ASEO_EQUIPO_DEF[fam] || []).map(n=>({nom: n, zona: aseoZona(aseoPuesto(n), iso)}));
 }
+// Alban 27 nov: quien figura "Fijo" en un área (ej. Deysi, Camila) no rota de zona pero SÍ tiene check y planillas de su área
+function aseoCheckArea(fam){ const base = aseoDelArea(fam), fijos = (PERSONAL || []).filter(p => p.a === fam && p.p === "Fijo" && !base.some(b => aseoNorm(b.nom) === aseoNorm(p.n))).map(p => ({nom: p.n, zona: "Puesto fijo", fijo: true}));
+  return base.concat(fijos); }
 function aseoExtras(fam, iso){ const w = aseoW(iso), out = [];
   if((w % 2 === 0 && fam === "Panaderia") || (w % 2 !== 0 && fam === "Batido")) out.push("Congelador 4 esta semana");
   return out; }
@@ -8521,7 +8524,7 @@ function sanCheckHTML(fam, gente, col){
   const box = (key, txt, on, extra, tach) => `<label style="${tach ? "opacity:.6;" : ""}display:flex;gap:12px;align-items:flex-start;padding:9px 2px;cursor:pointer;font-size:1rem;line-height:1.4;border-top:1px solid ${C.line};">
       <input type="checkbox" data-k="${key}" ${on ? "checked" : ""} style="width:24px;height:24px;flex:0 0 24px;margin:0;accent-color:${col};">
       <span><span${tach ? ' style="text-decoration:line-through;"' : ""}>${(m => m ? `<i style="color:${C.inkSoft};">${escH(m[1])}</i> – ${escH(m[2])}` : escH(txt))(/^(.+?) – (.+)$/.exec(txt))}</span>${extra ? ` <span style="font-size:0.8rem;color:${C.inkSoft};">${extra}</span>` : ""}</span></label>`;   // Alban 3 nov: el lugar en cursiva
-  if(fam !== "ARELIS" && fam !== "Logistica" && !ini){   // Alban 4 nov: se califica una sola vez por semana; ya marcado no vuelve a salir hasta el lunes
+  if(fam !== "ARELIS" && fam !== "Logistica" && !p.fijo && !ini){   // Alban 4 nov: se califica una sola vez por semana; ya marcado no vuelve a salir hasta el lunes
     h += `<div style="margin-top:12px;background:#FBF3DA;border:1.5px solid #C4791E;border-radius:14px;padding:12px 14px;">
       <div style="font-weight:700;">Inicio de semana — ${escH(T.zona)}</div>
       <div style="font-size:0.88rem;color:${C.inkSoft};">¿Cómo encontraste tu zona al recibirla? (califica la semana anterior)</div>
@@ -8640,7 +8643,7 @@ function renderSanidad(){
     <div style="font-size:0.88rem;color:${C.inkSoft};">Semana ${aseoW() + 1} · ${f(lun)} – ${f(sab)}. Las semanales se reportan el sábado.</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">${SAN_AREAS.map(([k,t])=>`<button type="button" data-a="${k}" style="font-family:'Work Sans',sans-serif;font-size:0.88rem;font-weight:600;border-radius:100px;padding:8px 14px;cursor:pointer;border:1.5px solid ${k===fam ? col : C.line};background:${k===fam ? col : C.paper};color:${k===fam ? "#fff" : C.ink};">${t}${k===miArea ? " · mi equipo" : ""}</button>`).join("")}</div>`;
   const card = (inner, c) => `<div style="margin-top:14px;background:${C.paper};border:1.5px solid ${c};border-radius:16px;padding:14px 16px;">${inner}</div>`;
-  const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [{nom:"Juan Pablo", zona:null}] : aseoDelArea(fam);
+  const genteChk = fam === "ARELIS" ? [{nom:"Arelis", zona:null}] : fam === "Logistica" ? [{nom:"Juan Pablo", zona:null}] : aseoCheckArea(fam);
   h += sanCheckHTML(fam, genteChk, col);
   if(typeof quimSeccionHTML === "function") h += quimSeccionHTML(col);   // Alban 3 nov: químicos, cómo se usan
   const SAN_EQUIPO = false;   // Alban 1 nov: "Tareas del equipo esta semana" oculto (todo va en el check de cada persona)
