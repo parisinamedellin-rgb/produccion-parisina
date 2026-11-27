@@ -554,6 +554,18 @@ const FORMULA_DEFS = [
     recipe: {"per":1100,"of":"total","steps":[]}
   },
   {
+    id: "Natilla (Maizena)", code: "NAV-NATILLA", group: "Topping", unit: "g", fromRec: true,   // Alban 27 nov: la receta sale del recetario (equipos autorizados)
+    channels: { total: [
+      {group:"Topping", sub:"Adicional", name:"Caja familiar: natilla 500 g + 6 buñuelos + 6 hojuelas", coef:500},
+      {group:"Topping", sub:"Adicional", name:"Caja 5 piezas: 1 natilla + 2 buñuelos + 2 hojuelas", coef:150},
+      {group:"Topping", sub:"Adicional", name:"Caja 6 piezas: 2 natillas + 2 buñuelos + 2 hojuelas", coef:300},
+    ] },
+    outputs: [ {label:"Natilla (g)", calc: ch=>ch.total} ],
+    titleFmt: v => `${fmtN(v)} g de natilla`,
+    note: "Estandarizada el 25 nov: 300 g de premezcla + 1 litro de leche rinden 1.125 g de natilla = 7 potes de 150 g + 75 g de sobrante. Una natilla de caja = 150 g; la de la caja familiar = 500 g.",
+    recipe: {"per":1125,"of":"total","steps":[]}
+  },
+  {
     id: "Masa bomba", code: "SE-MASA-BOMBA", group: "Reposteria", unit: "g",
     channels: { total: [] }, outputs: [],
     stock: {batch: 1057, unit: "g", alertPct: 20},
@@ -796,6 +808,14 @@ const FORMULA_DEFS = [
 // (aparece "pendiente de definir"). Jugo mango va dentro de "Bebida".
 // Alban 11 nov (fase 2): los ingredientes de estas fórmulas ya no están en el código; llegan del Apps Script solo a equipos autorizados
 function recAplicarDefs(m){ if(!m) return; FORMULA_DEFS.forEach(d => { if(d.recipe && m[d.id] && Array.isArray(m[d.id].steps)){ d.recipe.steps = m[d.id].steps; delete d._proc; } }); }
+// Alban 27 nov: fórmulas que no vienen en los "defs" del servidor (ej. natilla) toman sus pasos del recetario, solo en equipos autorizados
+function recDefsDeRecetario(){
+  if(!Array.isArray(ENS_REC)) return; let cambio = false;
+  FORMULA_DEFS.forEach(d => { if(!d.fromRec || (d.recipe.steps || []).length) return;
+    const f = ENS_REC.find(x => x.code === d.code); if(!f || !Array.isArray(f.pasos)) return;
+    d.recipe.steps = f.pasos.map(p => ({title: p.titulo, items: (p.items || []).map(i => [i.ing, Number(i.cant) || 0, i.u || "g"])})); delete d._proc; cambio = true; });
+  if(cambio){ try{ render(); }catch(e){} }
+}
 function recStepsOrLock(def){ const st = def && def.recipe && def.recipe.steps; return st && st.length ? st : [{title: "🔒 Receta solo en equipos autorizados por el gerente", items: []}]; }
 (function(){ try{ if(localStorage.getItem("rec_dev")) recAplicarDefs(JSON.parse(localStorage.getItem("rec_defs_cache") || "null")); }catch(e){} })();
 const OCULTAR_FORM_SUBS = new Set(["Cookies red velvet", "Galletas de avena", "Galletas de chocolate"]);
@@ -3774,6 +3794,7 @@ function ensCargar(forzar){
       if(x){ const quitar = new Set([...(x.del || []), ...(x.add || []).map(f => f.code)]); ENS_REC = ENS_REC.filter(f => !quitar.has(f.code)).concat(x.add || []); } } }catch(e){}
     try{ if(DB){ const g = await DB.doc("estado/RECETARIO_AJUSTES").get(); if(g.exists && g.data() && g.data().aj) ENS_AJ = g.data().aj; } }catch(e){}
     ensAplicarAj();
+    try{ recDefsDeRecetario(); }catch(e){}
     const api = ensApi();
     if(api){ try{ const r = await fetch(api + "?estados=1&t=" + Date.now(), {credentials: "omit"}); const j = await r.json(); if(j && j.ok){ ENS_EST = j.estados || {}; lsSet("ens_est_cache", JSON.stringify(ENS_EST)); } }
       catch(e){ try{ ENS_EST = JSON.parse(lsGet("ens_est_cache") || "{}"); }catch(x){} } }
@@ -7188,7 +7209,8 @@ function render(){
   // Alban 10 oct: en Panadería, HOY va con "Orden de realización"; los días siguientes, como antes:
   // lista por Nevera / Congelador / Panes…, todo agrupado y en orden alfabético.
   const PANA_FUT = ["Panaderia","Comida de sal","Reposteria","Tortas","Topping"].includes(activeCat) && (activeDate > hoyISO() || (activeCat === "Panaderia" && activeDate < hoyISO()));   // Alban 17 oct: el día anterior de Panadería va como los demás días   // Alban 10 oct: igual en Comida de sal y Repostería
-  const deUnaVezEl = PANA_FUT ? null : renderPrioridades(main);
+  const deUnaVezEl = (PANA_FUT || activeCat === "Topping") ? null : renderPrioridades(main);   // Alban 27 nov: Topping & Cremas = solo las fórmulas (sin "Orden de realización")
+  if(activeCat === "Topping" && typeof ensCargar === "function"){ try{ ensCargar(); }catch(e){} }
   // ¿se pintó el cuadro "Orden de realización"? (si no, los bloques de fórmula salen abiertos, p. ej. Topping)
   const hayOrden = activeCat !== "ALL" && !!(main.children && main.children.length > nMain0);
   if(hayOrden) any = true;
@@ -7268,11 +7290,20 @@ function render(){
       if(isFormula && OCULTAR_FORM_SUBS.has(sk)) return;   // Alban 12 nov: en Dulcería no mostrar estos bloques de fórmula
       const subEl = document.createElement("div");
       subEl.setAttribute("style", `background:${C.paper};border:1px solid ${C.line};border-radius:14px;margin-bottom:12px;overflow:hidden;`);
+      // Alban 27 nov: en Topping & Cremas cada fórmula del día tiene "Ya la hice"; al marcarla se oculta
+      const hKey = [activeDate, g, sk, "__HECHA__"].join("::"), hechaTop = activeCat === "Topping" && isFormula && AREA;
+      if(hechaTop && COMPLETED[hKey]){
+        const barra = document.createElement("div");
+        barra.setAttribute("style", `display:flex;justify-content:space-between;align-items:center;gap:10px;background:${C.accentSoft};border:1px solid ${C.line};border-radius:14px;margin-bottom:12px;padding:11px 16px;font-size:0.9rem;font-weight:600;color:${C.accent};`);
+        barra.innerHTML = `<span>✅ ${sk} — hecha</span><button type="button" style="font-size:0.75rem;font-weight:700;color:${C.accent};background:${C.paper};border:1px solid ${C.accent};border-radius:100px;padding:4px 10px;cursor:pointer;">↩️ Deshacer</button>`;
+        barra.querySelector("button").onclick = () => { marcar(hKey, false); flushDb(); render(); };
+        groupEl.appendChild(barra); return;
+      }
       const flag = isFormula ? `<button type="button" class="formula-toggle" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:${C.amber};background:${C.amberSoft};border:1px solid ${C.amber};border-radius:100px;padding:2px 8px;font-weight:700;cursor:pointer;">Fórmula ▸</button>` : '';
       const isMise = NO_COUNT_SUBS.has(sk);
       const subCount = (isFormula || isMise || SIN_TOTAL.has(g)) ? '' : ` <span style="font-family:'IBM Plex Mono',monospace;font-weight:500;opacity:.8;">${fmtN(subs[sk].reduce((s2,it)=>s2+it[1],0))} und.</span>`;
       const miseTag = isMise ? ` <span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;background:${C.accent};color:#fff;border-radius:100px;padding:2px 8px;font-weight:700;">1º · antes de empezar</span>` : '';
-      subEl.innerHTML = `<div style="padding:11px 16px;font-size:0.82rem;font-weight:600;color:${C.accent};border-bottom:1px solid ${C.line};background:${C.accentSoft};display:flex;justify-content:space-between;align-items:center;"><span>${isMise ? "🧊 " : ""}${sk}${subCount}${miseTag}</span>${flag}${AREA ? `<button type="button" class="block-toggle" style="margin-left:8px;font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:${C.accent};background:${C.paper};border:1px solid ${C.accent};border-radius:100px;padding:2px 8px;font-weight:700;cursor:pointer;">${(OPEN_BLOCKS[sk] ?? !hayOrden) ? "Ver ▾" : "Ver ▸"}</button>` : ""}</div>`;
+      subEl.innerHTML = `<div style="padding:11px 16px;font-size:0.82rem;font-weight:600;color:${C.accent};border-bottom:1px solid ${C.line};background:${C.accentSoft};display:flex;justify-content:space-between;align-items:center;"><span>${isMise ? "🧊 " : ""}${sk}${subCount}${miseTag}</span>${flag}${hechaTop ? `<button type="button" class="hecha-btn" style="margin-left:8px;font-size:0.78rem;color:#fff;background:${C.accent};border:none;border-radius:100px;padding:5px 12px;font-weight:700;cursor:pointer;">☐ Ya la hice</button>` : ""}${AREA ? `<button type="button" class="block-toggle" style="margin-left:8px;font-size:0.68rem;text-transform:uppercase;letter-spacing:.04em;color:${C.accent};background:${C.paper};border:1px solid ${C.accent};border-radius:100px;padding:2px 8px;font-weight:700;cursor:pointer;">${(OPEN_BLOCKS[sk] ?? !hayOrden) ? "Ver ▾" : "Ver ▸"}</button>` : ""}</div>`;
       // En un área, el contenido va dentro de "host" y se pliega (se abre con un click) — Alban 2 oct
       const host = AREA ? document.createElement("div") : subEl;
       if(AREA) host.setAttribute("style", `display:${(OPEN_BLOCKS[sk] ?? !hayOrden) ? "block" : "none"};`);
@@ -7387,6 +7418,7 @@ function render(){
 
       if(AREA){
         subEl.appendChild(host);
+        { const hb = subEl.querySelector(".hecha-btn"); if(hb) hb.onclick = e => { e.stopPropagation(); marcar(hKey, true); flushDb(); render(); }; }
         if(subEl._aj) subEl.appendChild(subEl._aj);
         const hd = subEl.firstElementChild || subEl.querySelector("div");
         const bt = subEl.querySelector(".block-toggle");
