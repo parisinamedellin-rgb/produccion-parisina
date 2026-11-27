@@ -3871,7 +3871,8 @@ function ensSeccionEl(){
   const pintar = () => {
     if(ENS_BLOQ){ box.innerHTML = recBloqHTML(); recBloqBind(box); return; }   // Alban 11 nov
     if(!ENS_REC){ box.innerHTML = `<div style="padding:13px 16px;font-size:0.9rem;color:${C.inkSoft};">🧪 Cargando el recetario…</div>`; return; }
-    const lista = ENS_REC.filter(f => areas.includes(f.area)).slice().sort((x, y) => (ensSub(x) || "~").localeCompare(ensSub(y) || "~", "es") || x.nombre.localeCompare(y.nombre, "es"));   // agrupadas por subcategoría
+    const catT = (activeCat === "FORMULAS" && navFam === "Reposteria" && navSub === "Topping");   // Alban 27 nov: Topping & Cremas solo ve sus fórmulas (incluye la natilla)
+    const lista = ENS_REC.filter(f => areas.includes(f.area) && (!catT || f.subgrupo === "Topping" || f.subgrupo === "Topping & Cremas")).slice().sort((x, y) => (ensSub(x) || "~").localeCompare(ensSub(y) || "~", "es") || x.nombre.localeCompare(y.nombre, "es"));   // agrupadas por subcategoría
     const grupos = {por_ensayar: [], por_aprobar: [], confirmada: []};
     const qw = ensPalabras(ENS_Q);
     (qw.length ? lista.filter(f => ensCoincide(f, qw)) : lista).forEach(f => (grupos[ensEstado(f)] || grupos.por_ensayar).push(f));
@@ -4454,7 +4455,9 @@ function renderFormulas(){
   if(typeof ensSeccionEl === "function") main.appendChild(ensSeccionEl());   // Alban 5 nov: ensayos del recetario
   const cards = [];
 
-  const DEFS_FAM = RECIPE_DEFS.filter(d=>enFam(d.group))
+  // Alban 27 nov: dentro de Dulcería / Topping & Cremas / Tortas, "Fórmulas" muestra solo las de esa categoría
+  const catF = (navFam === "Reposteria" && ["Reposteria","Topping","Tortas"].includes(navSub)) ? navSub : null;
+  const DEFS_FAM = RECIPE_DEFS.filter(d=>enFam(d.group) && (!catF || d.group === catF))
     .sort((x,y)=>{ const o=["Reposteria","Topping","Tortas"]; const i=g=>{const k=o.indexOf(g); return k<0?-1:k;}; return i(x.group)-i(y.group); });   // Alban 10 oct: Dulcería, luego Topping & Cremas, luego Tortas
   if(!DEFS_FAM.length){
     const v = document.createElement("div");
