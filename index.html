@@ -2523,7 +2523,7 @@ function capCurso(k){ return CAP_CURSOS.find(c=>c.k === k); }
 function capEsManipulador(u){ const a = (u && u.acc) || []; return a.some(x=>["ALL","Panaderia","Comida de sal","Reposteria","Batido","Marzzana","Aseo","Tortas","Topping"].includes(x)); }
 function capCursosDe(u){ return CAP_CURSOS.filter(c=>c.k !== "SAN" || capEsManipulador(u)); }
 function capEsNueva(u, p){ if(!u) return false; if(p && p.nuevo != null) return !!p.nuevo; const m = String(u.id || "").match(/^u(\d{13})/); return !!m && Number(m[1]) >= CAP_LANZA; }
-let CAP_YO = null, CAP_YO_ID = "", CAP_ST = {curso:null, mod:null, paso:"lista"};
+let CAP_T0 = 0, CAP_YO = null, CAP_YO_ID = "", CAP_ST = {curso:null, mod:null, paso:"lista"};
 function capCache(id){ try{ return JSON.parse(lsGet("cap_" + id) || "null"); }catch(e){ return null; } }
 async function capLeer(id){ let p = capCache(id); try{ if(DB){ const g = await DB.doc("estado/CAP-" + id).get(); if(g.exists && g.data()) p = g.data(); } }catch(e){} return p || {}; }
 async function capGuardar(id, p){ lsSet("cap_" + id, JSON.stringify(p)); if(id === CAP_YO_ID) CAP_YO = p; if(DB) await DB.doc("estado/CAP-" + id).set(p); }
@@ -2726,7 +2726,7 @@ function capPintarYo(w, u){
         <div style="font-weight:800;">${escH(m.t)}</div><div style="font-size:0.85rem;color:${C.inkSoft};margin-top:2px;">${escH(m.d)}</div>
         <div style="font-size:0.85rem;margin-top:6px;font-weight:700;color:${st && st.ok ? "#2E7D4F" : st && st.intentos ? "#B3261E" : abierto ? c.col : C.inkSoft};">${est}</div></button>`; }).join("")}</div>`;
   w.querySelector(".cap-vol").onclick = () => { CAP_ST = {curso:"YO", mod:null, paso:"lista"}; capPintarYo(w, u); window.scrollTo(0,0); };
-  w.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { CAP_ST = {curso: c.k, mod: b.dataset.m, paso: "inicio"}; capPintarYo(w, u); window.scrollTo(0,0); });
+  w.querySelectorAll("[data-m]").forEach(b => b.onclick = () => { CAP_T0 = Date.now(); CAP_ST = {curso: c.k, mod: b.dataset.m, paso: "inicio"}; capPintarYo(w, u); window.scrollTo(0,0); });
 }
 function capPintarModulo(w, u, c, mid){
   const p = CAP_YO || {}, i = c.mods.findIndex(m=>m.id === mid), m = c.mods[i], prev = i > 0 ? c.mods[i - 1] : null;
@@ -2772,7 +2772,7 @@ function capPintarModulo(w, u, c, mid){
     const qs = capMezclar(m.q);
     capQuiz(w.querySelector(".cm-q"), qs, c.col, "📝 " + m.t, async r => {
       const ok = r.nota >= CAP_APRUEBA, ant = capModSt(CAP_YO, c.k, m.id) || {};
-      await guardarMod({ok: ok || !!ant.ok, nota: ant.ok ? Math.max(ant.nota || 0, r.nota) : r.nota, fecha: hoyISO(), intentos: (ant.intentos || 0) + 1, fallos: r.fallos.map(k=>qs[k][0]), ult: r.nota});
+      await guardarMod({ok: ok || !!ant.ok, nota: ant.ok ? Math.max(ant.nota || 0, r.nota) : r.nota, fecha: hoyISO(), intentos: (ant.intentos || 0) + 1, fallos: r.fallos.map(k=>qs[k][0]), ult: r.nota, ts: new Date().toISOString(), seg: ant.seg || (CAP_T0 ? Math.round((Date.now() - CAP_T0) / 1000) : null)});   // Alban 27 nov: se guarda cuánto se demoró (primer intento)
       const sig = c.mods[i + 1], bloqAntes = c.k === "SAN" && m.id === "S0";
       w.querySelector(".cm-q").innerHTML = `<div style="text-align:center;"><div style="font-size:3rem;">${ok ? "🎉" : "📖"}</div>
         <div style="font-family:'Fraunces',serif;font-weight:700;font-size:1.5rem;color:${ok ? "#2E7D4F" : "#B3261E"};">${ok ? "¡Aprobado!" : "Todavía no"}</div>
@@ -2808,7 +2808,7 @@ async function capAdmin(w){
         ${nueva ? `<span style="font-size:0.78rem;font-weight:700;color:${bloq ? "#B3261E" : "#2E7D4F"};">🆕 ${bloq ? "bloqueada hasta el Módulo 0" : "nueva"}</span>` : ""}</div>
       ${capCursosDe(u).map(c => { const h = capHab(p, c.k), m = c.mods[h], st = capModSt(p, c.k, m.id) || {}, aprob = c.mods.filter(x=>(capModSt(p, c.k, x.id) || {}).ok).length;
         return `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;border-top:1px solid ${C.line};padding-top:8px;">
-          <span style="flex:1;min-width:200px;font-size:0.9rem;">${c.e} <b>${escH(c.t)}</b> · ${aprob}/${c.mods.length}<br><span style="color:${C.inkSoft};">Actual: ${escH(m.t)} — ${st.ok ? `<b style="color:#2E7D4F;">✅ ${st.nota} %</b> (${escH(st.fecha || "")})` : st.intentos ? `<b style="color:#B3261E;">❌ ${st.ult} % · ${st.intentos} intento(s)</b>` : "pendiente"}</span></span>
+          <span style="flex:1;min-width:200px;font-size:0.9rem;">${c.e} <b>${escH(c.t)}</b> · ${aprob}/${c.mods.length}<br><span style="color:${C.inkSoft};">Actual: ${escH(m.t)} — ${st.ok ? `<b style="color:#2E7D4F;">✅ ${st.nota} %</b> (${escH(st.fecha || "")}${st.seg ? " · ⏱️ " + Math.max(1, Math.round(st.seg / 60)) + " min" : ""})` : st.intentos ? `<b style="color:#B3261E;">❌ ${st.ult} % · ${st.intentos} intento(s)</b>` : "pendiente"}</span></span>
           <button type="button" data-ver="${u.id}|${c.k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;border:1.5px solid ${C.ink};background:#fff;color:${C.ink};border-radius:9px;padding:7px 10px;cursor:pointer;">📋 Detalle</button>
           ${h < c.mods.length - 1 ? `<button type="button" data-hab="${u.id}|${c.k}" style="font-family:'Work Sans',sans-serif;font-size:0.82rem;font-weight:700;border:none;background:${st.ok ? "#2E7D4F" : C.inkSoft};color:#fff;border-radius:9px;padding:8px 11px;cursor:pointer;">🔓 Habilitar ${escH(c.mods[h + 1].t.split(" · ")[0])}</button>` : ""}</div>`; }).join("")}
       ${nueva ? `<button type="button" data-lib="${u.id}" style="margin-top:8px;font-family:'Work Sans',sans-serif;font-size:0.8rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">${p.libre ? "Volver a bloquear hasta el Módulo 0" : "Dejarla entrar sin el Módulo 0"}</button>` : `<button type="button" data-nue="${u.id}" style="margin-top:8px;font-family:'Work Sans',sans-serif;font-size:0.8rem;border:none;background:none;color:${C.inkSoft};text-decoration:underline;cursor:pointer;">Marcar como persona nueva (bloquear hasta el Módulo 0)</button>`}</div>`; }).join("");
